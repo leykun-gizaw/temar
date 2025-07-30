@@ -1,2 +1,7 @@
-packages: 
-  - "packages/*"
+packages:
+  - packages/*
+  - apps/*
+
+ignoredBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - cypress
