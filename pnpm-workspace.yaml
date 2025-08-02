@@ -5,3 +5,6 @@ packages:
 ignoredBuiltDependencies:
   - '@tailwindcss/oxide'
   - cypress
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
