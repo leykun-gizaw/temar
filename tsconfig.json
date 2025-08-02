@@ -20,6 +20,9 @@
     },
     {
       "path": "./libs/data-access/notes"
+    },
+    {
+      "path": "./libs/data-access/generation"
     }
   ]
 }

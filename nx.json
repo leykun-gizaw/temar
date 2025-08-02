@@ -31,7 +31,7 @@
           "watchDepsName": "watch-deps"
         }
       },
-      "exclude": ["libs/data-access/notes/*"]
+      "exclude": ["libs/data-access/notes/*", "libs/data-access/generation/*"]
     },
     {
       "plugin": "@nx/next/plugin",
@@ -78,7 +78,7 @@
     },
     {
       "plugin": "@nx/js/typescript",
-      "include": ["libs/data-access/notes/*"],
+      "include": ["libs/data-access/notes/*", "libs/data-access/generation/*"],
       "options": {
         "typecheck": {
           "targetName": "typecheck"
