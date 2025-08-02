@@ -1,10 +1,9 @@
 packages:
-  - packages/*
-  - apps/*
-
+  - 'packages/*'
+  - 'apps/*'
+  - 'libs/*'
 ignoredBuiltDependencies:
   - '@tailwindcss/oxide'
-  - cypress
-
+  - 'cypress'
 onlyBuiltDependencies:
   - '@nestjs/core'
