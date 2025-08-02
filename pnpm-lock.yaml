@@ -311,6 +311,8 @@ importers:
 
   apps/web-e2e: {}
 
+  libs/data-access/notes: {}
+
   libs/types:
     dependencies:
       tslib:
