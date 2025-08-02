@@ -315,6 +315,8 @@ importers:
 
   libs/data-access/notes: {}
 
+  libs/data-access/scheduler: {}
+
   libs/types:
     dependencies:
       tslib:

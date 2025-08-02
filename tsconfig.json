@@ -23,6 +23,9 @@
     },
     {
       "path": "./libs/data-access/generation"
+    },
+    {
+      "path": "./libs/data-access/scheduler"
     }
   ]
 }
