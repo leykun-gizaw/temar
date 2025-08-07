@@ -1,7 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { ArchiveX, Command, File, Inbox, Send, Trash2 } from 'lucide-react';
+import {
+  ArchiveX,
+  Command,
+  File,
+  LibraryBig,
+  Send,
+  Trash2,
+} from 'lucide-react';
 
 import { NavUser } from '@/components/nav-user';
 import { Label } from '@/components/ui/label';
@@ -25,13 +32,13 @@ const data = {
   user: {
     name: 'shadcn',
     email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg',
+    avatar: '',
   },
   navMain: [
     {
-      title: 'Inbox',
+      title: 'Topics',
       url: '#',
-      icon: Inbox,
+      icon: LibraryBig,
       isActive: true,
     },
     {

@@ -12,7 +12,6 @@ export function ThemeToggle() {
 
   React.useEffect(() => setMounted(true), []);
 
-  console.log(theme);
   const toggleTheme = () =>
     theme === 'light' ? setTheme('dark') : setTheme('light');
 
