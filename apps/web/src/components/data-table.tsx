@@ -13,7 +13,7 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from 'lucide-react';
+import { ArrowUpDown, ChevronDown, MoreHorizontal, Plus } from 'lucide-react';
 import {
   Drawer,
   DrawerContent,
@@ -44,6 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ScrollArea } from './ui/scroll-area';
 
 export type Note = {
   id: string;
@@ -82,7 +83,7 @@ export const columns: ColumnDef<Topic>[] = [
       return (
         <Drawer direction="right">
           <DrawerTrigger asChild>
-            <Button variant="link" className="capitalize p-0 h-auto">
+            <Button variant="link" className="font-medium">
               {topic.title}
             </Button>
           </DrawerTrigger>
@@ -125,6 +126,44 @@ export const columns: ColumnDef<Topic>[] = [
     cell: ({ row }) => {
       const notes = row.getValue('notes') as Note[];
       return <div>{notes?.length ?? 0}</div>;
+    },
+  },
+  {
+    accessorKey: 'createdAt',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Created At
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const date = new Date(row.getValue('createdAt'));
+      const formatted = date.toLocaleDateString();
+      return <div className="font-medium">{formatted}</div>;
+    },
+  },
+  {
+    accessorKey: 'updatedAt',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Updated At
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const date = new Date(row.getValue('updatedAt'));
+      const formatted = date.toLocaleDateString();
+      return <div className="font-medium">{formatted}</div>;
     },
   },
   {
@@ -195,79 +234,89 @@ export function DataTable({ data }: { data: Topic[] }) {
 
   React.useEffect(() => {
     const tagsColumn = table.getColumn('tags');
-    if (tagsColumn && Array.isArray(selectedTagsFilter) && selectedTagsFilter.length === 0) {
+    if (
+      tagsColumn &&
+      Array.isArray(selectedTagsFilter) &&
+      selectedTagsFilter.length === 0
+    ) {
       tagsColumn.setFilterValue(undefined);
     }
   }, [selectedTagsFilter, table]);
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
+      <div className="flex justify-between py-4">
+        <div className="flex items-center gap-2">
+          <Button>
+            <Plus />
+            Add Topic
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Filter tags <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <ScrollArea className="h-72 w-[200px]">
+                {(() => {
+                  const tagsColumn = table.getColumn('tags');
+                  if (!tagsColumn) return null;
+                  const selectedTags =
+                    (tagsColumn.getFilterValue() as string[] | undefined) ?? [];
+                  if (selectedTags.length > 0) {
+                    return (
+                      <>
+                        <DropdownMenuItem
+                          onSelect={() => tagsColumn.setFilterValue(undefined)}
+                          className="justify-center text-center"
+                        >
+                          Clear filters
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    );
+                  }
+                  return null;
+                })()}
+                {tags.map((tag) => {
+                  const tagsColumn = table.getColumn('tags');
+                  const selectedTags =
+                    (tagsColumn?.getFilterValue() as string[]) ?? [];
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={tag}
+                      checked={selectedTags.includes(tag)}
+                      onCheckedChange={(checked) => {
+                        if (!tagsColumn) return;
+                        const currentTags = selectedTags;
+                        let newTags: string[];
+                        if (checked) {
+                          newTags = [...currentTags, tag];
+                        } else {
+                          newTags = currentTags.filter((t) => t !== tag);
+                        }
+                        tagsColumn.setFilterValue(
+                          newTags.length > 0 ? newTags : undefined
+                        );
+                      }}
+                    >
+                      {tag}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+              </ScrollArea>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         <Input
           placeholder="Filter titles..."
           value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
           onChange={(event) =>
             table.getColumn('title')?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="max-w-xs"
         />
-        <div className="ml-auto flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <ChevronDown className="mr-2 h-4 w-4" />
-                Filter by Tag
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Filter by Tag</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {tags.map((tag) => {
-                const tagsColumn = table.getColumn('tags');
-                const selectedTags = (tagsColumn?.getFilterValue() as string[]) ?? [];
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={tag}
-                    checked={selectedTags.includes(tag)}
-                    onCheckedChange={(checked) => {
-                      if (!tagsColumn) return;
-                      const currentTags = selectedTags;
-                      let newTags: string[];
-                      if (checked) {
-                        newTags = [...currentTags, tag];
-                      } else {
-                        newTags = currentTags.filter((t) => t !== tag);
-                      }
-                      tagsColumn.setFilterValue(newTags.length > 0 ? newTags : undefined);
-                    }}
-                  >
-                    {tag}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-              {(() => {
-                const tagsColumn = table.getColumn('tags');
-                if (!tagsColumn) return null;
-                const selectedTags = (tagsColumn.getFilterValue() as string[] | undefined) ?? [];
-                if (selectedTags.length > 0) {
-                  return (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onSelect={() => tagsColumn.setFilterValue(undefined)}
-                        className="justify-center text-center"
-                      >
-                        Clear filters
-                      </DropdownMenuItem>
-                    </>
-                  );
-                }
-                return null;
-              })()}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button>Add Topic</Button>
-        </div>
       </div>
       <div className="overflow-hidden rounded-md border">
         <Table>
@@ -312,7 +361,7 @@ export function DataTable({ data }: { data: Topic[] }) {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No Topics.
+                  No topics.
                 </TableCell>
               </TableRow>
             )}
