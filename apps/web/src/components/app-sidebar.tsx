@@ -28,6 +28,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import Link from 'next/link';
 import Logo from '@/assets/logo';
+import { cn } from '@/lib/utils';
 
 // This is sample data
 const data = {
@@ -39,9 +40,9 @@ const data = {
   navMain: [
     {
       title: 'Topics',
-      url: '#',
+      url: '/dashboard/topics',
       icon: LibraryBig,
-      isActive: true,
+      isActive: false,
     },
     {
       title: 'Notes',
@@ -158,12 +159,21 @@ const data = {
   ],
 };
 
+type NavMainItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType;
+  isActive: boolean;
+};
+
+type NavMain = NavMainItem[];
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Note: I'm using state to show active item.
   // IRL you should use the url/router.
-  const [activeItem, setActiveItem] = React.useState(data.navMain[0]);
-  const [mails, setMails] = React.useState(data.mails);
-  const { setOpen } = useSidebar();
+  const [activeItem, setActiveItem] = React.useState<NavMainItem>(
+    data.navMain[0]
+  );
 
   return (
     <Sidebar
@@ -198,28 +208,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {data.navMain.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      tooltip={{
-                        children: item.title,
-                        hidden: false,
-                      }}
-                      onClick={() => {
-                        setActiveItem(item);
-                        const mail = data.mails.sort(() => Math.random() - 0.5);
-                        setMails(
-                          mail.slice(
-                            0,
-                            Math.max(5, Math.floor(Math.random() * 10) + 1)
-                          )
-                        );
-                        setOpen(true);
-                      }}
-                      isActive={activeItem?.title === item.title}
-                      className="px-2.5 md:px-2"
-                    >
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
+                    <Link href={item.url}>
+                      <SidebarMenuButton
+                        tooltip={{
+                          children: item.title,
+                          hidden: false,
+                        }}
+                        onClick={() => {
+                          setActiveItem(item);
+                        }}
+                        isActive={activeItem?.title === item.title}
+                        className={cn(
+                          'px-2.5 md:px-2 cursor-pointer',
+                          activeItem?.title === item.title
+                            ? 'border'
+                            : 'border-transparent'
+                        )}
+                      >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </Link>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
@@ -249,7 +258,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarContent>
           <SidebarGroup className="px-0">
             <SidebarGroupContent>
-              {mails.map((mail) => (
+              {data.mails.map((mail) => (
                 <a
                   href="#"
                   key={mail.email}
