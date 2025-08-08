@@ -8,6 +8,7 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@svgr/webpack": "^8.1.0",
     "axios": "^1.6.0",
     "next": "~15.2.4",
     "react": "19.0.0",

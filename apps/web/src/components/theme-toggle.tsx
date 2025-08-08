@@ -22,7 +22,7 @@ export function ThemeToggle() {
       <Button
         onClick={toggleTheme}
         className="cursor-pointer size-8"
-        variant={'outline'}
+        variant="ghost"
       >
         {theme === 'light' ? <Sun /> : <Moon />}
       </Button>

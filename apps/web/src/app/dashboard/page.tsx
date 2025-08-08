@@ -14,6 +14,7 @@ export default function Page() {
           // '--header-height': 'calc(var(--spacing) * 12)',
         } as React.CSSProperties
       }
+      defaultOpen={false}
     >
       <AppSidebar />
       <SidebarInset>
@@ -26,11 +27,8 @@ export default function Page() {
                 <h1 className="text-3xl font-bold">Topics</h1>
               </div>
               <div className="px-6">
-                {/* <Input type="text" placeholder="Search topic notes" />
-                <Button></Button> */}
                 <DataTable data={data} />
               </div>
-              {/* <SectionCards /> */}
             </div>
           </div>
         </div>

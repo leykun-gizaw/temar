@@ -2,11 +2,11 @@
 
 import * as React from 'react';
 import {
-  ArchiveX,
-  Command,
-  File,
+  BinocularsIcon,
+  CalendarDaysIcon,
+  ChartNoAxesCombinedIcon,
   LibraryBig,
-  Send,
+  NotebookIcon,
   Trash2,
 } from 'lucide-react';
 
@@ -26,6 +26,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
+import Link from 'next/link';
+import Logo from '@/assets/logo';
 
 // This is sample data
 const data = {
@@ -42,21 +44,27 @@ const data = {
       isActive: true,
     },
     {
-      title: 'Drafts',
+      title: 'Notes',
       url: '#',
-      icon: File,
+      icon: NotebookIcon,
       isActive: false,
     },
     {
-      title: 'Sent',
+      title: 'Reviews',
       url: '#',
-      icon: Send,
+      icon: BinocularsIcon,
       isActive: false,
     },
     {
-      title: 'Junk',
+      title: 'Schedules',
       url: '#',
-      icon: ArchiveX,
+      icon: CalendarDaysIcon,
+      isActive: false,
+    },
+    {
+      title: 'Analytics',
+      url: '#',
+      icon: ChartNoAxesCombinedIcon,
       isActive: false,
     },
     {
@@ -174,15 +182,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild className="md:h-8 md:p-0">
-                <a href="#">
+                <Link href="/dashboard">
                   <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                    <Command className="size-4" />
+                    {/* <Command className="size-4" /> */}
+                    <Logo />
                   </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">Acme Inc</span>
-                    <span className="truncate text-xs">Enterprise</span>
-                  </div>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

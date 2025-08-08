@@ -80,21 +80,7 @@ export const columns: ColumnDef<Topic>[] = [
     },
     cell: ({ row }) => {
       const topic = row.original;
-      return (
-        <Drawer direction="right">
-          <DrawerTrigger asChild>
-            <Button variant="link" className="font-medium">
-              {topic.title}
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>{topic.title}</DrawerTitle>
-              <DrawerDescription>{topic.description}</DrawerDescription>
-            </DrawerHeader>
-          </DrawerContent>
-        </Drawer>
-      );
+      return <span className="font-medium px-4">{topic.title}</span>;
     },
   },
   {
@@ -182,14 +168,21 @@ export const columns: ColumnDef<Topic>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(topic.id)}
-            >
-              Copy Topic ID
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View Topic</DropdownMenuItem>
-            <DropdownMenuItem>Edit Topic</DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <Drawer direction="right">
+                <DrawerTrigger asChild>
+                  <span>View Topic</span>
+                </DrawerTrigger>
+                <DrawerContent>
+                  <DrawerHeader>
+                    <DrawerTitle>{topic.title}</DrawerTitle>
+                    <DrawerDescription>{topic.description}</DrawerDescription>
+                  </DrawerHeader>
+                </DrawerContent>
+              </Drawer>
+            </DropdownMenuItem>
+            <DropdownMenuItem>Open Notes</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -257,7 +250,7 @@ export function DataTable({ data }: { data: Topic[] }) {
                 Filter tags <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent forceMount>
               <ScrollArea className="h-72 w-[200px]">
                 {(() => {
                   const tagsColumn = table.getColumn('tags');
@@ -285,6 +278,7 @@ export function DataTable({ data }: { data: Topic[] }) {
                     (tagsColumn?.getFilterValue() as string[]) ?? [];
                   return (
                     <DropdownMenuCheckboxItem
+                      onSelect={(e) => e.preventDefault()}
                       key={tag}
                       checked={selectedTags.includes(tag)}
                       onCheckedChange={(checked) => {
