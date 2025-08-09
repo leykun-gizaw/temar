@@ -1,6 +1,6 @@
 import { DataTable } from '@/components/data-table';
 import { LibraryBig } from 'lucide-react';
-import data from '../data.json';
+import { topics_data } from './dummy-topics-data';
 
 export default function Page() {
   return (
@@ -10,7 +10,7 @@ export default function Page() {
         <h1 className="text-3xl font-bold">Topics</h1>
       </div>
       <div className="px-6">
-        <DataTable data={data} />
+        <DataTable data={topics_data} />
       </div>
     </div>
   );
