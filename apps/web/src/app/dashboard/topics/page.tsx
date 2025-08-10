@@ -1,6 +1,6 @@
 import { DataTable } from '@/components/data-table';
 import { LibraryBig } from 'lucide-react';
-import { topics_data } from './dummy-topics-data';
+import { topics_data } from '../dummy-topics-data';
 
 export default function Page() {
   return (

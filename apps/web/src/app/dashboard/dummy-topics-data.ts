@@ -9,6 +9,7 @@ export const topics_data = [
     color: '#4A90E2',
     createdAt: '2025-08-07T09:10:05.000Z',
     updatedAt: '2025-08-07T09:10:05.000Z',
+    progress: 85,
     notes: [
       {
         id: 'note-1-1',
@@ -34,6 +35,7 @@ export const topics_data = [
     color: '#D0021B',
     createdAt: '2025-08-07T09:10:05.000Z',
     updatedAt: '2025-08-07T09:10:05.000Z',
+    progress: 60,
     notes: [
       {
         id: 'note-2-1',
@@ -59,6 +61,7 @@ export const topics_data = [
     color: '#F5A623',
     createdAt: '2025-08-07T09:10:05.000Z',
     updatedAt: '2025-08-07T09:10:05.000Z',
+    progress: 40,
     notes: [
       {
         id: 'note-3-1',
@@ -83,6 +86,7 @@ export const topics_data = [
     color: '#7ED321',
     createdAt: '2025-08-07T09:15:00.000Z',
     updatedAt: '2025-08-07T09:15:00.000Z',
+    progress: 70,
     notes: [
       {
         id: 'note-4-1',
@@ -108,6 +112,7 @@ export const topics_data = [
     color: '#50E3C2',
     createdAt: '2025-08-07T09:15:00.000Z',
     updatedAt: '2025-08-07T09:15:00.000Z',
+    progress: 50,
     notes: [
       {
         id: 'note-5-1',
@@ -131,6 +136,7 @@ export const topics_data = [
     color: '#BD10E0',
     createdAt: '2025-08-07T09:15:00.000Z',
     updatedAt: '2025-08-07T09:15:00.000Z',
+    progress: 95,
     notes: [
       {
         id: 'note-6-1',
