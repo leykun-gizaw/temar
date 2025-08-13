@@ -1,36 +1,52 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { BinocularsIcon, LibraryBigIcon } from 'lucide-react';
+import { Button } from './ui/button';
+import Link from 'next/link';
 
 // Minimal stub for HeaderStats until a real one exists
 export function HeaderStats() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Reviews Today</CardTitle>
+    <div className="flex gap-6">
+      <Card className="w-full gap-1">
+        <CardHeader>
+          <CardTitle className="flex justify-between">
+            Reviews Today
+            <Button variant={'outline'} className="w-fit">
+              <Link href="/dashboard/reviews">
+                <BinocularsIcon />
+              </Link>
+            </Button>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">12</div>
+          <div className="text-5xl font-normal">12</div>
+        </CardContent>
+        <CardFooter>
           <div className="text-xs text-muted-foreground">+3 from yesterday</div>
-        </CardContent>
+        </CardFooter>
       </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Active Topics</CardTitle>
+      <Card className="w-full gap-0">
+        <CardHeader>
+          <CardTitle className="flex justify-between">
+            Topics this week
+            <Button variant={'outline'} className="w-fit">
+              <Link href="/dashboard/reviews">
+                <LibraryBigIcon />
+              </Link>
+            </Button>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">8</div>
-          <div className="text-xs text-muted-foreground">2 due this week</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Retention Avg</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold">76%</div>
-          <div className="text-xs text-muted-foreground">last 7 days</div>
+          <div className="text-5xl font-normal">4</div>
+          <div className="text-xs text-muted-foreground">3 due today</div>
         </CardContent>
       </Card>
     </div>

@@ -14,7 +14,7 @@ export function ScheduleCard() {
   const [view, setView] = useState<'day' | 'week'>('day');
 
   return (
-    <Card className="flex flex-col h-full min-h-0 w-lg">
+    <Card className="flex flex-col h-full min-h-0 w-full lg:w-2xl md:w-full">
       <CardHeader className="border-b">
         <CardTitle>Reviews Schedule</CardTitle>
         <div className="mt-2">
