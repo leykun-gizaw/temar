@@ -13,7 +13,7 @@ export function SiteHeader({
   };
 }) {
   return (
-    <header className="bg-background/70 sticky top-0 flex shrink-0 items-center gap-2 py-2 backdrop-blur-lg z-50 border-b">
+    <header className="bg-background/70 sticky top-0 z-50 border-b h-12 flex shrink-0 items-center backdrop-blur-lg">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1" />
         <Separator
