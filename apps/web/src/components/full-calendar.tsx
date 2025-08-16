@@ -36,6 +36,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 
@@ -200,12 +201,21 @@ const EventGroup = ({
   const now = new Date();
   const timeIndicator = (
     <div
-      className="absolute h-[2px] bg-red-500 w-full"
+      className="absolute h-[2px] bg-primary w-full"
       style={{
         top: `${(now.getMinutes() / 60) * 100}%`,
       }}
     >
-      <div className="size-2 rounded-full bg-red-500 absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+      <div
+        className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        style={{
+          width: 0,
+          height: 0,
+          borderTop: '0.5rem solid transparent',
+          borderBottom: '0.5rem solid transparent',
+          borderLeft: '0.5rem solid var(--primary)',
+        }}
+      ></div>
     </div>
   );
 
@@ -242,19 +252,58 @@ const EventGroup = ({
 };
 
 const CalendarDayView = () => {
-  const { view, events, date } = useCalendar();
-
-  if (view !== 'day') return null;
+  const { view, events, date, locale } = useCalendar();
+  const weekStartsOn = startOfWeek(date, { weekStartsOn: 1 });
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const hours = [...Array(24)].map((_, i) => setHours(date, i));
+  const headerDays = useMemo(() => {
+    const daysOfWeek = [];
+    for (let i = 0; i < 7; i++) {
+      const result = addDays(weekStartsOn, i);
+      daysOfWeek.push(result);
+    }
+    return daysOfWeek;
+  }, [weekStartsOn]);
 
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      const target = (el.scrollHeight - el.clientHeight) * (2 / 3);
+      el.scrollTop = target;
+    });
+  }, []);
+
+  if (view !== 'day') return null;
   return (
-    <div className="flex py-4">
-      <TimeTable />
-      <div className="flex-1">
-        {hours.map((hour) => (
-          <EventGroup key={hour.toString()} hour={hour} events={events} />
+    <div className="flex flex-col gap-4 h-full min-h-0">
+      <span className="font-semibold text-sm">{format(date, 'MMM yyyy')}</span>
+      <div className="flex bg-card z-10 border-b pb-3 mb-3 sticky top-0 gap-2">
+        {headerDays.map((date, i) => (
+          <div
+            key={date.toString()}
+            className={cn(
+              'text-center flex-1 gap-1 p-2 text-sm text-muted-foreground flex flex-col items-center justify-center border rounded-xl',
+              [5, 6].includes(i) && 'text-muted-foreground/50',
+              isToday(date) &&
+                'text-primary font-medium border-2 border-primary'
+            )}
+          >
+            <span className={cn('h-6 grid place-content-center')}>
+              {format(date, 'd')}
+            </span>
+            {format(date, 'E', { locale })}
+          </div>
         ))}
+      </div>
+      <div className="flex py-4 overflow-auto min-h-0" ref={scrollRef}>
+        <TimeTable />
+        <div className="flex-1">
+          {hours.map((hour) => (
+            <EventGroup key={hour.toString()} hour={hour} events={events} />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -295,7 +344,7 @@ const CalendarWeekView = () => {
           <div
             key={date.toString()}
             className={cn(
-              'text-center flex-1 gap-1 pb-2 text-sm text-muted-foreground flex items-center justify-center',
+              'text-center flex-1 gap-1 pb-2 text-sm text-muted-foreground flex flex-col items-center justify-center',
               [5, 6].includes(i) && 'text-muted-foreground/50'
             )}
           >

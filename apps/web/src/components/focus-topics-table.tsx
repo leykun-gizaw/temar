@@ -17,15 +17,15 @@ export function FocusTopicsTable() {
   return (
     <Card>
       <CardHeader className="border-b">
-        <CardTitle>Focus Topics</CardTitle>
+        <CardTitle>Reviews List</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Topic</TableHead>
               <TableHead>Retention</TableHead>
-              <TableHead className="text-right">Action</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

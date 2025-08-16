@@ -1,44 +1,40 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Calendar,
-  CalendarDayView,
-  CalendarWeekView,
-} from '@/components/full-calendar';
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Calendar, CalendarDayView } from '@/components/full-calendar';
 import { calendar_events } from '@/app/dashboard/dummy-calendar-events-data';
+import { CalendarDaysIcon } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from './ui/button';
 
-export function ScheduleCard() {
-  const [view, setView] = useState<'day' | 'week'>('day');
-
+export default function ScheduleCard() {
   return (
     <Card className="flex flex-col h-full min-h-0 w-full lg:w-2xl md:w-full">
-      <CardHeader className="border-b">
+      <CardHeader>
         <CardTitle>Reviews Schedule</CardTitle>
-        <div className="mt-2">
-          <Tabs
-            value={view}
-            onValueChange={(v) => setView(v as 'day' | 'week')}
-          >
-            <TabsList>
-              <TabsTrigger value="day">Today</TabsTrigger>
-              <TabsTrigger value="week">Week</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+        <CardDescription>5 Reviews scheduled for today</CardDescription>
+        <CardAction>
+          <Button variant={'outline'} asChild>
+            <Link href={'/dashboard/reviews'}>
+              <CalendarDaysIcon />
+            </Link>
+          </Button>
+        </CardAction>
       </CardHeader>
-      <CardContent className="p-0 flex-1 overflow-y-auto min-h-0">
-        {/* key forces Calendar to re-initialize when view changes */}
-        <Calendar key={view} view={view} events={calendar_events}>
-          <div className="p-4">
-            {view === 'day' ? <CalendarDayView /> : <CalendarWeekView />}
+      <CardContent className="p-0 flex-1 h-full min-h-0">
+        <Calendar events={calendar_events}>
+          <div className="p-4 h-full min-h-0">
+            <CalendarDayView />
           </div>
         </Calendar>
       </CardContent>
     </Card>
   );
 }
-
-export default ScheduleCard;
