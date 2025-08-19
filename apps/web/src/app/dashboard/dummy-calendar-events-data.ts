@@ -98,6 +98,7 @@ export const calendar_events: CalendarEvent[] = (() => {
         end: new Date(end),
         title: getRandomEventName(usedNames),
         color: allowedColors[colorIdx % allowedColors.length],
+        progress: getRandomInt(0, 100),
       });
       colorIdx++;
       // Move current to end + minGap

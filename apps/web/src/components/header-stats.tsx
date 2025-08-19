@@ -1,71 +1,46 @@
 'use client';
 
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { BinocularsIcon, LibraryBigIcon } from 'lucide-react';
-import { Button } from './ui/button';
-import Link from 'next/link';
+import { Grid2X2, LibraryBigIcon, Notebook } from 'lucide-react';
 
 export function HeaderStats() {
   return (
-    <div className="flex flex-col md:flex-row gap-6">
-      <Card className="w-full gap-1">
-        <CardHeader>
-          <CardTitle className="flex justify-between">
-            Reviews Today
-            <Button variant={'outline'} asChild>
-              <Link href="/dashboard/reviews">
-                <BinocularsIcon />
-              </Link>
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-5xl font-normal">12</div>
-        </CardContent>
-        <CardFooter>
-          <div className="text-xs text-muted-foreground">+3 from yesterday</div>
-        </CardFooter>
-      </Card>
-      <Card className="w-full gap-1">
-        <CardHeader>
-          <CardTitle className="flex justify-between">
-            Reviews Today
-            <Button variant={'outline'} asChild>
-              <Link href="/dashboard/reviews">
-                <BinocularsIcon />
-              </Link>
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-5xl font-normal">12</div>
-        </CardContent>
-        <CardFooter>
-          <div className="text-xs text-muted-foreground">+3 from yesterday</div>
-        </CardFooter>
-      </Card>
-      <Card className="w-full gap-0">
-        <CardHeader>
-          <CardTitle className="flex justify-between">
-            Topics this week
-            <Button variant={'outline'} asChild>
-              <Link href="/dashboard/topics">
-                <LibraryBigIcon />
-              </Link>
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-5xl font-normal">4</div>
-          <div className="text-xs text-muted-foreground">3 due today</div>
-        </CardContent>
-      </Card>
+    <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col gap-2 p-4 h-fit items-center justify-between w-full rounded-xl border">
+        <div className="flex justify-between w-full items-center">
+          <div className="flex gap-2 items-center pr-2 h-full border-r">
+            <LibraryBigIcon />
+            <h1>Topics</h1>
+          </div>
+          <h1 className="text-4xl">4</h1>
+        </div>
+        <span className="text-xs text-muted-foreground w-full">
+          3 in use today
+        </span>
+      </div>
+      <div className="flex flex-col gap-2 p-4 h-fit items-center justify-between w-full rounded-xl border">
+        <div className="flex justify-between w-full items-center">
+          <div className="flex gap-2 items-center pr-2 h-full border-r">
+            <Notebook />
+            <h1>Notes</h1>
+          </div>
+          <h1 className="text-4xl">13</h1>
+        </div>
+        <span className="text-xs text-muted-foreground w-full">
+          7 in use today
+        </span>
+      </div>
+      <div className="flex flex-col gap-2 p-4 h-fit items-center justify-between w-full rounded-xl border">
+        <div className="flex justify-between w-full items-center">
+          <div className="flex gap-2 items-center pr-2 h-full border-r">
+            <Grid2X2 />
+            <h1>Chunks</h1>
+          </div>
+          <h1 className="text-4xl">32</h1>
+        </div>
+        <span className="text-xs text-muted-foreground w-full">
+          13 in use today
+        </span>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import ScheduleCard from '@/components/schedule-card';
-import { FocusTopicsTable } from '@/components/focus-topics-table';
+import ReviewsTableCard from '@/components/focus-topics-table';
 import { HeaderStats } from '@/components/header-stats';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ export default function Page() {
     return unix < 1e12 ? unix * 1000 : unix;
   };
 
-  const [targetMs] = useState(() => resolveTargetMs(1655576990));
+  const [targetMs] = useState(() => resolveTargetMs(1755372460));
   const [remaining, setRemaining] = useState(() =>
     Math.max(0, targetMs - Date.now())
   );
@@ -43,23 +43,25 @@ export default function Page() {
   };
   return (
     <>
-      <div className="flex flex-col gap-6 py-6 px-12 lg:h-full lg:min-h-[calc(100svh-3rem)]">
-        <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 p-6 lg:h-full lg:min-h-[calc(100svh-3rem)]">
+        <div className="flex justify-between">
           <div>
             <h1 className="text-2xl shrink-0">Welcome Back!</h1>
             <span className="text-muted-foreground">
               Let&apos;s work on reviews consistently.
             </span>
           </div>
-          <div className="flex flex-col items-end">
-            <span className="tabular-nums text-right text-xl">
-              {format(remaining)}
-            </span>
-            <span className="text-muted-foreground">
-              {remaining > 0 ? 'Until next review' : 'Your review is ready'}
-            </span>
+          <div className="flex gap-2 items-end">
+            <div className="flex flex-col">
+              <span className="tabular-nums text-right text-xl">
+                {format(remaining)}
+              </span>
+              <span className="text-muted-foreground">
+                {remaining > 0 ? 'Until next review' : 'Your review is ready'}
+              </span>
+            </div>
             {remaining === 0 && (
-              <Button asChild className="w-full">
+              <Button asChild>
                 <Link href="/dashboard/reviews">
                   <span className="relative flex size-4">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-85"></span>
@@ -67,16 +69,24 @@ export default function Page() {
                       <BellRing />
                     </span>
                   </span>
-                  Jump In
                 </Link>
               </Button>
             )}
           </div>
         </div>
-        <div className="flex flex-col lg:flex-row gap-10 h-full min-h-0">
-          <div className="flex flex-col w-full flex-grow gap-8">
+        <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0">
+          <div className="flex flex-col w-full flex-grow gap-4">
             <HeaderStats />
-            <FocusTopicsTable />
+            <div className="bg-accent p-6 rounded-xl flex flex-col gap-4 items-center justify-center">
+              <span className="text-3xl text-muted-foreground">
+                No renewal suggested for today
+              </span>
+              <span className="text-muted-foreground text-xs">
+                Chunks that require tracking renewal or new tracking will be
+                listed here
+              </span>
+            </div>
+            <ReviewsTableCard />
           </div>
           <ScheduleCard />
         </div>

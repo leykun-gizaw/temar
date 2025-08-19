@@ -94,6 +94,7 @@ export type CalendarEvent = {
   end: Date;
   title: string;
   color?: VariantProps<typeof monthEventVariants>['variant'];
+  progress?: number;
 };
 
 type CalendarProps = {
