@@ -3,7 +3,6 @@ import {
   CalendarDaysIcon,
   ChartNoAxesCombinedIcon,
   LibraryBig,
-  NotebookIcon,
   Trash2,
 } from 'lucide-react';
 
@@ -12,12 +11,6 @@ export const navMain = [
     title: 'Topics',
     url: '/dashboard/topics',
     icon: LibraryBig,
-    isActive: false,
-  },
-  {
-    title: 'Notes',
-    url: '#',
-    icon: NotebookIcon,
     isActive: false,
   },
   {

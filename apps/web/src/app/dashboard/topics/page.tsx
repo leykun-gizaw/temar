@@ -47,7 +47,7 @@ export default function Page() {
         <div className="flex flex-col">
           <div className="flex">
             <LibraryBig size={32} />
-            <h1 className="text-2xl">Topics</h1>
+            <h1 className="text-2xl">All Topics</h1>
           </div>
           <span className="text-muted-foreground">
             Parent of one or more notes

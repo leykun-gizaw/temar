@@ -113,7 +113,10 @@ export default function DashboardLayout({
       }
       defaultOpen={false}
     >
-      <AppSidebar navMain={navMain} sidebarContentData={data.mails} />
+      <AppSidebar
+        navMain={navMain}
+        sidebarContentData={data.mails.slice(0, 2)}
+      />
       <SidebarInset>
         <SiteHeader userData={data.user} />
         {children}

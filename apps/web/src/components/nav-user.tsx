@@ -26,14 +26,14 @@ export function NavUser({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="lg" variant={'secondary'} className="md:h-8 md:p-0">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              CN
-            </AvatarFallback>
-          </Avatar>
-        </Button>
+        {/* <Button size="lg" variant={'secondary'} className="md:h-8 md:p-0"> */}
+        <Avatar className="h-8 w-8 hover:cursor-pointer">
+          <AvatarImage src={user.avatar} alt={user.name} />
+          <AvatarFallback className="bg-primary text-primary-foreground">
+            LG
+          </AvatarFallback>
+        </Avatar>
+        {/* </Button> */}
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
