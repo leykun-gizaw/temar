@@ -1,8 +1,15 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import {
+  CalendarEvent,
+  CalendarProps,
+  ContextType,
+  dayEventVariants,
+  monthEventVariants,
+  View,
+} from '@/lib/calendar-types';
 import { cn } from '@/lib/utils';
-import { VariantProps, cva } from 'class-variance-authority';
 import {
   Locale,
   addDays,
@@ -27,7 +34,6 @@ import {
 } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
 import {
-  ReactNode,
   createContext,
   ButtonHTMLAttributes,
   forwardRef,
@@ -40,73 +46,7 @@ import {
 } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 
-const monthEventVariants = cva('size-2 rounded-full', {
-  variants: {
-    variant: {
-      default: 'bg-primary',
-      blue: 'bg-blue-500',
-      green: 'bg-green-500',
-      pink: 'bg-pink-500',
-      purple: 'bg-purple-500',
-    },
-  },
-  defaultVariants: {
-    variant: 'default',
-  },
-});
-
-const dayEventVariants = cva('font-bold border-l-4 rounded p-2 text-xs', {
-  variants: {
-    variant: {
-      default: 'bg-muted/30 text-muted-foreground border-muted',
-      blue: 'bg-blue-500/30 text-blue-600 border-blue-500',
-      green: 'bg-green-500/30 text-green-600 border-green-500',
-      pink: 'bg-pink-500/30 text-pink-600 border-pink-500',
-      purple: 'bg-purple-500/30 text-purple-600 border-purple-500',
-    },
-  },
-  defaultVariants: {
-    variant: 'default',
-  },
-});
-
-type View = 'day' | 'week' | 'month' | 'year';
-
-type ContextType = {
-  view: View;
-  setView: (view: View) => void;
-  date: Date;
-  setDate: (date: Date) => void;
-  events: CalendarEvent[];
-  locale: Locale;
-  setEvents: (date: CalendarEvent[]) => void;
-  onChangeView?: (view: View) => void;
-  onEventClick?: (event: CalendarEvent) => void;
-  enableHotkeys?: boolean;
-  today: Date;
-};
-
 const Context = createContext<ContextType>({} as ContextType);
-
-export type CalendarEvent = {
-  id: string;
-  start: Date;
-  end: Date;
-  title: string;
-  color?: VariantProps<typeof monthEventVariants>['variant'];
-  progress?: number;
-};
-
-type CalendarProps = {
-  children: ReactNode;
-  defaultDate?: Date;
-  events?: CalendarEvent[];
-  view?: View;
-  locale?: Locale;
-  enableHotkeys?: boolean;
-  onChangeView?: (view: View) => void;
-  onEventClick?: (event: CalendarEvent) => void;
-};
 
 const Calendar = ({
   children,
@@ -199,7 +139,15 @@ const EventGroup = ({
   events: CalendarEvent[];
   hour: Date;
 }) => {
-  const now = new Date();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
   const timeIndicator = (
     <div
       className="absolute h-[2px] bg-primary w-full"
@@ -235,10 +183,7 @@ const EventGroup = ({
           return (
             <div
               key={event.id}
-              className={cn(
-                'relative',
-                dayEventVariants({ variant: event.color })
-              )}
+              className={cn('relative', dayEventVariants())}
               style={{
                 top: `${startPosition * 100}%`,
                 height: `${hoursDifference * 100}%`,
@@ -287,8 +232,7 @@ const CalendarDayView = () => {
             className={cn(
               'text-center flex-1 gap-1 p-2 text-sm text-muted-foreground flex flex-col items-center justify-center border rounded-xl',
               [5, 6].includes(i) && 'text-muted-foreground/50',
-              isToday(date) &&
-                'text-primary font-medium border-2 border-primary'
+              isToday(date) && 'text-primary border-primary'
             )}
           >
             <span className={cn('h-6 grid place-content-center')}>
@@ -444,12 +388,7 @@ const CalendarMonthView = () => {
                     key={event.id}
                     className="px-1 rounded text-sm flex items-center gap-1"
                   >
-                    <div
-                      className={cn(
-                        'shrink-0',
-                        monthEventVariants({ variant: event.color })
-                      )}
-                    ></div>
+                    <div className={cn('shrink-0', monthEventVariants())}></div>
                     <span className="flex-1 truncate">{event.title}</span>
                     <time className="tabular-nums text-muted-foreground/50 text-xs">
                       {format(event.start, 'HH:mm')}

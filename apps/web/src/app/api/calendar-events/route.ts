@@ -1,4 +1,5 @@
-import { type CalendarEvent } from '@/components/full-calendar';
+import { type CalendarEvent } from '@/lib/calendar-types';
+import { NextResponse } from 'next/server';
 
 function getCurrentWeekDates() {
   const now = new Date();
@@ -54,9 +55,48 @@ const eventNames = [
   'Memento Pattern',
   'Visitor Pattern',
   'Solid Principle',
+  'Load Balancer',
+  'Microservices Architecture',
+  'Database Sharding',
+  'Event-Driven Architecture',
+  'CAP Theorem',
+  'Distributed Systems',
+  'Scalability',
+  'Fault Tolerance',
+  'High Availability',
+  'Data Replication',
+  'Caching Strategies',
+  'Service Discovery',
+  'API Gateway',
+  'Message Queues',
+  'Rate Limiting',
+  'Consistency Models',
+  'Horizontal Scaling',
+  'Vertical Scaling',
+  'Cloud Computing',
+  'Containerization',
+  'Serverless Architecture',
+  'Monolithic Architecture',
+  'Edge Computing',
+  'Latency Optimization',
+  'Load Testing',
+  'Disaster Recovery',
+  'Elasticity',
+  'Concurrency Control',
+  'Session Management',
+  'Security Layers',
+  'Authentication and Authorization',
+  'Data Partitioning',
+  'Streaming Data Processing',
+  'Batch Processing',
+  'Data Lake',
+  'Data Warehouse',
+  'Observability',
+  'Monitoring and Alerting',
+  'Log Aggregation',
+  'Tracing',
+  'Metrics Collection',
 ];
-
-const allowedColors = ['blue', 'green', 'pink', 'purple', 'default'] as const;
 
 function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -76,19 +116,16 @@ function getRandomEventName(used: Set<string>) {
 export const calendar_events: CalendarEvent[] = (() => {
   const weekDates = getCurrentWeekDates();
   const events: CalendarEvent[] = [];
-  let colorIdx = 0;
   let idCounter = 1;
   for (const day of weekDates) {
     const usedNames = new Set<string>();
-    let current = new Date(day);
+    const current = new Date(day);
     current.setHours(9, 0, 0, 0); // Start at 9:00
     const dayEnd = new Date(day);
     dayEnd.setHours(19, 0, 0, 0); // End at 19:00
-    const duration = 90; // 90 minutes for all events
-    const minGap = 5; // 5 minutes between events
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 7; i++) {
       const end = new Date(current);
-      end.setMinutes(end.getMinutes() + duration);
+      end.setMinutes(end.getMinutes() + 30); // 30 minutes duration
       if (end > dayEnd) {
         break;
       }
@@ -97,14 +134,15 @@ export const calendar_events: CalendarEvent[] = (() => {
         start: new Date(current),
         end: new Date(end),
         title: getRandomEventName(usedNames),
-        color: allowedColors[colorIdx % allowedColors.length],
         progress: getRandomInt(0, 100),
       });
-      colorIdx++;
-      // Move current to end + minGap
-      current = new Date(end);
-      current.setMinutes(current.getMinutes() + minGap);
+      // Move current to the next hour
+      current.setHours(current.getHours() + 1, 0, 0, 0);
     }
   }
   return events;
 })();
+
+export async function GET() {
+  return NextResponse.json(calendar_events);
+}

@@ -20,25 +20,29 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { BinocularsIcon, DoorOpenIcon, Eye } from 'lucide-react';
 import Link from 'next/link';
-import { calendar_events } from '@/app/dashboard/dummy-calendar-events-data';
 import { Input } from './ui/input';
 import { useMemo, useState } from 'react';
+import { CalendarEventParsed } from '@/lib/schemas/calendar-event';
 
-export default function ReviewsTableCard() {
+export default function ReviewsTableCard({
+  events,
+}: {
+  events: CalendarEventParsed[];
+}) {
   const [search, setSearch] = useState('');
 
   const filteredReviews = useMemo(
     () =>
-      calendar_events.filter((r) =>
+      events.filter((r) =>
         r.title.toLowerCase().includes(search.toLowerCase())
       ),
-    [search]
+    [events, search]
   );
 
   return (
-    <Card className="min-h-0">
+    <Card className="min-h-0 shadow-none">
       <CardHeader className="border-b">
-        <CardTitle>Reviews List</CardTitle>
+        <CardTitle>Recall Items</CardTitle>
         <CardAction>
           <Button asChild variant={'outline'}>
             <Link href="/dashboard/reviews">
@@ -46,10 +50,10 @@ export default function ReviewsTableCard() {
             </Link>
           </Button>
         </CardAction>
-        <CardDescription>Review chunks scheduled for this week</CardDescription>
+        <CardDescription>Recall items scheduled for this week</CardDescription>
         <div className="mt-2">
           <Input
-            placeholder="Search reviews..."
+            placeholder="Search recall items..."
             aria-label="Search reviews by title"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -60,10 +64,11 @@ export default function ReviewsTableCard() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Reviews</TableHead>
-              <TableHead>Repetitions Count</TableHead>
-              <TableHead>Retention</TableHead>
-              <TableHead></TableHead>
+              <TableHead>Items</TableHead>
+              <TableHead>Reps </TableHead>
+              <TableHead>Retrievability</TableHead>
+              <TableHead>Due</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -80,7 +85,7 @@ export default function ReviewsTableCard() {
             {filteredReviews.map((review) => (
               <TableRow key={review.id}>
                 <TableCell className="font-medium">{review.title}</TableCell>
-                <TableCell>{Math.floor(Math.random() * 5)}</TableCell>
+                <TableCell>{review.progress}</TableCell>
                 <TableCell className="w-64">
                   <div className="flex items-center gap-2">
                     <Progress value={review.progress} className="h-2 flex-1" />
@@ -88,6 +93,13 @@ export default function ReviewsTableCard() {
                       {review.progress}%
                     </span>
                   </div>
+                </TableCell>
+                <TableCell>
+                  {
+                    <span className="text-xs text-muted-foreground">
+                      {review.start.toLocaleString()}
+                    </span>
+                  }
                 </TableCell>
                 <TableCell className="flex gap-2 justify-end text-right">
                   <Button size="sm" variant="outline">
