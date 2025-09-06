@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BookPlusIcon } from 'lucide-react';
+import { BookPlusIcon, LibraryBig } from 'lucide-react';
 import { TopicInputSchema } from '@/lib/schemas/topic-schema';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -35,7 +35,7 @@ async function createTopic(input: { name: string; description: string }) {
 }
 
 interface AddTopicDialogProps {
-  queryKeyBase?: any[]; // override base key if needed, defaults to ['topics']
+  queryKeyBase?: string[]; // override base key if needed, defaults to ['topics']
 }
 
 export function AddTopicDialog({
@@ -113,8 +113,8 @@ export function AddTopicDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button ref={triggerRef} type="button">
-          <BookPlusIcon /> Add Topic
+        <Button ref={triggerRef} type="button" size={'sm'} variant="outline">
+          <LibraryBig /> Add
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-auto">

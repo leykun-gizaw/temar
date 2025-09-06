@@ -1,44 +1,178 @@
-import { Topic } from '@/lib/topic-types';
-import { dehydrate, QueryClient } from '@tanstack/react-query';
-import { QueryProvider } from '@/components/query-provider';
-import TopicsView from './topics-view';
+import type { Topic } from '@/lib/topic-types';
+import { Button } from '@/components/ui/button';
+import AddNoteDialog from '@/components/add-note-dialog';
+import { Plus } from 'lucide-react';
+import TopicTitleFromCache from '@/components/topic-title-from-cache';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-async function fetchTopics(query: string | undefined): Promise<Topic[]> {
-  // Simulate fetching topics from an API. If a query is provided, filter the topics.
-  const qs = query ? `?query=${encodeURIComponent(query)}` : '';
-  const res = await fetch(
-    `${
-      process.env.NEXT_PUBLIC_APP_ORIGIN || 'http://localhost:3000'
-    }/api/topics${qs}`,
-    {
-      // Important: cache: 'no-store' or revalidate strategy depending on freshness needs
-      next: { revalidate: 0 },
-    }
-  );
-  if (!res.ok) {
-    throw new Error('Failed to fetch topics');
+// Define a minimal Note type for rendering.
+// Adjust fields to match your backend response.
+type Note = {
+  id: string;
+  title: string;
+  // allow either shape while you migrate
+  content?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  topicId: string;
+  userId?: string;
+};
+
+async function fetchNotesByTopicId(topicId: string): Promise<Note[]> {
+  try {
+    const res = await fetch(
+      `/api/notes?topicId=${encodeURIComponent(topicId)}`,
+      {
+        cache: 'no-store',
+        next: { tags: [`notes:topic:${topicId}`] },
+      }
+    );
+    if (!res.ok) return [];
+    return (await res.json()) as Note[];
+  } catch {
+    return [];
   }
-  return res.json();
 }
 
-export default async function Page({
+async function fetchTopicById(topicId: string): Promise<Topic | null> {
+  try {
+    // Still using the collection until /api/topics/[id] exists
+    const res = await fetch(`/api/topics`, {
+      cache: 'no-store',
+      next: { tags: ['topics'] },
+    });
+    if (!res.ok) return null;
+    const topics = (await res.json()) as Topic[];
+    return topics.find((t) => String(t.id) === String(topicId)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function excerpt(value: unknown, max = 140) {
+  const text =
+    typeof value === 'string' ? value : value == null ? '' : String(value);
+  const trimmed = text.trim().replace(/\s+/g, ' ');
+  return trimmed.length > max ? `${trimmed.slice(0, max - 1)}…` : trimmed;
+}
+
+export default async function TopicsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ query?: string; page: string }>;
+  searchParams: Promise<{ topicId?: string; topicName?: string }>;
 }) {
-  const { query = '' } = await searchParams;
-  const queryClient = new QueryClient();
+  const { topicId, topicName } = await searchParams;
 
-  await queryClient.prefetchQuery({
-    queryKey: ['topics', { query }],
-    queryFn: () => fetchTopics(query),
-  });
+  if (!topicId) {
+    return (
+      <div className="h-full p-6 space-y-4">
+        <h1 className="text-3xl font-semibold">Topic Notes</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Select a topic</CardTitle>
+          </CardHeader>
+          <CardContent className="text-muted-foreground">
+            Choose a topic from the sidebar to view and add notes.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const dehydrated = dehydrate(queryClient);
+  const [topic, notes] = await Promise.all([
+    fetchTopicById(topicId),
+    fetchNotesByTopicId(topicId),
+  ]);
+
+  const pageTitle = topic?.name ?? topicName ?? 'Topic';
 
   return (
-    <QueryProvider state={dehydrated}>
-      <TopicsView query={query} />
-    </QueryProvider>
+    <div className="h-full p-6 space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-3xl font-semibold">
+          <TopicTitleFromCache topicId={topicId} fallback={pageTitle} />
+        </h1>
+        {topic?.description ? (
+          <p className="text-sm text-muted-foreground">{topic.description}</p>
+        ) : null}
+      </div>
+
+      {/* "Gallery" toolbar */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-medium">Gallery</div>
+        <AddNoteDialog
+          topicId={topicId}
+          trigger={
+            <Button size="sm">
+              <Plus className="mr-1.5 h-4 w-4" />
+              New
+            </Button>
+          }
+        />
+      </div>
+
+      {/* Notes grid */}
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+        {notes.map((note) => (
+          <Card
+            key={note.id}
+            className="group cursor-default transition-shadow hover:shadow-sm"
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">{note.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                {excerpt(note.content ?? note.description ?? '')}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* New note card (empty slot like Notion) */}
+        <Card className="border-dashed">
+          <CardContent className="flex h-full min-h-[120px] items-center justify-center p-4">
+            <AddNoteDialog
+              topicId={topicId}
+              trigger={
+                <button className="text-sm text-muted-foreground underline underline-offset-4">
+                  + New note
+                </button>
+              }
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ topicId?: string; topicName?: string }>;
+}) {
+  const { topicId, topicName } = await searchParams;
+
+  if (!topicId) {
+    return {
+      title: 'Topics',
+      description: 'Select a topic to view its notes.',
+    };
+  }
+
+  const topic = await fetchTopicById(topicId);
+
+  if (!topic) {
+    return {
+      title: `${topicName ?? 'Topic'} — Notes`,
+      description: 'The selected topic could not be found.',
+    };
+  }
+
+  return {
+    title: `${topic.name} — Notes`,
+    description: topic.description,
+  };
 }

@@ -6,6 +6,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import React from 'react';
 
 import { navMain } from './dummy-nav-data';
+import { QueryProvider } from '@/components/query-provider'; // added
 
 // This is sample data
 const data = {
@@ -113,14 +114,16 @@ export default function DashboardLayout({
       }
       defaultOpen={false}
     >
-      <AppSidebar
-        navMain={navMain}
-        sidebarContentData={data.mails.slice(0, 2)}
-      />
-      <SidebarInset>
-        <SiteHeader userData={data.user} />
-        {children}
-      </SidebarInset>
+      <QueryProvider>
+        <AppSidebar
+          navMain={navMain}
+          sidebarContentData={data.mails.slice(0, 9)}
+        />
+        <SidebarInset>
+          <SiteHeader userData={data.user} />
+          {children}
+        </SidebarInset>
+      </QueryProvider>
     </SidebarProvider>
   );
 }
