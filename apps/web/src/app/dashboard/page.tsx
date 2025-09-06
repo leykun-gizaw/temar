@@ -1,7 +1,7 @@
 import ScheduleCard from '@/components/schedule-card';
 import ReviewsTableCard from '@/components/reviews-table-card';
 import { HeaderStats } from '@/components/header-stats';
-import { CalendarEventArraySchema } from '@/lib/schemas/calendar-event';
+import { CalendarEventArraySchema } from '@/lib/schemas/calendar-schema';
 import { Calendar, CalendarDayView } from '@/components/full-calendar';
 import { EventsSummary } from '@/components/events-summary';
 
