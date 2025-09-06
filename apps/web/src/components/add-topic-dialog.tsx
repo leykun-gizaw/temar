@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BookPlusIcon, LibraryBig } from 'lucide-react';
+import { LibraryBig } from 'lucide-react';
 import { TopicInputSchema } from '@/lib/schemas/topic-schema';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
