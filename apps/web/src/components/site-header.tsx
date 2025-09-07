@@ -17,6 +17,9 @@ import {
 } from '@/components/ui/breadcrumb';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from './ui/button';
+import { useRouter } from 'next/navigation';
 
 export function SiteHeader({
   userData,
@@ -55,12 +58,29 @@ export function SiteHeader({
     }
     return undefined;
   })();
+  const router = useRouter();
 
   return (
     <header className="bg-background/70 sticky top-0 z-50 h-12 flex shrink-0 items-center backdrop-blur-lg">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <div className="flex items-center">
           <SidebarTrigger className="-ml-1" />
+          <Separator
+            orientation="vertical"
+            className="mx-2 data-[orientation=vertical]:h-4"
+          />
+          <div>
+            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+              <ChevronLeft size={20} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.forward()}
+            >
+              <ChevronRight size={20} />
+            </Button>
+          </div>
           <Separator
             orientation="vertical"
             className="mx-2 data-[orientation=vertical]:h-4"

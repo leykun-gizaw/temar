@@ -5,6 +5,8 @@ import { CalendarEventArraySchema } from '@/lib/schemas/calendar-schema';
 import { Calendar, CalendarDayView } from '@/components/full-calendar';
 import { EventsSummary } from '@/components/events-summary';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Page() {
   const res = await fetch('http://localhost:3000/api/calendar-events');
   const json = await res.json();
