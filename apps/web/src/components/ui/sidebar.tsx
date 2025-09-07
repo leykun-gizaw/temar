@@ -158,24 +158,16 @@ function Sidebar({
   className,
   children,
   navMain,
-  sidebarContentData,
   ...props
 }: React.ComponentProps<'div'> & {
   side?: 'left' | 'right';
   variant?: 'sidebar' | 'floating' | 'inset';
   collapsible?: 'offcanvas' | 'icon' | 'none';
-  navMain: {
+  navMain?: {
     title: string;
     url: string;
     icon: React.ComponentType;
     isActive: boolean;
-  }[];
-  sidebarContentData: {
-    name: string;
-    email: string;
-    subject: string;
-    date: string;
-    teaser: string;
   }[];
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();

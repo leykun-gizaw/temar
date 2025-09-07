@@ -31,7 +31,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* First (icons) sidebar */}
       <Sidebar
         navMain={props.navMain}
-        sidebarContentData={props.sidebarContentData}
         collapsible="none"
         className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
       >
@@ -52,7 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroup>
             <SidebarGroupContent className="px-1.5 md:px-0">
               <SidebarMenu>
-                {props.navMain.map((item) => {
+                {props.navMain?.map((item) => {
                   const isActive = pathname?.startsWith(
                     item.url.replace(/\/$/, '')
                   );
@@ -81,12 +80,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </Sidebar>
 
       {/* Second (content) sidebar */}
-      <Sidebar
-        navMain={props.navMain}
-        sidebarContentData={props.sidebarContentData}
-        collapsible="none"
-        className="hidden flex-1 md:flex"
-      >
+      <Sidebar collapsible="none" className="hidden flex-1 md:flex">
         {pathname?.startsWith('/dashboard/topics') ? (
           <TopicsSidebarPanel />
         ) : (
