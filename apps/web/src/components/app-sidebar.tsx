@@ -11,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import Logo from '@/assets/logo';
@@ -20,7 +21,22 @@ import { TopicsSidebarPanel } from '@/components/sidebar/topics-sidebar-panel';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
   // No per-tab title here; Topics panel renders its own header/content.
+
+  // Path-driven default behavior: closed on /dashboard, open on /dashboard/topics
+  React.useEffect(() => {
+    if (pathname === '/dashboard') {
+      isMobile ? setOpenMobile(false) : setOpen(false);
+      return;
+    }
+    if (pathname === '/dashboard/topics') {
+      isMobile ? setOpenMobile(true) : setOpen(true);
+      return;
+    }
+    // For other paths, do not auto-toggle; keep user choice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, isMobile]);
 
   return (
     <Sidebar
@@ -79,16 +95,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarContent>
       </Sidebar>
 
-      {/* Second (content) sidebar */}
-      <Sidebar collapsible="none" className="hidden flex-1 md:flex">
-        {pathname?.startsWith('/dashboard/topics') ? (
+      {/* Second (content) sidebar: render for /dashboard/topics and subroutes */}
+      {pathname?.startsWith('/dashboard/topics') ? (
+        <Sidebar collapsible="none" className="hidden flex-1 md:flex">
           <TopicsSidebarPanel />
-        ) : (
-          <div className="text-sm text-muted-foreground p-4 h-full flex justify-center items-center">
-            Select a tab from the sidebar.
-          </div>
-        )}
-      </Sidebar>
+        </Sidebar>
+      ) : null}
     </Sidebar>
   );
 }
