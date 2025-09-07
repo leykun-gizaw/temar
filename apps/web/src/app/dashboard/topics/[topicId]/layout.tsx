@@ -1,31 +1,16 @@
 import type { Metadata } from 'next';
-import type { Topic } from '@/lib/topic-types';
-
-async function fetchTopicById(topicId: string): Promise<Topic | null> {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_ORIGIN ?? ''}/api/topics`,
-      {
-        cache: 'no-store',
-      }
-    );
-    if (!res.ok) return null;
-    const topics = (await res.json()) as Topic[];
-    return topics.find((t) => String(t.id) === String(topicId)) ?? null;
-  } catch {
-    return null;
-  }
-}
+import { getTopicByIdServer } from '@/lib/server/topics';
 
 export async function generateMetadata({
   params,
 }: {
-  params: { topicId: string };
+  params: Promise<{ topicId: string }>;
 }): Promise<Metadata> {
-  const topic = await fetchTopicById(params.topicId);
+  const { topicId } = await params;
+  const topic = await getTopicByIdServer(topicId);
   if (!topic) {
     return {
-      title: `Topic ${params.topicId} — Notes`,
+      title: `Topic - Notes`,
       description: 'The selected topic could not be found.',
     };
   }

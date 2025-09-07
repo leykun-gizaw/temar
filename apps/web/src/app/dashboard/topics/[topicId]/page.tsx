@@ -6,9 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import type { Topic } from '@/lib/topic-types';
 import TopicTitleFromCache from '@/components/topic-title-from-cache';
 import AddNoteDialog from '@/components/add-note-dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { LayoutGridIcon, Plus, Text } from 'lucide-react';
 
 type Note = {
   id: string;
@@ -64,29 +64,45 @@ export default function TopicNotesPage() {
   });
 
   const fallbackTitle = topic?.name ?? `Topic ${topicId}`;
+  const TopicTitle = (
+    <TopicTitleFromCache topicId={topicId} fallback={fallbackTitle} />
+  );
 
   return (
     <div className="h-full p-6 space-y-6">
       <div className="space-y-1">
-        <h1 className="text-3xl font-semibold">
-          <TopicTitleFromCache topicId={topicId} fallback={fallbackTitle} />
-        </h1>
+        <span className="text-5xl">📚</span>
+        <h1 className="text-2xl font-semibold mb-4">{TopicTitle}</h1>
         {topic?.description ? (
-          <p className="text-sm text-muted-foreground">{topic.description}</p>
+          <div className="flex items-center">
+            <span className="flex items-center gap-2 text-sm text-muted-foreground mr-12">
+              <Text size={16} /> Description
+            </span>
+            <span className="text-xs">{topic.description}</span>
+          </div>
         ) : null}
       </div>
+      <hr />
 
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-medium">Gallery</div>
-        <AddNoteDialog
-          topicId={topicId}
-          trigger={
-            <Button size="sm">
-              <Plus className="mr-1.5 h-4 w-4" />
-              New
-            </Button>
-          }
-        />
+      <div className="flex flex-col items-center justify-between *:w-full gap-2">
+        <h1 className="text-lg font-bold bg-primary/10 p-2">
+          {TopicTitle} - Notes
+        </h1>
+        <div className="flex items-center justify-between text-sm font-medium">
+          <span className="flex items-center gap-2 bg-muted py-2 px-3 rounded-full">
+            <LayoutGridIcon size={16} />
+            Notes Gallery
+          </span>
+          <AddNoteDialog
+            topicId={topicId}
+            trigger={
+              <Button size="sm">
+                <Plus className="mr-1.5 h-4 w-4" />
+                New
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       {notesLoading ? (
@@ -105,33 +121,31 @@ export default function TopicNotesPage() {
 
       <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
         {notes.map((note) => (
-          <Card
+          <div
             key={note.id}
-            className="group cursor-default transition-shadow hover:shadow-sm"
+            className="border rounded-xl flex flex-col hover:bg-accent h-[180px] cursor-pointer"
           >
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{note.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                {excerpt(note.content ?? note.description ?? '')}
-              </p>
-            </CardContent>
-          </Card>
+            <div className="flex-1 border-b text-xs text-muted-foreground whitespace-pre-wrap p-4 bg-muted/50">
+              {excerpt(note.description)}
+            </div>
+            <div className="h-1/4 flex items-center pl-4">
+              <span className="text-sm font-semibold">📘 {note.title}</span>
+            </div>
+          </div>
         ))}
 
-        <Card className="border-dashed shadow-none cursor-pointer hover:bg-accent">
-          <CardContent className="flex h-full min-h-[120px] items-center justify-center p-4">
+        <div className="border border-dashed rounded-xl flex flex-col h-[180px]">
+          <div className="flex-1 text-xs text-muted-foreground whitespace-pre-wrap flex items-center justify-center">
             <AddNoteDialog
               topicId={topicId}
               trigger={
-                <button className="text-sm text-muted-foreground underline underline-offset-4">
+                <button className="text-sm text-muted-foreground font-normal w-full h-full cursor-pointer hover:bg-accent">
                   + New note
                 </button>
               }
             />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
