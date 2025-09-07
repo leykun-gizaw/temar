@@ -71,8 +71,8 @@ export default function TopicNotesPage() {
   return (
     <div className="h-full p-6 space-y-6">
       <div className="space-y-1">
-        <span className="text-5xl">📚</span>
-        <h1 className="text-2xl font-semibold mb-4">{TopicTitle}</h1>
+        <span className="text-6xl">📗</span>
+        <h1 className="text-2xl font-semibold mb-4">{TopicTitle} Notes</h1>
         {topic?.description ? (
           <div className="flex items-center">
             <span className="flex items-center gap-2 text-sm text-muted-foreground mr-12">

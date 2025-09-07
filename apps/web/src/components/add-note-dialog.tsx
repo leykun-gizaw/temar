@@ -123,8 +123,13 @@ export default function AddNoteDialog({
       <DialogContent className="sm:max-w-md">
         <form onSubmit={onSubmit} className="space-y-4">
           <DialogHeader>
-            <DialogTitle>New note</DialogTitle>
-            <DialogDescription>Create a note for this topic.</DialogDescription>
+            <DialogTitle className="flex flex-col items-center gap-2">
+              <span className="text-5xl">📗</span>
+              Add Note
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Create a new lote for this topic
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2">

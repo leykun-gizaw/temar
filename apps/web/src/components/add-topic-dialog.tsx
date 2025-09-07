@@ -36,10 +36,12 @@ async function createTopic(input: { name: string; description: string }) {
 
 interface AddTopicDialogProps {
   queryKeyBase?: string[]; // override base key if needed, defaults to ['topics']
+  trigger?: React.ReactNode; // custom trigger element
 }
 
 export function AddTopicDialog({
   queryKeyBase = ['topics'],
+  trigger,
 }: AddTopicDialogProps) {
   const qc = useQueryClient();
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -113,9 +115,16 @@ export function AddTopicDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button ref={triggerRef} type="button" size={'sm'} variant="outline">
-          <LibraryBig /> Add
-        </Button>
+        {trigger ?? (
+          <Button
+            ref={triggerRef}
+            type="button"
+            size={'sm'}
+            variant={'outline'}
+          >
+            <LibraryBig /> New Topic
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-auto">
         <form
@@ -124,8 +133,11 @@ export function AddTopicDialog({
           noValidate
         >
           <DialogHeader>
-            <DialogTitle>Add Topic</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="flex flex-col items-center gap-2">
+              <span className="text-5xl">📚</span>
+              Add Topic
+            </DialogTitle>
+            <DialogDescription className="text-center">
               Create a new topic to track your learning.
             </DialogDescription>
           </DialogHeader>
