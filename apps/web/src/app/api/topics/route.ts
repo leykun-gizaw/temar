@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getAllTopics, topics_data } from './data';
 
 export async function GET(request: Request) {
+  await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate network delay
   const url = new URL(request.url);
   const query = url.searchParams.get('query')?.toLowerCase() || '';
 

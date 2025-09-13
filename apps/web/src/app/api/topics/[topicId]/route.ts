@@ -5,7 +5,8 @@ export async function GET(
   _request: Request,
   { params }: { params: { topicId: string } }
 ) {
-  const topic = findTopicById(params.topicId);
+  const topicId = await params;
+  const topic = findTopicById(topicId);
   if (!topic) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
