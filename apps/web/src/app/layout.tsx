@@ -12,8 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <body className="h-full">
         <ThemeProvider attribute="class" disableTransitionOnChange>
           {children}
         </ThemeProvider>

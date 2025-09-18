@@ -21,7 +21,7 @@ export function ThemeToggle() {
     <>
       <Button
         onClick={toggleTheme}
-        className="cursor-pointer size-8"
+        className="cursor-pointer size-8 rounded-full"
         variant="ghost"
       >
         {theme === 'light' ? <Sun /> : <Moon />}

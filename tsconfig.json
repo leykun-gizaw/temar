@@ -32,6 +32,12 @@
     },
     {
       "path": "./libs/db"
+    },
+    {
+      "path": "./apps/notion_sync-service-e2e"
+    },
+    {
+      "path": "./apps/notion_sync-service"
     }
   ]
 }

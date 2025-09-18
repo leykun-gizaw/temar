@@ -2,40 +2,51 @@
 
 import * as React from 'react';
 
-import { Label } from '@/components/ui/label';
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
-  SidebarInput,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
-import { Switch } from '@/components/ui/switch';
 import Link from 'next/link';
 import Logo from '@/assets/logo';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
+import { TopicsSidebarPanel } from '@/components/sidebar/topics-sidebar-panel';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  // Note: I'm using state to show active item.
-  // IRL you should use the url/router.
-  const [activeItem, setActiveItem] = React.useState(props.navMain[0]);
+  const pathname = usePathname();
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
+  // No per-tab title here; Topics panel renders its own header/content.
+
+  // Path-driven default behavior: closed on /dashboard, open on /dashboard/topics
+  React.useEffect(() => {
+    if (pathname === '/dashboard') {
+      isMobile ? setOpenMobile(false) : setOpen(false);
+      return;
+    }
+    if (pathname === '/dashboard/topics') {
+      isMobile ? setOpenMobile(true) : setOpen(true);
+      return;
+    }
+    // For other paths, do not auto-toggle; keep user choice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, isMobile]);
 
   return (
     <Sidebar
       collapsible="icon"
-      className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
+      className="overflow-hidden *:data-[sidebar=sidebar]:flex-row bg-primary"
       {...props}
     >
-      {/* This is the first sidebar */}
-      {/* We disable collapsible and adjust width to icon. */}
-      {/* This will make the sidebar appear as icons. */}
+      {/* First (icons) sidebar */}
       <Sidebar
         navMain={props.navMain}
-        sidebarContentData={props.sidebarContentData}
         collapsible="none"
         className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
       >
@@ -56,80 +67,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroup>
             <SidebarGroupContent className="px-1.5 md:px-0">
               <SidebarMenu>
-                {props.navMain.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <Link href={item.url}>
-                      <SidebarMenuButton
-                        tooltip={{
-                          children: item.title,
-                          hidden: false,
-                        }}
-                        onClick={() => {
-                          setActiveItem(item);
-                        }}
-                        isActive={activeItem?.title === item.title}
-                        className={cn(
-                          'px-2.5 md:px-2 cursor-pointer',
-                          activeItem?.title === item.title
-                            ? 'border'
-                            : 'border-transparent'
-                        )}
-                      >
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </Link>
-                  </SidebarMenuItem>
-                ))}
+                {props.navMain?.map((item) => {
+                  const isActive = pathname?.startsWith(
+                    item.url.replace(/\/$/, '')
+                  );
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <Link href={item.url}>
+                        <SidebarMenuButton
+                          tooltip={{ children: item.title, hidden: false }}
+                          isActive={!!isActive}
+                          className={cn(
+                            'px-2.5 md:px-2 cursor-pointer',
+                            isActive ? 'border' : 'border-transparent'
+                          )}
+                        >
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </Link>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
 
-      {/* This is the second sidebar */}
-      {/* We disable collapsible and let it fill remaining space */}
-      <Sidebar
-        navMain={props.navMain}
-        sidebarContentData={props.sidebarContentData}
-        collapsible="none"
-        className="hidden flex-1 md:flex"
-      >
-        <SidebarHeader className="gap-3.5 border-b p-4">
-          <div className="flex w-full items-center justify-between">
-            <div className="text-foreground text-base font-medium">
-              {activeItem?.title}
-            </div>
-            <Label className="flex items-center gap-2 text-sm">
-              <span>Unreads</span>
-              <Switch className="shadow-none" />
-            </Label>
-          </div>
-          <SidebarInput placeholder="Type to search..." />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup className="px-0">
-            <SidebarGroupContent>
-              {props.sidebarContentData.map((mail) => (
-                <a
-                  href="#"
-                  key={mail.email}
-                  className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
-                >
-                  <div className="flex w-full items-center gap-2">
-                    <span>{mail.name}</span>{' '}
-                    <span className="ml-auto text-xs">{mail.date}</span>
-                  </div>
-                  <span className="font-medium">{mail.subject}</span>
-                  <span className="line-clamp-2 w-[260px] text-xs whitespace-break-spaces">
-                    {mail.teaser}
-                  </span>
-                </a>
-              ))}
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
+      {/* Second (content) sidebar: render for /dashboard/topics and subroutes */}
+      {pathname?.startsWith('/dashboard/topics') ? (
+        <Sidebar collapsible="none" className="hidden flex-1 md:flex">
+          <TopicsSidebarPanel />
+        </Sidebar>
+      ) : null}
     </Sidebar>
   );
 }
