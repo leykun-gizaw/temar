@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
-import { Note, NoteInput, NoteInputSchema } from '@/lib/schemas/note-schema';
+import {
+  Note,
+  NoteInput,
+  NoteInputSchema,
+} from '@/lib/zod-schemas/note-schema';
 
 // Use a global store to survive HMR and share across route handlers
 const g = globalThis as unknown as { __notesStore?: Note[] };

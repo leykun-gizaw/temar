@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { Note } from '@/lib/schemas/note-schema';
+import type { Note } from '@/lib/zod-schemas/note-schema';
 
 export default function AddNoteDialog({
   topicId,

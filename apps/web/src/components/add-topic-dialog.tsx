@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LibraryBig } from 'lucide-react';
-import { TopicInputSchema } from '@/lib/schemas/topic-schema';
+import { TopicInputSchema } from '@/lib/zod-schemas/topic-schema';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 async function createTopic(input: { name: string; description: string }) {

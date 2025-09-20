@@ -19,19 +19,7 @@
       "path": "./libs/types"
     },
     {
-      "path": "./libs/data-access/notes"
-    },
-    {
-      "path": "./libs/data-access/generation"
-    },
-    {
-      "path": "./libs/data-access/scheduler"
-    },
-    {
       "path": "./libs/utils"
-    },
-    {
-      "path": "./libs/db"
     },
     {
       "path": "./apps/notion_sync-service-e2e"

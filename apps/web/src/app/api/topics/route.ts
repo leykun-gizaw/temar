@@ -1,4 +1,4 @@
-import { TopicSchema } from '@/lib/schemas/topic-schema';
+import { TopicSchema } from '@/lib/zod-schemas/topic-schema';
 import { NextResponse } from 'next/server';
 import { getAllTopics, topics_data } from './data';
 

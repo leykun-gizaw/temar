@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Note, NoteInputSchema } from '@/lib/schemas/note-schema';
+import { Note, NoteInputSchema } from '@/lib/zod-schemas/note-schema';
 
 // Share the same in-memory store used by /api/notes
 const g = globalThis as unknown as { __notesStore?: Note[] };
