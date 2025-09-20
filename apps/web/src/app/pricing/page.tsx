@@ -74,7 +74,7 @@ export default function PricingPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <SiteNavbar />
       <main className="flex-1">
-        <section className="relative border-b">
+        <section className="relative">
           <div className="text-center mx-auto max-w-5xl px-6 md:py-18">
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
               Simple, transparent pricing
