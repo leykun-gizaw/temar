@@ -203,6 +203,10 @@ importers:
 
   apps/api-e2e: {}
 
+  apps/notion_sync-service: {}
+
+  apps/notion_sync-service-e2e: {}
+
   apps/web:
     dependencies:
       '@dnd-kit/core':
@@ -335,13 +339,7 @@ importers:
 
   apps/web-e2e: {}
 
-  libs/data-access/generation: {}
-
-  libs/data-access/notes: {}
-
-  libs/data-access/scheduler: {}
-
-  libs/db:
+  libs/db-client:
     dependencies:
       tslib:
         specifier: ^2.3.0

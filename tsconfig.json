@@ -26,6 +26,9 @@
     },
     {
       "path": "./apps/notion_sync-service"
+    },
+    {
+      "path": "./libs/db-client"
     }
   ]
 }
