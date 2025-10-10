@@ -1,0 +1,17 @@
+{
+  "name": "db-client",
+  "sourceRoot": "libs/db-client/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "outputPath": "dist/libs/db-client",
+        "main": "libs/db-client/src/index.ts",
+        "tsConfig": "libs/db-client/tsconfig.lib.json",
+        "assets": ["libs/db-client/*.md"]
+      }
+    }
+  }
+}
