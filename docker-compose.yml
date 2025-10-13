@@ -1,15 +1,24 @@
 services:
-  temar_pg_db:
+  temar_db:
     image: postgres
+    container_name: shared-db
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - temar_data:/var/lib/postgresql/data
     ports:
-      - '5432:5432'
+      - "${DATABASE_PORT:-5432}:5432"
 
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - temar_db
 volumes:
-  pg_data:
+  temar_data:
