@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import SiteNavbar from '@/components/site-navbar';
+import SiteFooter from '@/components/site-footer';
 
 export default function Index() {
   return (
@@ -20,7 +21,7 @@ export default function Index() {
               </p>
               <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
                 <Link
-                  href="/auth/register"
+                  href="/auth/sign-up"
                   className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   Get Started
@@ -64,25 +65,7 @@ export default function Index() {
           </div>
         </section>
       </main>
-      <footer className="border-t py-10 text-center text-xs text-muted-foreground">
-        <div className="mx-auto max-w-6xl px-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p>&copy; {new Date().getFullYear()} Temar. All rights reserved.</p>
-          <div className="flex items-center justify-center gap-4">
-            <Link
-              href="/privacy"
-              className="hover:text-foreground transition-colors"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="hover:text-foreground transition-colors"
-            >
-              Terms
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

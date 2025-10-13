@@ -19,7 +19,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@temar/db-client": ["../../libs/db-client/src"]
+      "@temar/db-client": ["../../libs/db-client/src/index.ts"]
     },
     "types": ["jest", "node"],
     "outDir": "dist",

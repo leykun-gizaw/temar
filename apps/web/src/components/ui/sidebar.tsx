@@ -157,18 +157,11 @@ function Sidebar({
   collapsible = 'offcanvas',
   className,
   children,
-  navMain,
   ...props
 }: React.ComponentProps<'div'> & {
   side?: 'left' | 'right';
   variant?: 'sidebar' | 'floating' | 'inset';
   collapsible?: 'offcanvas' | 'icon' | 'none';
-  navMain?: {
-    title: string;
-    url: string;
-    icon: React.ComponentType;
-    isActive: boolean;
-  }[];
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 

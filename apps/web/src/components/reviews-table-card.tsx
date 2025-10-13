@@ -22,7 +22,7 @@ import { BinocularsIcon, DoorOpenIcon, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from './ui/input';
 import { useMemo, useState } from 'react';
-import { CalendarEventParsed } from '@/lib/zod-schemas/calendar-schema';
+import { CalendarEventParsed } from '@/lib/zod/calendar-schema';
 
 export default function ReviewsTableCard({
   events,

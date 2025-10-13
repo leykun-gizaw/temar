@@ -1,9 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 import Logo from '@/assets/logo';
 import { ThemeToggle } from './theme-toggle';
+import { authClient } from '@/lib/auth-client';
+import { Button } from './ui/button';
 
 interface NavLink {
   href: string;
@@ -14,11 +16,17 @@ const primaryLinks: NavLink[] = [{ href: '/pricing', label: 'Pricing' }];
 
 const authLinks: NavLink[] = [
   { href: '/auth/sign-in', label: 'Sign In' },
-  { href: '/auth/register', label: 'Register' },
+  { href: '/auth/sign-up', label: 'Register' },
 ];
 
 export function SiteNavbar() {
   const [open, setOpen] = useState(false);
+  const { data, isPending } = authClient.useSession();
+
+  if (isPending) {
+    return '';
+  }
+  const isLoggedIn = !!data;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
@@ -48,19 +56,37 @@ export function SiteNavbar() {
           </nav>
         </div>
         <div className="hidden md:flex items-center gap-4 text-sm">
-          {authLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={
-                l.label === 'Register'
-                  ? 'inline-flex h-9 items-center rounded-md bg-primary px-4 font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors'
-                  : 'text-muted-foreground hover:text-foreground transition-colors'
-              }
-            >
-              {l.label}
-            </Link>
-          ))}
+          {!isLoggedIn ? (
+            authLinks.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={
+                  l.label === 'Register'
+                    ? 'inline-flex h-9 items-center rounded-md bg-primary px-4 font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors'
+                    : 'text-muted-foreground hover:text-foreground transition-colors'
+                }
+              >
+                {l.label}
+              </Link>
+            ))
+          ) : (
+            <>
+              <Link href={'/dashboard'}>
+                <Button asChild variant={'outline'}>
+                  <span>Dashboard</span>
+                </Button>
+              </Link>
+              <Link href="/auth/sign-out">
+                <Button asChild>
+                  <span>
+                    <LogOut /> Sign Out
+                  </span>
+                </Button>
+              </Link>
+            </>
+          )}
+
           <ThemeToggle />
         </div>
         <button

@@ -1,5 +1,5 @@
+import { getTopicById } from '@/lib/fetchers/topics';
 import type { Metadata } from 'next';
-import { getTopicByIdServer } from '@/lib/server/topics';
 
 export async function generateMetadata({
   params,
@@ -7,14 +7,14 @@ export async function generateMetadata({
   params: Promise<{ topicId: string }>;
 }): Promise<Metadata> {
   const { topicId } = await params;
-  const topic = await getTopicByIdServer(topicId);
+  const topic = await getTopicById(topicId);
   if (!topic) {
     return {
       title: `Topic - Notes`,
       description: 'The selected topic could not be found.',
     };
   }
-  return { title: `${topic.name} — Notes`, description: topic.description };
+  return { title: `${topic.title} — Notes`, description: topic.description };
 }
 
 export default function TopicNotesLayout({
