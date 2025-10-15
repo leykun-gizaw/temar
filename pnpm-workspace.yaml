@@ -2,7 +2,6 @@ packages:
   - 'packages/*'
   - 'apps/*'
   - 'libs/*'
-  - 'libs/data-access/*'
 ignoredBuiltDependencies:
   - '@tailwindcss/oxide'
   - 'cypress'

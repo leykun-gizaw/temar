@@ -19,7 +19,7 @@
     "customConditions": ["development"],
     "baseUrl": ".",
     "paths": {
-      "@temar/db-client": ["libs/db-client/src"]
+      "@temar/db-client": ["libs/db-client/src/index.ts"]
     }
   }
 }
