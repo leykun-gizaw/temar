@@ -1,17 +1,4 @@
-import { type CalendarEvent } from '@/lib/calendar-types';
-import { NextResponse } from 'next/server';
-
-function getCurrentWeekDates() {
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
-  startOfWeek.setHours(0, 0, 0, 0);
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(startOfWeek);
-    d.setDate(startOfWeek.getDate() + i);
-    return d;
-  });
-}
+import { CalendarEvent } from '../calendar-types';
 
 const eventNames = [
   'Binary Search',
@@ -97,9 +84,16 @@ const eventNames = [
   'Tracing',
   'Metrics Collection',
 ];
-
-function getRandomInt(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function getCurrentWeekDates() {
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+  startOfWeek.setHours(0, 0, 0, 0);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    return d;
+  });
 }
 
 function getRandomEventName(used: Set<string>) {
@@ -111,6 +105,10 @@ function getRandomEventName(used: Set<string>) {
   } while (used.has(name) && tries < 10);
   used.add(name);
   return name;
+}
+
+function getRandomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 export const calendar_events: CalendarEvent[] = (() => {
@@ -143,6 +141,10 @@ export const calendar_events: CalendarEvent[] = (() => {
   return events;
 })();
 
-export async function GET() {
-  return NextResponse.json(calendar_events);
+export function getAllCalendarEvents() {
+  return Promise.resolve(calendar_events);
+}
+
+export function getCalendarEventById(id: string) {
+  return Promise.resolve(calendar_events.find((event) => event.id === id));
 }

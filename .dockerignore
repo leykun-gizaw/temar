@@ -1,0 +1,17 @@
+# pnpm specific
+node_modules/
+.pnpm-store/
+.pnpm-debug.log
+
+# NX and build artifacts
+dist/
+.nx/
+.cache/
+coverage/
+
+# General
+.git/
+.env
+*.log
+.DS_Store
+docker-compose*.yml

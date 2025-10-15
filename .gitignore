@@ -52,3 +52,6 @@ test-output
 
 # Variables
 .env
+
+# miscellaneous scripts
+sync-deps.js

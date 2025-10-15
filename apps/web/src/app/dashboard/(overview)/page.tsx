@@ -1,16 +1,14 @@
 import ScheduleCard from '@/components/schedule-card';
 import ReviewsTableCard from '@/components/reviews-table-card';
 import { HeaderStats } from '@/components/header-stats';
-import { CalendarEventArraySchema } from '@/lib/zod/calendar-schema';
 import { Calendar, CalendarDayView } from '@/components/full-calendar';
 import { EventsSummary } from '@/components/events-summary';
+import { getAllCalendarEvents } from '@/lib/fetchers/events';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
-  const res = await fetch('http://localhost:3000/api/calendar-events');
-  const json = await res.json();
-  const events = CalendarEventArraySchema.parse(json);
+  const events = await getAllCalendarEvents();
 
   return (
     <>

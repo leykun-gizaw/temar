@@ -18,23 +18,20 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@temar/db-client": ["../../libs/db-client/src/index.ts"]
+      "@/*": ["./src/*"]
     },
     "types": ["jest", "node"],
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "include": [
-    "../../apps/web/.next/types/**/*.ts",
-    "../../dist/apps/web/.next/types/**/*.ts",
     "next-env.d.ts",
     "src/**/*.js",
+    "src/**/*.json",
     "src/**/*.jsx",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/**/*.json"
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "out-tsc",
@@ -48,5 +45,9 @@
     "eslint.config.cjs",
     "eslint.config.mjs"
   ],
-  "references": [{ "path": "../../libs/db-client" }]
+  "references": [
+    {
+      "path": "../../libs/db-client"
+    }
+  ]
 }

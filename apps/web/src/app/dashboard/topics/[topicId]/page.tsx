@@ -10,7 +10,7 @@ export default async function TopicNotesPage({
   params,
   searchParams,
 }: {
-  params: { topicId: string };
+  params: Promise<{ topicId: string }>;
   searchParams?: Promise<{ query?: string }>;
 }) {
   const { topicId } = await params;
