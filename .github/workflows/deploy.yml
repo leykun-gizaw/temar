@@ -1,0 +1,44 @@
+name: Build, Push & Deploy Web App (Self-Hosted)
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    build-and-push:
+        runs-on: self-hosted
+        permissions:
+            contents: read
+            packages: write
+
+        env:
+            IMAGE_NAME: ghcr.io/${{ github.repository_owner}}/temar-web:latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+
+            - name: Set up pnpm
+              run: npm install -g pnpm
+
+            - name: Log in to GHCR
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Build and Push Image
+              run: |
+                  docker build -f apps/web/Dockerfile.web -t $IMAGE_NAME --target prod .
+            - name: Deploy using docker-compose
+              run: |
+                  echo 'Pulling and redeploying containers...'
+                  docker compose -f docker-compose.prod.yml pull
+                  docker compose -f docker-compose.prod.yml up -d
