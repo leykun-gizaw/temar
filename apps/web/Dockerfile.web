@@ -6,7 +6,9 @@ COPY package*.json ./
 COPY pnpm-lock.yaml ./
 COPY pnpm-workspace.yaml ./
 COPY nx.json ./
-RUN pnpm install --frozen-lockfile
+COPY libs/db-client/package.json libs/db-client/
+COPY apps/web/package.json apps/web/
+RUN pnpm install --frozen-lockfile --recursive
 
 # --- Builder stage ---
 FROM base AS builder
