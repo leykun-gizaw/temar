@@ -10,7 +10,8 @@
         "outputPath": "dist/libs/db-client",
         "main": "libs/db-client/src/index.ts",
         "tsConfig": "libs/db-client/tsconfig.lib.json",
-        "assets": ["libs/db-client/*.md"]
+        "assets": ["libs/db-client/package.json", "libs/db-client/*.md"],
+        "outputFormat": ["esm"]
       }
     }
   }

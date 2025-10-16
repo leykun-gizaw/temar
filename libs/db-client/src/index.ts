@@ -1,2 +1,2 @@
-export * from './lib/db-client.js';
-export * from './schema/auth-schema.js';
+export * from './lib/db-client';
+export * from './schema/auth-schema';
