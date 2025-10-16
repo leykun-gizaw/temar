@@ -1,0 +1,39 @@
+services:
+  temar_db:
+    image: postgres
+    container_name: shared-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - temar_data:/var/lib/postgresql/data
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.web
+      target: dev
+    container_name: dev_web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - temar_db
+volumes:
+  temar_data:

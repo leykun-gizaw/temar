@@ -1,5 +1,6 @@
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '@/components/providers/theme-provider';
 import './globals.css';
+import { BetterAuthProvider } from '@/components/providers/AuthProvider';
 
 export const metadata = {
   title: 'Temar',
@@ -14,9 +15,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body className="h-full">
-        <ThemeProvider attribute="class" disableTransitionOnChange>
-          {children}
-        </ThemeProvider>
+        <BetterAuthProvider>
+          <ThemeProvider attribute="class" disableTransitionOnChange>
+            {children}
+          </ThemeProvider>
+        </BetterAuthProvider>
       </body>
     </html>
   );

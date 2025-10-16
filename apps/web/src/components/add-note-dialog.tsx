@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,7 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { Note } from '@/lib/schemas/note-schema';
 
 export default function AddNoteDialog({
   topicId,
@@ -23,78 +21,10 @@ export default function AddNoteDialog({
   topicId: string;
   trigger?: React.ReactNode;
 }) {
-  const qc = useQueryClient();
-
   const [open, setOpen] = React.useState(false);
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
-
-  const notesKey = (id: string) => ['notes', { topicId: id }] as const;
-
-  const createNote = useMutation({
-    mutationFn: async (payload: {
-      title: string;
-      description: string;
-      topicId: string;
-    }) => {
-      const res = await fetch('/api/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const serverMsg =
-          data?.details?.formErrors?.[0] ??
-          Object.values<string[] | undefined>(
-            data?.details?.fieldErrors ?? {}
-          )[0]?.[0] ??
-          data?.error;
-        throw new Error(serverMsg || `Request failed (${res.status})`);
-      }
-      return data as Note;
-    },
-    onMutate: async (payload) => {
-      setError(null);
-      await qc.cancelQueries({ queryKey: notesKey(payload.topicId) });
-
-      const prev = qc.getQueryData<Note[]>(notesKey(payload.topicId)) || [];
-
-      const now = new Date().toISOString();
-      const optimistic: Note = {
-        id: `optimistic-${now}`,
-        title: payload.title,
-        description: payload.description,
-        topicId: payload.topicId,
-        createdAt: now,
-        updatedAt: now,
-        // userId optional
-      } as Note;
-
-      qc.setQueryData<Note[]>(notesKey(payload.topicId), [optimistic, ...prev]);
-
-      return { prev };
-    },
-    onError: (err, payload, ctx) => {
-      if (ctx?.prev)
-        qc.setQueryData<Note[]>(notesKey(payload.topicId), ctx.prev);
-      setError(err instanceof Error ? err.message : 'Failed to create note');
-    },
-    onSuccess: (created, payload) => {
-      qc.setQueryData<Note[]>(notesKey(payload.topicId), (curr) => {
-        const list = curr ?? [];
-        const withoutOptimistic = list.filter(
-          (n) => !String(n.id).startsWith('optimistic-')
-        );
-        return [created, ...withoutOptimistic];
-      });
-      qc.invalidateQueries({ queryKey: ['notes'] });
-      setOpen(false);
-      setTitle('');
-      setDescription('');
-    },
-  });
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -102,11 +32,6 @@ export default function AddNoteDialog({
       setError('Title and description are required');
       return;
     }
-    createNote.mutate({
-      title: title.trim(),
-      description: description.trim(),
-      topicId,
-    });
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -156,12 +81,8 @@ export default function AddNoteDialog({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={createNote.isPending}
-              aria-disabled={createNote.isPending}
-            >
-              {createNote.isPending ? 'Creating…' : 'Create'}
+            <Button type="submit" disabled={false}>
+              Create
             </Button>
           </DialogFooter>
         </form>

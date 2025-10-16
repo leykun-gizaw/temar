@@ -10,7 +10,7 @@ const swcJestConfig = JSON.parse(
 swcJestConfig.swcrc = false;
 
 export default {
-  displayName: '@temar/db',
+  displayName: '@temar/db-client',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
   transform: {

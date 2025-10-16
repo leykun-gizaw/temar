@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    container_name: prod_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - pg_data_prod:/var/lib/postgresql/data
+
+  migrate:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/migrate:latest
+    container_name: prod_migrate
+    restart: "no"
+    env_file:
+      - .env.production
+    depends_on:
+      - db
+    command: ["pnpm", "run", "migrate:prod"]
+  web:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/web:latest
+    container_name: prod_web
+    restart: always
+    ports:
+      - "80:3000"
+    env_file:
+      - .env.production
+    depends_on:
+      - db
+      - migrate
+
+volumes:
+  pg_data_prod:

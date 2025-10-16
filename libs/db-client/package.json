@@ -1,8 +1,7 @@
 {
-  "name": "@temar/db",
+  "name": "@temar/db-client",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,6 +15,14 @@
     }
   },
   "dependencies": {
+    "drizzle-orm": "^0.44.6",
+    "pg": "^8.16.3",
+    "dotenv": "^17.2.3",
+    "drizzle-kit": "0.31.5",
     "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.5",
+    "drizzle-kit": "^0.31.5"
   }
 }

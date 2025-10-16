@@ -1,56 +1,17 @@
-'use client';
-
 import * as React from 'react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Topic } from '@/lib/topic-types';
-import AddTopicDialog from '@/components/add-topic-dialog';
-import { Card, CardContent } from '@/components/ui/card';
+import AddTopicDialog from '@/app/dashboard/topics/_components/add-topic-dialog';
 import { LayoutGridIcon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Search from './_components/search';
+import GalleryList from './_components/topics-gallery-list';
 
-async function fetchTopicsClient(query?: string): Promise<Topic[]> {
-  const url = new URL('/api/topics', window.location.origin);
-  if (query) url.searchParams.set('query', query);
-  const res = await fetch(url.toString(), { cache: 'no-store' });
-  if (!res.ok) return [];
-  return (await res.json()) as Topic[];
-}
-
-function excerpt(value: unknown, max = 140) {
-  const text =
-    typeof value === 'string' ? value : value == null ? '' : String(value);
-  const trimmed = text.trim().replace(/\s+/g, ' ');
-  return trimmed.length > max ? `${trimmed.slice(0, max - 1)}…` : trimmed;
-}
-
-export default function TopicsPage() {
-  const searchParams = useSearchParams();
-  const query = searchParams.get('query') || undefined;
-  const qc = useQueryClient();
-
-  // Cache-first: hydrate from any matching cached topics list from the sidebar
-  const topicsKey = ['topics', { query }] as const;
-  const initialExact = qc.getQueryData<Topic[]>(topicsKey);
-  const initialAny =
-    initialExact ??
-    qc
-      .getQueriesData<Topic[]>({ queryKey: ['topics'] })
-      .map(([, data]) => data)
-      .find(Boolean);
-
-  const {
-    data: topics = [],
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: topicsKey,
-    queryFn: () => fetchTopicsClient(query),
-    // Use cache if present; fetch to revalidate in background
-    initialData: initialAny,
-    staleTime: 30_000,
-  });
+export default async function TopicsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ query?: string }>;
+}) {
+  const params = await searchParams;
+  const query = params?.query || '';
 
   return (
     <div className="h-full p-6 space-y-6">
@@ -70,57 +31,22 @@ export default function TopicsPage() {
             <LayoutGridIcon size={16} />
             Topics Gallery
           </span>
-          <AddTopicDialog
-            trigger={
-              <Button size="sm">
-                <Plus className="mr-1.5 h-4 w-4" />
-                New
-              </Button>
-            }
-          />
-        </div>
-      </div>
-
-      {isLoading ? (
-        <Card>
-          <CardContent className="p-4 text-sm text-muted-foreground">
-            Loading topics…
-          </CardContent>
-        </Card>
-      ) : isError ? (
-        <Card>
-          <CardContent className="p-4 text-sm text-destructive">
-            Failed to load topics.
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        {topics.map((topic) => (
-          <Link
-            key={topic.id}
-            href={`/dashboard/topics/${encodeURIComponent(String(topic.id))}`}
-            className="border rounded-xl flex flex-col hover:bg-accent h-[180px] cursor-pointer"
-          >
-            <div className="flex-1 border-b text-xs text-muted-foreground whitespace-pre-wrap p-4 bg-muted/50">
-              {excerpt(topic.description)}
-            </div>
-            <div className="h-1/4 flex items-center pl-4">
-              <span className="text-sm font-semibold">📚 {topic.name}</span>
-            </div>
-          </Link>
-        ))}
-        <div className="border border-dashed rounded-xl flex flex-col h-[180px]">
-          <div className="flex-1 text-xs text-muted-foreground whitespace-pre-wrap flex items-center justify-center">
+          <div className="flex gap-2 items-center max-w-sm w-full">
+            <Search placeholder="Search..." />
             <AddTopicDialog
               trigger={
-                <button className="text-sm text-muted-foreground font-normal w-full h-full cursor-pointer hover:bg-accent">
-                  + New topic
-                </button>
+                <Button size="sm" className="">
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  New
+                </Button>
               }
             />
           </div>
         </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+        <GalleryList query={query} type="topic" />
       </div>
     </div>
   );
