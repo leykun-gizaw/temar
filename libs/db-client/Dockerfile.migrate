@@ -1,0 +1,16 @@
+FROM node:20-alpine
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files and install dependencies
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
+
+# Copy the db-client library and drizzle config
+COPY libs/db-client ./libs/db-client
+COPY libs/db-client/drizzle.config.ts ./libs/db-client/drizzle.config.ts
+
+# Default command: run production migration
+CMD ["pnpm", "run", "migrate:prod"]

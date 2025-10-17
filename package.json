@@ -2,7 +2,9 @@
   "name": "@temar/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "migrate": "cd libs/db-client/src && drizzle-kit migrate --config ../drizzle.config.ts"
+  },
   "private": true,
   "dependencies": {
     "@daveyplate/better-auth-ui": "^3.2.6",

@@ -19,8 +19,9 @@ ENV NODE_ENV=production
 COPY --from=builder /app/dist/apps/web ./web
 COPY pnpm-lock.yaml package.json ./
 RUN npm i -g pnpm && pnpm install --frozen-lockfile --prod
+WORKDIR /app/web
 EXPOSE 3000
-CMD [ "node", "web/server.js" ]
+CMD [ "pnpm", "exec", "next", "start" ]
 
 # --- Development stage ---
 FROM base AS dev

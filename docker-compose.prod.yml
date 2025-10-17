@@ -12,17 +12,8 @@ services:
     networks:
       - temar_net
 
-  migrate:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/migrate:latest
-    container_name: prod_migrate
-    restart: "no"
-    env_file:
-      - .env
-    depends_on:
-      - db
-    command: ["pnpm", "run", "migrate:prod"]
   web:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/web:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/temar-web:latest
     container_name: prod_web
     restart: always
     ports:
@@ -30,7 +21,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      - temar_db
       - migrate
     networks:
       - temar_net
