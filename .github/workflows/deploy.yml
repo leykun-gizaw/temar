@@ -28,6 +28,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
+      - name: Cache Nx outputs
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: ${{ runner.os }}-nx-${{ hashFiles('**/*.ts','**/*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nx-
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -74,6 +82,10 @@ jobs:
           GH_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}
           EOL
 
+      - name: Ensure docker network exists
+        run: |
+          echo 'Ensuring docker network temar_net exists...'
+          docker network inspect temar_net >/dev/null 2>&1 || docker network create temar_net
       - name: Run database migrations
         run: |
           echo 'Running database migrations...'

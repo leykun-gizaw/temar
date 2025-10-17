@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "migrate": "cd libs/db-client/src && drizzle-kit migrate --config ../drizzle.config.ts"
+    "migrate": "cd libs/db-client/src && npx drizzle-kit migrate --config ../drizzle.config.ts"
   },
   "private": true,
   "dependencies": {
