@@ -1,7 +1,6 @@
 services:
   temar_db:
     image: postgres
-    container_name: shared-db
     restart: always
     environment:
       POSTGRES_USER: ${DATABASE_USER}
@@ -11,13 +10,14 @@ services:
       - temar_data:/var/lib/postgresql/data
     ports:
       - "${DATABASE_PORT:-5432}:5432"
+    networks:
+      - dokploy-network
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile.web
       target: dev
-    container_name: dev_web
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -26,14 +26,19 @@ services:
     volumes:
       - .:/workspace
       - /workspace/node_modules
-
-  adminer:
-    image: adminer
-    container_name: adminer
-    restart: always
-    ports:
-      - "8080:8080"
     depends_on:
       - temar_db
+    networks:
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.web.rule=Host(`${WEB_HOSTNAME}`)
+      - traefik.http.routers.web.entrypoints=web
+      - traefik.http.services.web.loadbalancer.server.port=3000
+
 volumes:
   temar_data:
+
+networks:
+  dokploy-network:
+    external: true
