@@ -6,10 +6,8 @@ import { RedirectToSignIn, SignedIn } from '@daveyplate/better-auth-ui';
 
 export default async function DashboardLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: Record<string, string>;
 }) {
   return (
     <>
