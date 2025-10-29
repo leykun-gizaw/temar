@@ -1,43 +1,86 @@
 services:
-  temar_db:
-    image: postgres
+  db:
+    image: postgres:16-alpine
     restart: always
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
     volumes:
-      - temar_data:/var/lib/postgresql/data
-    ports:
-      - "${DATABASE_PORT:-5432}:5432"
+      - data:/var/lib/postgresql/data
+    networks:
+      - dokploy-network
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    restart: "no"
+    env_file:
+      - .env
+    command:
+      [
+        "pnpm",
+        "nx",
+        "run",
+        "db-client:generate:prod",
+        "&&",
+        "pnpm",
+        "nx",
+        "run",
+        "db-client:migrate:prod",
+      ]
+    depends_on:
+      db:
+        condition: service_healthy
+
     networks:
       - dokploy-network
 
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile.web
-      target: dev
+      dockerfile: Dockerfile
+      target: production
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     env_file:
       - .env
-    volumes:
-      - .:/workspace
-      - /workspace/node_modules
     depends_on:
-      - temar_db
+      - db
     networks:
       - dokploy-network
     labels:
       - traefik.enable=true
       - traefik.http.routers.web.rule=Host(`${WEB_HOSTNAME}`)
       - traefik.http.routers.web.entrypoints=web
-      - traefik.http.services.web.loadbalancer.server.port=3000
+      - traefik.http.services.web.loadbalancer.server.port=5173
+
+  nginx-cdn:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: nginx-cdn
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - web
+    networks:
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.nginx-cdn.rule=Host(`${WEB_HOSTNAME}`)
+      - traefik.http.routers.nginx-cdn.entrypoints=web
+      - traefik.http.services.nginx-cdn.loadbalancer.server.port=80
 
 volumes:
-  temar_data:
+  data:
 
 networks:
   dokploy-network:
