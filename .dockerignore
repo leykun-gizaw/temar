@@ -1,17 +1,25 @@
-# pnpm specific
-node_modules/
-.pnpm-store/
-.pnpm-debug.log
+# Git
+.git
+.gitignore
 
-# NX and build artifacts
-dist/
-.nx/
-.cache/
-coverage/
+# Node
+node_modules
 
-# General
-.git/
-.env
-*.log
+# Nx
+dist
+tmp
+.nx/cache
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose.override.yml
+.dockerignore
+
+# OS
 .DS_Store
-docker-compose*.yml
+
+# env files
+.env
+.env.local
+.env.*.local

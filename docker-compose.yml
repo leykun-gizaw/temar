@@ -1,0 +1,87 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+    volumes:
+      - data:/var/lib/postgresql/data
+    networks:
+      - dokploy-network
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    restart: "no"
+    env_file:
+      - .env
+    command:
+      [
+        "pnpm",
+        "nx",
+        "run",
+        "db-client:generate:prod",
+        "&&",
+        "pnpm",
+        "nx",
+        "run",
+        "db-client:migrate:prod",
+      ]
+    depends_on:
+      db:
+        condition: service_healthy
+
+    networks:
+      - dokploy-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.web.rule=Host(`${WEB_HOSTNAME}`)
+      - traefik.http.routers.web.entrypoints=web
+      - traefik.http.services.web.loadbalancer.server.port=5173
+
+  nginx-cdn:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: nginx-cdn
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - web
+    networks:
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.nginx-cdn.rule=Host(`${WEB_HOSTNAME}`)
+      - traefik.http.routers.nginx-cdn.entrypoints=web
+      - traefik.http.services.nginx-cdn.loadbalancer.server.port=80
+
+volumes:
+  data:
+
+networks:
+  dokploy-network:
+    external: true
