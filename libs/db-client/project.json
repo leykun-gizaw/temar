@@ -10,8 +10,21 @@
         "outputPath": "dist/libs/db-client",
         "main": "libs/db-client/src/index.ts",
         "tsConfig": "libs/db-client/tsconfig.lib.json",
-        "assets": ["libs/db-client/*.md"]
+        "assets": ["libs/db-client/*.md"],
+        "generatePackageJson": true
       }
+    },
+    "migrate:dev": {
+      "command": "pnpm drizzle-kit push --config={projectRoot}/drizzle.config.ts",
+      "options": { "cwd": "." }
+    },
+    "generate:prod": {
+      "command": "pnpm drizzle-kit generate --config={projectRoot}/drizzle.config.ts",
+      "options": { "cwd": "." }
+    },
+    "migrate:prod": {
+      "command": "pnpm drizzle-kit migrate --config={projectRoot}/drizzle.config.ts",
+      "options": { "cwd": "." }
     }
   }
 }
