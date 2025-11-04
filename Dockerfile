@@ -1,6 +1,6 @@
 # STAGE 1: Base Image
 # Common base for all other stages
-FROM node:alpine AS base
+FROM node:lts AS base
 WORKDIR /app
 # Install pnpm
 RUN npm install -g pnpm
@@ -23,13 +23,13 @@ FROM deps AS builder
 # Copy the entire monorepo source code
 COPY . .
 # Build the 'web' application
-RUN pnpm nx build web --prod
+RUN NX_DAEMON=false pnpm nx build web --prod --verbose
 
 # ----------------------------------------------
 
 # STAGE 3.5: NGINX CDN Setup
 # Build the NGINX image to serve static assets
-FROM nginx:alpine AS nginx-cdn
+FROM nginx:alpine AS nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist/apps/web/public /var/www/html
 COPY --from=builder /app/dist/apps/web/.next/static /var/www/html/_next/static
@@ -41,7 +41,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Create a non-root user to run the application
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 USER appuser
 
 # Copy the standalone output from the builder stage
