@@ -4,6 +4,10 @@ import { dbClient } from '@temar/db-client';
 import { user, session, account, verification } from '@temar/db-client';
 
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL as string,
+  trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(
+    ','
+  ) as string[],
   database: drizzleAdapter(dbClient, {
     provider: 'pg',
     schema: { user, session, account, verification },
@@ -20,5 +24,4 @@ export const auth = betterAuth({
       clientSecret: process.env.GH_CLIENT_SECRET as string,
     },
   },
-  trustedOrigins: [process.env.BETTER_AUTH_URL as string],
 });
