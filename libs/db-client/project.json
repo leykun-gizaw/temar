@@ -14,15 +14,15 @@
         "generatePackageJson": true
       }
     },
-    "migrate:dev": {
-      "command": "pnpm drizzle-kit push --config={projectRoot}/drizzle.config.ts",
-      "options": { "cwd": "." }
-    },
-    "generate:prod": {
+    "generate": {
       "command": "pnpm drizzle-kit generate --config={projectRoot}/drizzle.config.ts",
       "options": { "cwd": "." }
     },
-    "migrate:prod": {
+    "push": {
+      "command": "pnpm drizzle-kit push --config={projectRoot}/drizzle.config.ts",
+      "options": { "cwd": "." }
+    },
+    "migrate": {
       "command": "pnpm drizzle-kit migrate --config={projectRoot}/drizzle.config.ts",
       "options": { "cwd": "." }
     }

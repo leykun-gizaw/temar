@@ -1,12 +1,12 @@
 import dotenv from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
 
-dotenv.config({ path: __dirname + '/.env' });
+dotenv.config({ path: __dirname + '/../../.env' });
 
 export default defineConfig({
   dialect: 'postgresql',
   schema: 'libs/db-client/src/schema/*',
-  out: './src/drizzle',
+  out: 'libs/db-client/src/drizzle',
   dbCredentials: {
     host: process.env.DATABASE_HOST as string,
     port: Number(process.env.DATABASE_PORT) || 5432,

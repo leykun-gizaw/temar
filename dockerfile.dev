@@ -1,0 +1,7 @@
+FROM node:lts
+
+WORKDIR /app
+
+COPY . .
+
+EXPOSE 5173

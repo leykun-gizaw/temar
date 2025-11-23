@@ -1,0 +1,22 @@
+# Docker Compose configuration for development environment
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - local_temar_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer:latest
+    container_name: "adminer-ui"
+    ports:
+      - "8080:8080"
+
+volumes:
+  local_temar_data:

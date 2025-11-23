@@ -1,20 +1,23 @@
-//@ts-check
-
+// next.config.js
 const { composePlugins, withNx } = require('@nx/next');
 
 /**
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
 const nextConfig = {
-  // Use this to set Nx-specific options
-  // See: https://nx.dev/recipes/next/next-config-setup
   nx: {},
   output: 'standalone',
+  // Remove turbopack config for now and only keep webpack
+  webpack(config) {
+    config.module.rules.push({
+      test: /\.svg$/i,
+      issuer: /\.[jt]sx?$/,
+      use: ['@svgr/webpack'],
+    });
+    return config;
+  },
 };
 
-const plugins = [
-  // Add more Next.js plugins to this list if needed.
-  withNx,
-];
+const plugins = [withNx];
 
 module.exports = composePlugins(...plugins)(nextConfig);
