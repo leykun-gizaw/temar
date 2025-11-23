@@ -31,7 +31,6 @@ export function AddTopicDialog({ trigger }: AddTopicDialogProps) {
     createTopic,
     initialErrorState
   );
-  console.log(errorState);
   return (
     <Dialog
       open={open}
