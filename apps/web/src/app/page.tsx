@@ -8,7 +8,7 @@ export default function Index() {
       <SiteNavbar />
       <main className="flex-1">
         <section className="relative overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 select-none [background:radial-gradient(circle_at_center,theme(colors.primary/15)_0%,transparent_70%)]" />
+          <div className="pointer-events-none absolute inset-0 select-none " />
           <div className="mx-auto max-w-6xl px-6 py-24 md:py-32 lg:py-40">
             <div className="max-w-3xl">
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
