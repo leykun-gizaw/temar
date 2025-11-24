@@ -1,7 +1,6 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
-console.log(process.env.DATABASE_PASSWORD);
 const pool = new Pool({
   host: process.env.DATABASE_HOST,
   user: process.env.DATABASE_USER,
