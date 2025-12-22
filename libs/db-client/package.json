@@ -2,6 +2,7 @@
   "name": "@temar/db-client",
   "version": "0.0.1",
   "private": true,
+  "main": "src/index.ts",
   "dependencies": {
     "drizzle-orm": "^0.44.6",
     "pg": "^8.16.3",

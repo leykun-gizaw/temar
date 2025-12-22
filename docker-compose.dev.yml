@@ -7,9 +7,9 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
     ports:
-      - "5432:5432"
+      - "${DATABASE_PORT}:5432"
     volumes:
-      - local_temar_data:/var/lib/postgresql/data
+      - dev_data:/var/lib/postgresql/data
 
   adminer:
     image: adminer:latest
@@ -18,4 +18,4 @@ services:
       - "8080:8080"
 
 volumes:
-  local_temar_data:
+  dev_data:
