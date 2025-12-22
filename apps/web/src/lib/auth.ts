@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { dbClient } from '@temar/db-client';
-import { user, session, account, verification } from '@temar/db-client';
+import { session, user, verification, account } from '@temar/db-client';
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL as string,
@@ -10,8 +10,11 @@ export const auth = betterAuth({
   ) as string[],
   database: drizzleAdapter(dbClient, {
     provider: 'pg',
-    schema: { user, session, account, verification },
+    schema: { session, user, verification, account },
   }),
+  advanced: {
+    database: { generateId: 'uuid' },
+  },
   emailAndPassword: { enabled: true },
   socialProviders: {
     google: {
