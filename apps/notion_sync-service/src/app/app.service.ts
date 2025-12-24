@@ -1,19 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { Client } from '@notionhq/client';
+import { dbClient, user } from '@temar/db-client';
 
 @Injectable()
 export class AppService {
   private notionClient: Client;
+  private dbClient: typeof dbClient;
 
   constructor() {
     this.notionClient = new Client({
       auth: process.env.NOTION_INTEGRATION_SECRET,
     });
+    this.dbClient = dbClient;
   }
 
-  getData(): { message: string } {
+  async getGreeting() {
     return { message: 'Hello API' };
   }
+
+  async getUsersList() {
+    return await this.dbClient.select().from(user);
+  }
+
   async getPage(id: string) {
     return await this.notionClient.pages.retrieve({ page_id: id });
   }

@@ -6,8 +6,13 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  getData() {
-    return this.appService.getData();
+  getGreeting() {
+    return this.appService.getGreeting();
+  }
+
+  @Get('/users')
+  async getUsers() {
+    return await this.appService.getUsersList();
   }
 
   @Get('/block/:id')
