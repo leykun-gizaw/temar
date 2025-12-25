@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Client } from '@notionhq/client';
 import { dbClient, user } from '@temar/db-client';
+import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class AppService {
@@ -20,6 +21,23 @@ export class AppService {
 
   async getUsersList() {
     return await this.dbClient.select().from(user);
+  }
+
+  async getUserById(id: string) {
+    return await this.dbClient
+      .select()
+      .from(user)
+      .where(eq(user.id, id))
+      .limit(1)
+      .then((rows) => rows[0]);
+  }
+
+  async updateUserNotionPageId(id: string, notionPageId: string) {
+    return await this.dbClient
+      .update(user)
+      .set({ notionPageId })
+      .where(eq(user.id, id))
+      .returning();
   }
 
   async getPage(id: string) {

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -13,6 +13,19 @@ export class AppController {
   @Get('/users')
   async getUsers() {
     return await this.appService.getUsersList();
+  }
+
+  @Get('/user/:id')
+  async getUserById(@Param('id') id: string) {
+    return await this.appService.getUserById(id);
+  }
+
+  @Post('/user/:id/notion_page')
+  async updateUserNotionPageId(
+    @Param('id') id: string,
+    @Body('notionPageId') notionPageId: string
+  ) {
+    return await this.appService.updateUserNotionPageId(id, notionPageId);
   }
 
   @Get('/block/:id')
