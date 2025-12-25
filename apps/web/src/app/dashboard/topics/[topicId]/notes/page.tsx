@@ -2,8 +2,8 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { LayoutGridIcon, Plus, Text } from 'lucide-react';
 import { getTopicById } from '@/lib/fetchers/topics';
-import NotesGalleryList from './_components/notes-gallery-list';
-import Search from '../_components/search';
+import NotesGalleryList from '@/app/dashboard/topics/[topicId]/_components/notes-gallery-list';
+import Search from '@/app/dashboard/topics/_components/search';
 import AddTopicDialog from '@/app/dashboard/topics/_components/add-topic-dialog';
 
 export default async function TopicNotesPage({

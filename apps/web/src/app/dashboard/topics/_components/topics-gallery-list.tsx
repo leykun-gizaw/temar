@@ -20,7 +20,9 @@ export default async function GalleryList({
       {filteredTopics.map((item) => (
         <Link
           key={item.id}
-          href={`/dashboard/topics/${encodeURIComponent(String(item.id))}`}
+          href={`/dashboard/topics/${encodeURIComponent(
+            String(item.id)
+          )}/notes`}
           className="border rounded-xl flex flex-col hover:bg-accent h-[180px] cursor-pointer"
         >
           <div className="flex-1 border-b text-xs text-muted-foreground whitespace-pre-wrap p-4 bg-muted/50">
