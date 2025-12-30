@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import AddTopicDialog from '@/app/dashboard/topics/_components/add-topic-dialog';
-import { getFilteredTopics } from '@/lib/fetchers/topics';
+import { getFilteredDBTopics, getFilteredTopics } from '@/lib/fetchers/topics';
+import { getLoggedInUser } from '@/lib/fetchers/users';
 
 function excerpt(value: unknown, max = 140) {
   const text =
@@ -14,10 +15,14 @@ export default async function GalleryList({
   query: string;
   type: string;
 }) {
-  const filteredTopics = await getFilteredTopics(query);
+  const currentUser = await getLoggedInUser();
+  const notionTopics = await getFilteredDBTopics(
+    currentUser?.notionPageId as string,
+    query
+  );
   return (
     <>
-      {filteredTopics.map((item) => (
+      {notionTopics.map((item) => (
         <Link
           key={item.id}
           href={`/dashboard/topics/${encodeURIComponent(
@@ -26,10 +31,14 @@ export default async function GalleryList({
           className="border rounded-xl flex flex-col hover:bg-accent h-[180px] cursor-pointer"
         >
           <div className="flex-1 border-b text-xs text-muted-foreground whitespace-pre-wrap p-4 bg-muted/50">
-            {excerpt(item.description)}
+            {excerpt(item.properties.Description.rich_text[0].plain_text)}
           </div>
           <div className="h-1/4 flex items-center pl-4">
-            <span className="text-sm font-semibold">📚 {item.title}</span>
+            <span className="text-sm font-semibold">
+              📚
+              {item.properties.Name.title[0].plain_text}
+              {item.title}
+            </span>
           </div>
         </Link>
       ))}

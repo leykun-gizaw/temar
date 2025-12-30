@@ -43,9 +43,22 @@ export class AppController {
     return await this.appService.getPage(id);
   }
 
+  @Get('/page/:id/get_datasource_list')
+  async getPageDatasourceList(@Param('id') id: string) {
+    return await this.appService.getPageDatasourceList(id);
+  }
+
   @Get('database/:id')
   async getDatabase(@Param('id') id: string) {
     return await this.appService.getDatabase(id);
+  }
+
+  @Post('page/:id/create_page_database')
+  async createPageDatabase(
+    @Param('id') id: string,
+    @Body('title') title: string
+  ) {
+    return await this.appService.createPageDatabase(id, title);
   }
 
   @Get('datasource/:id')

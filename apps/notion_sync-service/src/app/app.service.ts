@@ -76,6 +76,19 @@ export class AppService {
     return await this.notionClient.databases.retrieve({ database_id: id });
   }
 
+  async getPageDatasourceList(id: string) {
+    const pageChildren = (await this.getBlockChildren(id)).results;
+    const pageDB = pageChildren.find(
+      (child) => child.type === 'child_database'
+    );
+    const database = await this.getDatabase(pageDB.id);
+    const databaseDatasourceID = database.data_sources[0].id;
+    const datasourcePagesList = (
+      await this.queryDataSource(databaseDatasourceID)
+    ).results;
+    return datasourcePagesList;
+  }
+
   async getDataSource(id: string) {
     return await this.notionClient.dataSources.retrieve({ data_source_id: id });
   }
@@ -133,6 +146,20 @@ export class AppService {
     );
   }
 
+  async createPageDatabase(parentPageId: string, title: string) {
+    return await this.notionClient.databases.create({
+      parent: { type: 'page_id', page_id: parentPageId },
+      initial_data_source: {
+        properties: {
+          Name: { type: 'title', title: {} },
+          Description: { type: 'rich_text', rich_text: {} },
+        },
+      },
+      title: [{ type: 'text', text: { content: title } }],
+      is_inline: true,
+    });
+  }
+
   private async createPageContent(parentPageId: string, headingTitle: string) {
     // Create heading
     await this.notionClient.blocks.children.append({
@@ -152,16 +179,6 @@ export class AppService {
       ],
     });
     // Create datasource
-    return await this.notionClient.databases.create({
-      parent: { type: 'page_id', page_id: parentPageId },
-      initial_data_source: {
-        properties: {
-          Name: { type: 'title', title: {} },
-          Description: { type: 'rich_text', rich_text: {} },
-        },
-      },
-      title: [{ type: 'text', text: { content: headingTitle } }],
-      is_inline: true,
-    });
+    return await this.createPageDatabase(parentPageId, headingTitle);
   }
 }
