@@ -5,11 +5,8 @@ import { Button } from '@/components/ui/button';
 import Search from './_components/search';
 import GalleryList from './_components/topics-gallery-list';
 
-import { dbClient, user } from '@temar/db-client';
-import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
 import AddMasterPageDialog from '@/app/dashboard/topics/_components/add-master-page-dialog';
+import { getLoggedInUser } from '@/lib/fetchers/users';
 
 export default async function TopicsPage({
   searchParams,
@@ -19,17 +16,9 @@ export default async function TopicsPage({
   const params = await searchParams;
   const query = params?.query || '';
 
-  const sessionUser = (await auth.api.getSession({ headers: await headers() }))
-    ?.user;
-  if (!sessionUser) {
-    return null;
-  }
-  const currentUser = await dbClient
-    .select()
-    .from(user)
-    .where(eq(user.id, sessionUser?.id));
+  const currentUser = await getLoggedInUser();
 
-  if (!currentUser[0]?.notionPageId) {
+  if (!currentUser?.notionPageId) {
     return (
       <div className="col-span-full flex flex-col p-6 h-full m-2">
         <div className="space-y-1 border-b pb-4 mb-6">
