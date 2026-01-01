@@ -1,24 +1,22 @@
 'use server';
 
-import type { Topic } from '@/lib/zod/topic-schema';
-import { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+import { dbClient, topic } from '@temar/db-client';
+import { getLoggedInUser } from './users';
+import { eq } from 'drizzle-orm';
 
 export async function getFilteredDBTopics(pageId: string, query: string) {
-  const notionServiceApiEndpoint = process.env.NOTION_SERVICE_API_ENDPOINT;
+  const loggedInUser = await getLoggedInUser();
 
-  const response = await fetch(
-    `${notionServiceApiEndpoint}/page/${pageId}/get_datasource_list`
+  if (!loggedInUser) return [];
+
+  const dataOriginal = await dbClient
+    .select()
+    .from(topic)
+    .where(eq(topic.userId, loggedInUser?.id));
+
+  const filteredDataOriginal = dataOriginal.filter((topic) =>
+    topic.name.toLowerCase().includes(query.toLowerCase())
   );
-  if (!response.ok) {
-    throw new Error('Failed to fetch topics from Notion service');
-  }
-  const data = await response.json();
-
-  const filteredData = data.filter((topic: PageObjectResponse) =>
-    topic.properties.Name.title[0].plain_text
-      .toLowerCase()
-      .includes(query.toLowerCase())
-  );
-
-  return filteredData;
+  console.log('It workes');
+  return filteredDataOriginal;
 }

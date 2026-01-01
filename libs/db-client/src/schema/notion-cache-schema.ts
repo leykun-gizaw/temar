@@ -5,6 +5,7 @@ import { user } from './auth-schema';
 
 export const topic = pgTable('topic', {
   id: uuid('id').primaryKey(),
+  userId: uuid('user_id').references(() => user.id, { onDelete: 'cascade' }),
   parentPageId: uuid('parent_page_id').references(() => user.notionPageId),
   parentDatabaseId: uuid('parent_database_id').notNull(),
   datasourceId: uuid('datasource_id').notNull(),
@@ -14,7 +15,8 @@ export const topic = pgTable('topic', {
 
 export const note = pgTable('note', {
   id: uuid('id').primaryKey(),
-  topicId: uuid('topic_id').references(() => topic.id),
+  userId: uuid('user_id').references(() => user.id, { onDelete: 'cascade' }),
+  topicId: uuid('topic_id').references(() => topic.id, { onDelete: 'cascade' }),
   parentDatabaseId: uuid('parent_database_id').notNull(),
   datasourceId: uuid('datasource_id').notNull(),
   name: text('name').notNull(),
@@ -23,7 +25,8 @@ export const note = pgTable('note', {
 
 export const chunk = pgTable('chunk', {
   id: uuid().primaryKey(),
-  noteId: uuid('note_id').references(() => note.id),
+  userId: uuid('user_id').references(() => user.id, { onDelete: 'cascade' }),
+  noteId: uuid('note_id').references(() => note.id, { onDelete: 'cascade' }),
   parentDatabaseId: uuid('parent_database_id').notNull(),
   datasourceId: uuid('datasource_id').notNull(),
   name: text('name').notNull(),
