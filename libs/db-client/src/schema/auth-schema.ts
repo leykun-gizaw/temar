@@ -21,7 +21,7 @@ export const user = pgTable('user', {
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
-  notionPageId: uuid(),
+  notionPageId: uuid('notion_page_id').unique(),
 });
 
 export const session = pgTable(

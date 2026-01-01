@@ -15,6 +15,27 @@
       "when": 1766594910646,
       "tag": "0001_spooky_marten_broadcloak",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767265052703,
+      "tag": "0002_busy_microchip",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1767265246161,
+      "tag": "0003_legal_sumo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1767265306139,
+      "tag": "0004_lively_randall",
+      "breakpoints": true
     }
   ]
 }

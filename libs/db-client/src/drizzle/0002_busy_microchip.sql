@@ -1,0 +1,1 @@
+ALTER TABLE "user" RENAME COLUMN "notionPageId" TO "notion_page_id";
