@@ -72,6 +72,17 @@ export class AppService {
     return await this.notionClient.blocks.children.list({ block_id: id });
   }
 
+  async appendBlockChildren(blockId: string) {
+    return await this.notionClient.blocks.children.append({
+      block_id: blockId,
+      children: [
+        {
+          heading_1: { rich_text: [{ text: { content: 'Hello, World 🌍' } }] },
+        },
+      ],
+    });
+  }
+
   async getDatabase(id: string) {
     return await this.notionClient.databases.retrieve({ database_id: id });
   }

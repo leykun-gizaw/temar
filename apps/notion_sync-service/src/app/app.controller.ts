@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -36,6 +36,11 @@ export class AppController {
   @Get('/block/:id/children')
   async getBlockChildren(@Param('id') id: string) {
     return await this.appService.getBlockChildren(id);
+  }
+
+  @Patch('/block/:id/appendChildren')
+  async appendBlockChildren(@Param('id') id: string) {
+    return await this.appService.appendBlockChildren(id);
   }
 
   @Get('/page/:id')
@@ -92,6 +97,6 @@ export class AppController {
     const chunkPage = await this.appService.createChunk(
       chunksDatabase.data_sources[0].id
     );
-    return chunkPage;
+    return { topicPage, notePage, chunkPage };
   }
 }
