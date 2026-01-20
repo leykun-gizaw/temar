@@ -2,21 +2,33 @@
 
 import { dbClient, topic } from '@temar/db-client';
 import { getLoggedInUser } from './users';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
-export async function getFilteredDBTopics(pageId: string, query: string) {
+export async function getFilteredTopics(pageId: string, query: string) {
   const loggedInUser = await getLoggedInUser();
 
   if (!loggedInUser) return [];
 
-  const dataOriginal = await dbClient
+  const data = await dbClient
     .select()
     .from(topic)
     .where(eq(topic.userId, loggedInUser?.id));
 
-  const filteredDataOriginal = dataOriginal.filter((topic) =>
+  const filteredData = data.filter((topic) =>
     topic.name.toLowerCase().includes(query.toLowerCase())
   );
-  console.log('It workes');
-  return filteredDataOriginal;
+  return filteredData;
+}
+
+export async function getTopicById(topicId: string) {
+  const loggedInUser = await getLoggedInUser();
+
+  if (!loggedInUser) return null;
+
+  return (
+    await dbClient
+      .select()
+      .from(topic)
+      .where(and(eq(topic.userId, loggedInUser.id), eq(topic.id, topicId)))
+  )[0];
 }

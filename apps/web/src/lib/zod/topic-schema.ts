@@ -7,11 +7,6 @@ export const TopicSchema = z.object({
     .string()
     .min(1, { error: 'Please provide a description' })
     .max(500),
-  slug: z
-    .string()
-    .trim()
-    .min(1, { error: 'Slug is required.' })
-    .max(100, { error: 'Slug must be at most 100 characters.' }),
   createdAt: z.iso.datetime({ offset: true }),
   updatedAt: z.iso.datetime({ offset: true }),
   userId: z.uuid(),

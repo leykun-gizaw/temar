@@ -1,9 +1,8 @@
 import Link from 'next/link';
 import AddTopicDialog from '@/app/dashboard/topics/_components/add-topic-dialog';
-import { getFilteredDBTopics } from '@/lib/fetchers/topics';
+import { getFilteredTopics } from '@/lib/fetchers/topics';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import NotionCard from './notion-cards';
-import { Topic } from '@/lib/zod/topic-schema';
 
 export default async function GalleryList({
   query,
@@ -12,7 +11,7 @@ export default async function GalleryList({
   type: string;
 }) {
   const currentUser = await getLoggedInUser();
-  const notionTopics: Topic[] = await getFilteredDBTopics(
+  const notionTopics = await getFilteredTopics(
     currentUser?.notionPageId as string,
     query
   );

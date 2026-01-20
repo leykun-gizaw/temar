@@ -7,10 +7,8 @@ import { dbClient, user, topic, note, chunk } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { eq } from 'drizzle-orm';
 
-import {
-  AppendBlockChildrenResponse,
-  CreatePageResponse,
-} from '@notionhq/client/build/src/api-endpoints';
+import { NotionPage } from '@temar/shared-types';
+import { AppendBlockChildrenResponse } from '@notionhq/client/build/src/api-endpoints';
 
 export async function createMasterPage(
   state: MasterPageErrorState | undefined,
@@ -48,9 +46,9 @@ export async function createMasterPage(
       throw new Error('Failed to update Notion master page ID');
     } else {
       const data: {
-        topicPage: CreatePageResponse;
-        notePage: CreatePageResponse;
-        chunkPage: CreatePageResponse;
+        topicPage: NotionPage;
+        notePage: NotionPage;
+        chunkPage: NotionPage;
       } = await response.json();
       const topicPage = data.topicPage;
       const notePage = data.notePage;
@@ -67,6 +65,7 @@ export async function createMasterPage(
           .update(user)
           .set({ notionPageId })
           .where(eq(user.id, loggedInUser.id));
+
         await tx.insert(topic).values({
           id: topicPage.id,
           parentPageId: notionPageId,
@@ -74,6 +73,7 @@ export async function createMasterPage(
           datasourceId: topicPage.parent.data_source_id,
           name: topicPage.properties.Name.title[0].plain_text,
           description: topicPage.properties.Description.rich_text[0].plain_text,
+          userId: loggedInUser.id,
         });
 
         await tx.insert(note).values({
@@ -83,6 +83,7 @@ export async function createMasterPage(
           datasourceId: notePage.parent.data_source_id,
           name: notePage.properties.Name.title[0].plain_text,
           description: notePage.properties.Description.rich_text[0].plain_text,
+          userId: loggedInUser.id,
         });
 
         await tx.insert(chunk).values({
@@ -93,16 +94,22 @@ export async function createMasterPage(
           name: chunkPage.properties.Name.title[0].plain_text,
           description: chunkPage.properties.Description.rich_text[0].plain_text,
           contentJson: chunkContent.results,
+          userId: loggedInUser.id,
         });
       });
       revalidatePath('dashboard/topics');
     }
 
     return { errors: {}, message: 'Master page created successfully.' };
-  } catch {
+  } catch (err) {
+    // Log the error for debugging so we can see why the transaction rolled back
+    // (keeps behavior safe for production while surfacing useful info during dev)
+    console.error('createMasterPage error:', err);
     return {
       errors: {},
-      message: 'Database Error: Failed to create master page.',
+      message: `Database Error: Failed to create master page. ${
+        err instanceof Error ? err.message : String(err)
+      }`,
     };
   }
 }

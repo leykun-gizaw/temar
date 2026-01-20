@@ -14,7 +14,7 @@ export async function generateMetadata({
       description: 'The selected topic could not be found.',
     };
   }
-  return { title: `${topic.title} — Notes`, description: topic.description };
+  return { title: `${topic.name} — Notes`, description: topic.description };
 }
 
 export default function TopicNotesLayout({

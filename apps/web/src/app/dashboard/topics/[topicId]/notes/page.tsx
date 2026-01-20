@@ -19,7 +19,7 @@ export default async function TopicNotesPage({
   const query = queryParams?.query || '';
 
   const topic = await getTopicById(topicId);
-  const TopicTitle = topic?.title;
+  const TopicTitle = topic?.name;
 
   return (
     <div className="h-full p-6 space-y-6">
