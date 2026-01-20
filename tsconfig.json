@@ -23,7 +23,12 @@
     },
     {
       "path": "./libs/db-client"
+    },
+    {
+      "path": "./libs/shared-types"
     }
   ],
-  "compilerOptions": { "strict": true }
+  "compilerOptions": {
+    "strict": true
+  }
 }
