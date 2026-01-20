@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Client } from '@notionhq/client';
+import { Client, isFullBlock, isFullDatabase } from '@notionhq/client';
 import { dbClient, user } from '@temar/db-client';
 import { eq } from 'drizzle-orm';
 
@@ -89,10 +89,15 @@ export class AppService {
 
   async getPageDatasourceList(id: string) {
     const pageChildren = (await this.getBlockChildren(id)).results;
-    const pageDB = pageChildren.find(
-      (child) => child.type === 'child_database'
-    );
+    const pageDB = pageChildren.find((child) => {
+      if (!isFullBlock(child)) return false;
+      return child.type === 'child_database';
+    });
+
+    if (!pageDB) return null;
     const database = await this.getDatabase(pageDB.id);
+
+    if (!isFullDatabase(database)) return null;
     const databaseDatasourceID = database.data_sources[0].id;
     const datasourcePagesList = (
       await this.queryDataSource(databaseDatasourceID)
@@ -109,7 +114,6 @@ export class AppService {
   }
 
   async createTopicsPage(parentPageId: string) {
-    // Update page title
     await this.notionClient.pages.update({
       page_id: parentPageId,
       properties: {
@@ -172,7 +176,6 @@ export class AppService {
   }
 
   private async createPageContent(parentPageId: string, headingTitle: string) {
-    // Create heading
     await this.notionClient.blocks.children.append({
       block_id: parentPageId,
       children: [
@@ -189,7 +192,6 @@ export class AppService {
         },
       ],
     });
-    // Create datasource
     return await this.createPageDatabase(parentPageId, headingTitle);
   }
 }

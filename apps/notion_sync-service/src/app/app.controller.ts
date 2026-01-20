@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Post, Body, Patch } from '@nestjs/common';
 import { AppService } from './app.service';
+import { isFullDatabase } from '@notionhq/client';
 
 @Controller()
 export class AppController {
@@ -84,16 +85,20 @@ export class AppController {
   @Post('page/:id/prep_notion')
   async createTopicsPage(@Param('id') id: string) {
     const topicsDatabase = await this.appService.createTopicsPage(id);
+
+    if (!isFullDatabase(topicsDatabase)) return null;
     const topicPage = await this.appService.createTopic(
       topicsDatabase.data_sources[0].id
     );
 
     const notesDatabase = await this.appService.createNotesPage(topicPage.id);
+    if (!isFullDatabase(notesDatabase)) return null;
     const notePage = await this.appService.createNote(
       notesDatabase.data_sources[0].id
     );
 
     const chunksDatabase = await this.appService.createChunksPage(notePage.id);
+    if (!isFullDatabase(chunksDatabase)) return null;
     const chunkPage = await this.appService.createChunk(
       chunksDatabase.data_sources[0].id
     );
