@@ -11,6 +11,7 @@ services:
       interval: 30s
       timeout: 30s
       retries: 5
+      start_period: 10s
     ports:
       - "${DATABASE_PORT}:5432"
     volumes:
@@ -22,7 +23,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: builder
+      target: source
     restart: "no"
     env_file:
       - .env
@@ -64,8 +65,6 @@ services:
       dockerfile: Dockerfile
       target: nginx
     restart: unless-stopped
-    ports:
-      - "5173:80"
     depends_on:
       - web
     networks:
@@ -76,6 +75,21 @@ services:
       - "traefik.http.routers.nginx.entrypoints=websecure"
       - "traefik.http.routers.nginx.tls.certresolver=letsencrypt"
       - "traefik.http.services.nginx.loadbalancer.server.port=80"
+
+  notion_sync-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: notion_sync-service
+    restart: no
+    env_file:
+      - .env
+    ports:
+      - 3333:3333
+    depends_on:
+      - db
+    networks:
+      - dokploy-network
 
 volumes:
   data:
