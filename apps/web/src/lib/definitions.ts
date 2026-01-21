@@ -5,3 +5,10 @@ export type ErrorState = {
   };
   message?: string | null;
 };
+
+export type MasterPageErrorState = {
+  errors?: {
+    notionMasterPageId?: string[];
+  };
+  message?: string | null;
+};

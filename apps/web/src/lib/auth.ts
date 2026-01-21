@@ -12,6 +12,15 @@ export const auth = betterAuth({
     provider: 'pg',
     schema: { session, user, verification, account },
   }),
+  user: {
+    additionalFields: {
+      notionPageId: {
+        type: 'string',
+        required: false,
+        input: true,
+      },
+    },
+  },
   advanced: {
     database: { generateId: 'uuid' },
   },

@@ -18,7 +18,8 @@
     "target": "es2022",
     "baseUrl": ".",
     "paths": {
-      "@temar/db-client": ["libs/db-client/src/index.ts"]
+      "@temar/db-client": ["libs/db-client/src/index.ts"],
+      "@temar/shared-types": ["libs/shared-types/src/index.ts"]
     }
   }
 }

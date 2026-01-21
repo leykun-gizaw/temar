@@ -1,19 +1,45 @@
 import { Injectable } from '@nestjs/common';
-import { Client } from '@notionhq/client';
+import { Client, isFullBlock, isFullDatabase } from '@notionhq/client';
+import { dbClient, user } from '@temar/db-client';
+import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class AppService {
   private notionClient: Client;
+  private dbClient: typeof dbClient;
 
   constructor() {
     this.notionClient = new Client({
       auth: process.env.NOTION_INTEGRATION_SECRET,
     });
+    this.dbClient = dbClient;
   }
 
-  getData(): { message: string } {
+  async getGreeting() {
     return { message: 'Hello API' };
   }
+
+  async getUsersList() {
+    return await this.dbClient.select().from(user);
+  }
+
+  async getUserById(id: string) {
+    return await this.dbClient
+      .select()
+      .from(user)
+      .where(eq(user.id, id))
+      .limit(1)
+      .then((rows) => rows[0]);
+  }
+
+  async updateUserNotionPageId(id: string, notionPageId: string) {
+    return await this.dbClient
+      .update(user)
+      .set({ notionPageId })
+      .where(eq(user.id, id))
+      .returning();
+  }
+
   async getPage(id: string) {
     return await this.notionClient.pages.retrieve({ page_id: id });
   }
@@ -46,8 +72,37 @@ export class AppService {
     return await this.notionClient.blocks.children.list({ block_id: id });
   }
 
+  async appendBlockChildren(blockId: string) {
+    return await this.notionClient.blocks.children.append({
+      block_id: blockId,
+      children: [
+        {
+          heading_1: { rich_text: [{ text: { content: 'Hello, World 🌍' } }] },
+        },
+      ],
+    });
+  }
+
   async getDatabase(id: string) {
     return await this.notionClient.databases.retrieve({ database_id: id });
+  }
+
+  async getPageDatasourceList(id: string) {
+    const pageChildren = (await this.getBlockChildren(id)).results;
+    const pageDB = pageChildren.find((child) => {
+      if (!isFullBlock(child)) return false;
+      return child.type === 'child_database';
+    });
+
+    if (!pageDB) return null;
+    const database = await this.getDatabase(pageDB.id);
+
+    if (!isFullDatabase(database)) return null;
+    const databaseDatasourceID = database.data_sources[0].id;
+    const datasourcePagesList = (
+      await this.queryDataSource(databaseDatasourceID)
+    ).results;
+    return datasourcePagesList;
   }
 
   async getDataSource(id: string) {
@@ -59,7 +114,6 @@ export class AppService {
   }
 
   async createTopicsPage(parentPageId: string) {
-    // Update page title
     await this.notionClient.pages.update({
       page_id: parentPageId,
       properties: {
@@ -107,8 +161,21 @@ export class AppService {
     );
   }
 
+  async createPageDatabase(parentPageId: string, title: string) {
+    return await this.notionClient.databases.create({
+      parent: { type: 'page_id', page_id: parentPageId },
+      initial_data_source: {
+        properties: {
+          Name: { type: 'title', title: {} },
+          Description: { type: 'rich_text', rich_text: {} },
+        },
+      },
+      title: [{ type: 'text', text: { content: title } }],
+      is_inline: true,
+    });
+  }
+
   private async createPageContent(parentPageId: string, headingTitle: string) {
-    // Create heading
     await this.notionClient.blocks.children.append({
       block_id: parentPageId,
       children: [
@@ -125,17 +192,6 @@ export class AppService {
         },
       ],
     });
-    // Create datasource
-    return await this.notionClient.databases.create({
-      parent: { type: 'page_id', page_id: parentPageId },
-      initial_data_source: {
-        properties: {
-          Name: { type: 'title', title: {} },
-          Description: { type: 'rich_text', rich_text: {} },
-        },
-      },
-      title: [{ type: 'text', text: { content: headingTitle } }],
-      is_inline: true,
-    });
+    return await this.createPageDatabase(parentPageId, headingTitle);
   }
 }

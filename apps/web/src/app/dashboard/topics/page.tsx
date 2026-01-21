@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import Search from './_components/search';
 import GalleryList from './_components/topics-gallery-list';
 
+import AddMasterPageDialog from '@/app/dashboard/topics/_components/add-master-page-dialog';
+import { getLoggedInUser } from '@/lib/fetchers/users';
+
 export default async function TopicsPage({
   searchParams,
 }: {
@@ -12,6 +15,40 @@ export default async function TopicsPage({
 }) {
   const params = await searchParams;
   const query = params?.query || '';
+
+  const currentUser = await getLoggedInUser();
+
+  if (!currentUser?.notionPageId) {
+    return (
+      <div className="col-span-full flex flex-col p-6 h-full m-2">
+        <div className="space-y-1 border-b pb-4 mb-6">
+          <span className="text-5xl">📚</span>
+          <h1 className="text-2xl font-semibold mb-4">Topics</h1>
+        </div>
+        <div className="flex h-1/2 items-center justify-center">
+          <div className="border shadow max-w-xl w-full h-fit bg-muted/5 rounded-lg p-6 text-center space-y-8">
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold">
+                Connect a Notion master page
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Add a master Notion page to start syncing topics and notes to
+                your workspace.
+              </p>
+            </div>
+            <AddMasterPageDialog
+              trigger={
+                <Button size="sm">
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  Add master page
+                </Button>
+              }
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full p-6 space-y-6">

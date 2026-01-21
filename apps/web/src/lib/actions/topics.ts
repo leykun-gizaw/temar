@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache';
 import { TopicInputSchema } from '../zod/topic-schema';
-// import { dbClient } from '@temar/db-client';
 import { ErrorState } from '../definitions';
 
 export async function createTopic(

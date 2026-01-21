@@ -1,6 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
     "jsx": "preserve",
     "noEmit": true,
     "emitDeclarationOnly": false,
@@ -17,8 +21,9 @@
       }
     ],
     "paths": {
-      "@/*": ["apps/web/src/*"],
-      "@temar/db-client": ["libs/db-client/src/index.ts"]
+      "@/*": ["../../apps/web/src/*"],
+      "@temar/db-client": ["../../libs/db-client/src/index.ts"],
+      "@temar/shared-types": ["../../libs/shared-types/src/index.ts"]
     },
     "types": ["jest", "node"],
     "outDir": "dist",
@@ -47,6 +52,9 @@
     "eslint.config.mjs"
   ],
   "references": [
+    {
+      "path": "../../libs/shared-types"
+    },
     {
       "path": "../../libs/db-client"
     }

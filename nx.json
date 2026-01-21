@@ -42,7 +42,8 @@
       "exclude": [
         "libs/data-access/notes/*",
         "libs/data-access/generation/*",
-        "libs/data-access/scheduler/*"
+        "libs/data-access/scheduler/*",
+        "libs/shared-types/*"
       ]
     },
     {
@@ -93,7 +94,8 @@
       "include": [
         "libs/data-access/notes/*",
         "libs/data-access/generation/*",
-        "libs/data-access/scheduler/*"
+        "libs/data-access/scheduler/*",
+        "libs/shared-types/*"
       ],
       "options": {
         "typecheck": {

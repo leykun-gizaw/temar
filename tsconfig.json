@@ -1,17 +1,34 @@
 {
-    "extends": "./tsconfig.base.json",
-    "compileOnSave": false,
-    "files": [],
-    "references": [
-        { "path": "./apps/web-e2e" },
-        { "path": "./apps/web" },
-        { "path": "./apps/api-e2e" },
-        { "path": "./apps/api" },
-        { "path": "./libs/types" },
-        { "path": "./libs/utils" },
-        { "path": "./apps/notion_sync-service-e2e" },
-        { "path": "./apps/notion_sync-service" },
-        { "path": "./libs/db-client" }
-    ],
-    "compilerOptions": { "strict": true }
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/web-e2e"
+    },
+    {
+      "path": "./apps/web"
+    },
+    {
+      "path": "./apps/api-e2e"
+    },
+    {
+      "path": "./apps/api"
+    },
+    {
+      "path": "./apps/notion_sync-service-e2e"
+    },
+    {
+      "path": "./apps/notion_sync-service"
+    },
+    {
+      "path": "./libs/db-client"
+    },
+    {
+      "path": "./libs/shared-types"
+    }
+  ],
+  "compilerOptions": {
+    "strict": true
+  }
 }

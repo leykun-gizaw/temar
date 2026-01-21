@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD CONSTRAINT "user_notion_page_id_unique" UNIQUE("notion_page_id");
