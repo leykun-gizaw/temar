@@ -1,0 +1,20 @@
+{$DOMAIN:localhost} {
+	# Next.js web app
+	reverse_proxy web:5173
+
+	# Encode responses with gzip/zstd
+	encode zstd gzip
+
+	# Security headers
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}
+
+# Notion sync service (internal API, not exposed publicly by default)
+# Uncomment below if you need to expose it externally:
+# api.{$DOMAIN:localhost} {
+# 	reverse_proxy notion_sync-service:3333
+# }
