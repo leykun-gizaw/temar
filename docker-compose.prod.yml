@@ -1,0 +1,81 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 10s
+    ports:
+      - "${DATABASE_PORT}:5432"
+    volumes:
+      - data:/var/lib/postgresql/data
+    networks:
+      - temar-network
+
+  migrate:
+    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-migrate:${IMAGE_TAG:-latest}
+    restart: "no"
+    env_file:
+      - .env
+    command: >
+      sh -c "pnpm nx run db-client:generate && pnpm nx run db-client:migrate"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - temar-network
+
+  web:
+    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - temar-network
+
+  notion_sync-service:
+    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-notion-sync:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - temar-network
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - notion_sync-service
+    networks:
+      - temar-network
+
+volumes:
+  data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  temar-network:
+    driver: bridge

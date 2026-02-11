@@ -14,7 +14,10 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml nx.json ./
 COPY apps/web/package.json apps/web/
+COPY apps/api/package.json apps/api/
+COPY apps/notion_sync-service/package.json apps/notion_sync-service/
 COPY libs/db-client/package.json libs/db-client/
+COPY libs/shared-types/package.json libs/shared-types/
 RUN pnpm install --frozen-lockfile
 
 # ----------------------------------------------
@@ -36,21 +39,12 @@ RUN NX_DAEMON=false pnpm nx build notion_sync-service --prod
 
 # ----------------------------------------------
 
-# STAGE 4.25: NestJS Production Dependencies
+# STAGE 4.5: NestJS Production Dependencies
 FROM base AS notion-prod-deps
 WORKDIR /app
 COPY --from=builder /app/dist/apps/notion_sync-service/package.json ./
 COPY --from=builder /app/dist/apps/notion_sync-service/pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile
-
-# ----------------------------------------------
-
-# STAGE 4.5: NGINX CDN Setup
-# Build the NGINX image to serve static assets
-FROM nginx:alpine AS nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /app/dist/apps/web/public /var/www/html
-COPY --from=builder /app/dist/apps/web/.next/static /var/www/html/_next/static
 
 # ----------------------------------------------
 
