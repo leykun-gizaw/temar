@@ -23,12 +23,21 @@ export function SiteHeader() {
   const pathname = usePathname() ?? '/';
   const segments = pathname.split('/').filter(Boolean);
 
-  const items = segments.map((seg, idx) => {
-    const href = '/' + segments.slice(0, idx + 1).join('/');
-    const label = seg.length > 9 ? seg.slice(0, 4) + '...' : seg;
-    const isLast = idx === segments.length - 1;
-    return { href, label, isLast };
-  });
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  const items: { href: string; label: string; isLast: boolean }[] = [];
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    if (seg === 'dashboard' || UUID_RE.test(seg)) continue;
+
+    const href = '/' + segments.slice(0, i + 1).join('/');
+    const label = seg.charAt(0).toUpperCase() + seg.slice(1);
+    items.push({ href, label, isLast: false });
+  }
+  if (items.length > 0) {
+    items[items.length - 1].isLast = true;
+  }
 
   const router = useRouter();
 
