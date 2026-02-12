@@ -1,7 +1,8 @@
-import { sharedTypes } from './shared-types.js';
+import type { NotionPage } from './shared-types.js';
 
 describe('sharedTypes', () => {
-  it('should work', () => {
-    expect(sharedTypes()).toEqual('shared-types');
+  it('should export NotionPage type', () => {
+    const page: Partial<NotionPage> = {};
+    expect(page).toBeDefined();
   });
 });
