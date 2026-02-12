@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import AddNoteDialog from '@/components/add-note-dialog';
 import { getFilteredNotes } from '@/lib/fetchers/notes';
 
@@ -21,17 +22,20 @@ export default async function NotesGalleryList({
   return (
     <>
       {filteredNotes.map((note) => (
-        <div
+        <Link
           key={note.id}
+          href={`/dashboard/topics/${topicId}/notes/${encodeURIComponent(
+            note.id
+          )}/chunks`}
           className="border rounded-xl flex flex-col hover:bg-accent h-[180px] cursor-pointer"
         >
           <div className="flex-1 border-b text-xs text-muted-foreground whitespace-pre-wrap p-4 bg-muted/50">
             {excerpt(note.description)}
           </div>
           <div className="h-1/4 flex items-center pl-4">
-            <span className="text-sm font-semibold">📘 {note.title}</span>
+            <span className="text-sm font-semibold">📘 {note.name}</span>
           </div>
-        </div>
+        </Link>
       ))}
 
       <div className="border border-dashed rounded-xl flex flex-col h-[180px]">
