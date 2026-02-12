@@ -6,13 +6,11 @@ import { eq } from 'drizzle-orm';
 @Injectable()
 export class AppService {
   private notionClient: Client;
-  private dbClient: typeof dbClient;
 
   constructor() {
     this.notionClient = new Client({
       auth: process.env.NOTION_INTEGRATION_SECRET,
     });
-    this.dbClient = dbClient;
   }
 
   async getGreeting() {
@@ -20,11 +18,11 @@ export class AppService {
   }
 
   async getUsersList() {
-    return await this.dbClient.select().from(user);
+    return await dbClient.select().from(user);
   }
 
   async getUserById(id: string) {
-    return await this.dbClient
+    return await dbClient
       .select()
       .from(user)
       .where(eq(user.id, id))
@@ -33,7 +31,7 @@ export class AppService {
   }
 
   async updateUserNotionPageId(id: string, notionPageId: string) {
-    return await this.dbClient
+    return await dbClient
       .update(user)
       .set({ notionPageId })
       .where(eq(user.id, id))
@@ -98,6 +96,7 @@ export class AppService {
     const database = await this.getDatabase(pageDB.id);
 
     if (!isFullDatabase(database)) return null;
+    if (!database.data_sources?.length) return null;
     const databaseDatasourceID = database.data_sources[0].id;
     const datasourcePagesList = (
       await this.queryDataSource(databaseDatasourceID)

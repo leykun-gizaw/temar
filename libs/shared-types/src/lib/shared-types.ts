@@ -7,12 +7,14 @@ type DescriptionProperty = Extract<
   NotionProperties[string],
   { type: 'rich_text' }
 >;
-type ParentProperty = Extract<NotionParent, { type: 'data_source_id' }>;
+type DataSourceParent = Extract<NotionParent, { type: 'data_source_id' }>;
+type DatabaseParent = Extract<NotionParent, { type: 'database_id' }>;
+type PageParent = Extract<NotionParent, { type: 'page_id' }>;
 
 export interface NotionPage extends PageObjectResponse {
   properties: {
     Name: NameProperty;
     Description: DescriptionProperty;
   };
-  parent: ParentProperty;
+  parent: DataSourceParent | DatabaseParent | PageParent;
 }

@@ -43,8 +43,8 @@ RUN NX_DAEMON=false pnpm nx build notion_sync-service --prod
 FROM base AS notion-prod-deps
 WORKDIR /app
 COPY --from=builder /app/dist/apps/notion_sync-service/package.json ./
-COPY --from=builder /app/dist/apps/notion_sync-service/pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
+COPY --from=source /app/pnpm-lock.yaml ./
+RUN pnpm install --prod
 
 # ----------------------------------------------
 
@@ -82,8 +82,8 @@ CMD ["node", "server.js"]
 FROM base AS notion_sync-service
 WORKDIR /app
 ENV NODE_ENV=production
-RUN addgroup --system --gid 1001 nestjs
-RUN adduser --system --uid 1001 nestuser
+RUN addgroup --system --gid 1002 nestjs
+RUN adduser --system --uid 1002 nestuser
 
 COPY --from=builder --chown=nestuser:nestjs /app/dist/apps/notion_sync-service ./
 COPY --from=notion-prod-deps --chown=nestuser:nestjs /app/node_modules ./node_modules
