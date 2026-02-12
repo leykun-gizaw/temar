@@ -1,11 +1,12 @@
 'use client';
 
-export default function NotionCard({ item }: { item: any }) {
+import { topic } from '@temar/db-client';
+
+type Topic = typeof topic.$inferSelect;
+
+export default function NotionCard({ item }: { item: Topic }) {
   return (
-    <div
-      className="flex flex-col justify-between h-full"
-      onMouseEnter={() => console.log('Mouse inside')}
-    >
+    <div className="flex flex-col justify-between h-full">
       <div className="border-b flex-1 text-xs text-muted-foreground whitespace-pre-wrap p-4 bg-muted/50">
         {item.description}
       </div>
