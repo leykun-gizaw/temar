@@ -1,4 +1,13 @@
-import { Controller, Get, Param, Post, Body, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Body,
+  Patch,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { isFullDatabase } from '@notionhq/client';
 
@@ -86,19 +95,31 @@ export class AppController {
   async createTopicsPage(@Param('id') id: string) {
     const topicsDatabase = await this.appService.createTopicsPage(id);
 
-    if (!isFullDatabase(topicsDatabase)) return null;
+    if (!isFullDatabase(topicsDatabase))
+      throw new HttpException(
+        'Failed to create topics database',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     const topicPage = await this.appService.createTopic(
       topicsDatabase.data_sources[0].id
     );
 
     const notesDatabase = await this.appService.createNotesPage(topicPage.id);
-    if (!isFullDatabase(notesDatabase)) return null;
+    if (!isFullDatabase(notesDatabase))
+      throw new HttpException(
+        'Failed to create notes database',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     const notePage = await this.appService.createNote(
       notesDatabase.data_sources[0].id
     );
 
     const chunksDatabase = await this.appService.createChunksPage(notePage.id);
-    if (!isFullDatabase(chunksDatabase)) return null;
+    if (!isFullDatabase(chunksDatabase))
+      throw new HttpException(
+        'Failed to create chunks database',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     const chunkPage = await this.appService.createChunk(
       chunksDatabase.data_sources[0].id
     );

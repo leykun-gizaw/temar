@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import AddTopicDialog from '@/app/dashboard/topics/_components/add-topic-dialog';
 import { getFilteredTopics } from '@/lib/fetchers/topics';
-import { getLoggedInUser } from '@/lib/fetchers/users';
 import NotionCard from './notion-cards';
 
 export default async function GalleryList({
@@ -10,11 +9,7 @@ export default async function GalleryList({
   query: string;
   type: string;
 }) {
-  const currentUser = await getLoggedInUser();
-  const notionTopics = await getFilteredTopics(
-    currentUser?.notionPageId as string,
-    query
-  );
+  const notionTopics = await getFilteredTopics(query);
   return (
     <>
       {notionTopics.map((item) => (

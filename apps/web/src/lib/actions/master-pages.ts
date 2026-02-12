@@ -50,13 +50,18 @@ export async function createMasterPage(
         notePage: NotionPage;
         chunkPage: NotionPage;
       } = await response.json();
-      const topicPage = data.topicPage;
-      const notePage = data.notePage;
-      const chunkPage = data.chunkPage;
+      const { topicPage, notePage, chunkPage } = data;
+
+      if (!topicPage || !notePage || !chunkPage) {
+        throw new Error('Notion prep returned incomplete data');
+      }
 
       const chunkResponse = await fetch(
         `${notionServiceApiEndpoint}/block/${chunkPage.id}/children`
       );
+      if (!chunkResponse.ok) {
+        throw new Error('Failed to fetch chunk block children');
+      }
       const chunkContent: AppendBlockChildrenResponse =
         await chunkResponse.json();
 
@@ -71,8 +76,9 @@ export async function createMasterPage(
           parentPageId: notionPageId,
           parentDatabaseId: topicPage.parent.database_id,
           datasourceId: topicPage.parent.data_source_id,
-          name: topicPage.properties.Name.title[0].plain_text,
-          description: topicPage.properties.Description.rich_text[0].plain_text,
+          name: topicPage.properties.Name.title[0]?.plain_text ?? '',
+          description:
+            topicPage.properties.Description.rich_text[0]?.plain_text ?? '',
           userId: loggedInUser.id,
         });
 
@@ -81,8 +87,9 @@ export async function createMasterPage(
           topicId: topicPage.id,
           parentDatabaseId: notePage.parent.database_id,
           datasourceId: notePage.parent.data_source_id,
-          name: notePage.properties.Name.title[0].plain_text,
-          description: notePage.properties.Description.rich_text[0].plain_text,
+          name: notePage.properties.Name.title[0]?.plain_text ?? '',
+          description:
+            notePage.properties.Description.rich_text[0]?.plain_text ?? '',
           userId: loggedInUser.id,
         });
 
@@ -91,13 +98,14 @@ export async function createMasterPage(
           noteId: notePage.id,
           parentDatabaseId: chunkPage.parent.database_id,
           datasourceId: chunkPage.parent.data_source_id,
-          name: chunkPage.properties.Name.title[0].plain_text,
-          description: chunkPage.properties.Description.rich_text[0].plain_text,
+          name: chunkPage.properties.Name.title[0]?.plain_text ?? '',
+          description:
+            chunkPage.properties.Description.rich_text[0]?.plain_text ?? '',
           contentJson: chunkContent.results,
           userId: loggedInUser.id,
         });
       });
-      revalidatePath('dashboard/topics');
+      revalidatePath('/dashboard/topics');
     }
 
     return { errors: {}, message: 'Master page created successfully.' };
