@@ -28,6 +28,7 @@ export async function createMasterPage(
     const notionPageId = payload.get('notionMasterPageId') as string;
     const loggedInUser = await getLoggedInUser();
     const notionServiceApiEndpoint = process.env.NOTION_SERVICE_API_ENDPOINT;
+    const notionSyncApiKey = process.env.NOTION_SYNC_API_KEY;
 
     if (!loggedInUser) throw Error('User not logged in');
     if (!notionPageId) throw Error('Page ID not found');
@@ -37,6 +38,7 @@ export async function createMasterPage(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(notionSyncApiKey && { 'x-api-key': notionSyncApiKey }),
         },
         body: JSON.stringify({ notionPageId }),
       }
@@ -57,13 +59,33 @@ export async function createMasterPage(
       }
 
       const chunkResponse = await fetch(
-        `${notionServiceApiEndpoint}/block/${chunkPage.id}/children`
+        `${notionServiceApiEndpoint}/block/${chunkPage.id}/children`,
+        {
+          headers: {
+            ...(notionSyncApiKey && { 'x-api-key': notionSyncApiKey }),
+          },
+        }
       );
       if (!chunkResponse.ok) {
         throw new Error('Failed to fetch chunk block children');
       }
       const chunkContent: AppendBlockChildrenResponse =
         await chunkResponse.json();
+
+      const getParentIds = (page: NotionPage) => {
+        const p = page.parent;
+        if (p.type === 'data_source_id') {
+          return { databaseId: p.database_id, datasourceId: p.data_source_id };
+        }
+        if (p.type === 'database_id') {
+          return { databaseId: p.database_id, datasourceId: '' };
+        }
+        throw new Error(`Unexpected parent type: ${p.type}`);
+      };
+
+      const topicParent = getParentIds(topicPage);
+      const noteParent = getParentIds(notePage);
+      const chunkParent = getParentIds(chunkPage);
 
       await dbClient.transaction(async (tx) => {
         await tx
@@ -74,8 +96,8 @@ export async function createMasterPage(
         await tx.insert(topic).values({
           id: topicPage.id,
           parentPageId: notionPageId,
-          parentDatabaseId: topicPage.parent.database_id,
-          datasourceId: topicPage.parent.data_source_id,
+          parentDatabaseId: topicParent.databaseId,
+          datasourceId: topicParent.datasourceId,
           name: topicPage.properties.Name.title[0]?.plain_text ?? '',
           description:
             topicPage.properties.Description.rich_text[0]?.plain_text ?? '',
@@ -85,8 +107,8 @@ export async function createMasterPage(
         await tx.insert(note).values({
           id: notePage.id,
           topicId: topicPage.id,
-          parentDatabaseId: notePage.parent.database_id,
-          datasourceId: notePage.parent.data_source_id,
+          parentDatabaseId: noteParent.databaseId,
+          datasourceId: noteParent.datasourceId,
           name: notePage.properties.Name.title[0]?.plain_text ?? '',
           description:
             notePage.properties.Description.rich_text[0]?.plain_text ?? '',
@@ -96,8 +118,8 @@ export async function createMasterPage(
         await tx.insert(chunk).values({
           id: chunkPage.id,
           noteId: notePage.id,
-          parentDatabaseId: chunkPage.parent.database_id,
-          datasourceId: chunkPage.parent.data_source_id,
+          parentDatabaseId: chunkParent.databaseId,
+          datasourceId: chunkParent.datasourceId,
           name: chunkPage.properties.Name.title[0]?.plain_text ?? '',
           description:
             chunkPage.properties.Description.rich_text[0]?.plain_text ?? '',

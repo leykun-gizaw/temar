@@ -100,6 +100,11 @@ export class AppController {
         'Failed to create topics database',
         HttpStatus.INTERNAL_SERVER_ERROR
       );
+    if (!topicsDatabase.data_sources?.length)
+      throw new HttpException(
+        'Topics database has no data sources',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     const topicPage = await this.appService.createTopic(
       topicsDatabase.data_sources[0].id
     );
@@ -110,6 +115,11 @@ export class AppController {
         'Failed to create notes database',
         HttpStatus.INTERNAL_SERVER_ERROR
       );
+    if (!notesDatabase.data_sources?.length)
+      throw new HttpException(
+        'Notes database has no data sources',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     const notePage = await this.appService.createNote(
       notesDatabase.data_sources[0].id
     );
@@ -118,6 +128,11 @@ export class AppController {
     if (!isFullDatabase(chunksDatabase))
       throw new HttpException(
         'Failed to create chunks database',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    if (!chunksDatabase.data_sources?.length)
+      throw new HttpException(
+        'Chunks database has no data sources',
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     const chunkPage = await this.appService.createChunk(

@@ -7,17 +7,15 @@
   "targets": {
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{options.output-path}"],
+      "outputs": ["{workspaceRoot}/dist/apps/notion_sync-service"],
       "options": {
-        "command": "webpack-cli build --config apps/notion_sync-service/webpack.config.js",
+        "command": "webpack-cli build --config apps/notion_sync-service/webpack.config.js --output-path=dist/apps/notion_sync-service",
         "args": ["--node-env=production"],
-        "output-path": "dist/apps/notion_sync-service",
         "cwd": "."
       },
       "configurations": {
         "development": {
-          "args": ["--node-env=development"],
-          "sourceMap": true
+          "args": ["--node-env=development"]
         }
       }
     },
