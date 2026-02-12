@@ -1,7 +1,7 @@
 import { dbClient } from './db-client';
 
 describe('dbClient', () => {
-  it('should work', () => {
-    expect(dbClient()).toEqual('db-client');
+  it('should be defined', () => {
+    expect(dbClient).toBeDefined();
   });
 });

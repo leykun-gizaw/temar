@@ -6,6 +6,7 @@
     "migrate": "cd libs/db-client/src && npx drizzle-kit migrate --config ../drizzle.config.ts"
   },
   "private": true,
+  "packageManager": "pnpm@10.23.0",
   "dependencies": {
     "@daveyplate/better-auth-ui": "^3.3.9",
     "@dnd-kit/core": "^6.3.1",
