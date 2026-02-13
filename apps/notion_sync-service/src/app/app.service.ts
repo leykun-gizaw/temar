@@ -1,16 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { Client, isFullBlock, isFullDatabase } from '@notionhq/client';
+import { NotionToMarkdown } from 'notion-to-md';
 import { dbClient, user } from '@temar/db-client';
 import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class AppService {
   private notionClient: Client;
+  private n2m: NotionToMarkdown;
 
   constructor() {
     this.notionClient = new Client({
       auth: process.env.NOTION_INTEGRATION_SECRET,
     });
+    this.n2m = new NotionToMarkdown({ notionClient: this.notionClient });
   }
 
   async getGreeting() {
@@ -68,6 +71,18 @@ export class AppService {
 
   async getBlockChildren(id: string) {
     return await this.notionClient.blocks.children.list({ block_id: id });
+  }
+
+  async getBlockChildrenWithMd(id: string) {
+    const response = await this.notionClient.blocks.children.list({
+      block_id: id,
+    });
+    const mdBlocks = await this.n2m.blocksToMarkdown(response.results);
+    const mdString = this.n2m.toMarkdownString(mdBlocks);
+    return {
+      results: response.results,
+      contentMd: mdString.parent,
+    };
   }
 
   async appendBlockChildren(blockId: string) {
@@ -172,6 +187,123 @@ export class AppService {
       title: [{ type: 'text', text: { content: title } }],
       is_inline: true,
     });
+  }
+
+  /**
+   * Create a topic with full child hierarchy:
+   * topic page → notes database → sample note → chunks database → sample chunk
+   */
+  async createTopicCascade(
+    datasourceId: string,
+    name: string,
+    description: string
+  ) {
+    const topicPage = await this.createDatabasePage(
+      datasourceId,
+      name,
+      description,
+      '📚'
+    );
+
+    const notesDatabase = await this.createNotesPage(topicPage.id);
+    if (!isFullDatabase(notesDatabase) || !notesDatabase.data_sources?.length) {
+      throw new Error('Failed to create notes database for topic');
+    }
+    const notePage = await this.createNote(notesDatabase.data_sources[0].id);
+
+    const chunksDatabase = await this.createChunksPage(notePage.id);
+    if (
+      !isFullDatabase(chunksDatabase) ||
+      !chunksDatabase.data_sources?.length
+    ) {
+      throw new Error('Failed to create chunks database for note');
+    }
+    const chunkPage = await this.createChunk(chunksDatabase.data_sources[0].id);
+
+    return { topicPage, notesDatabase, notePage, chunksDatabase, chunkPage };
+  }
+
+  /**
+   * Create a note with child hierarchy:
+   * note page → chunks database → sample chunk
+   */
+  async createNoteCascade(
+    datasourceId: string,
+    name: string,
+    description: string
+  ) {
+    const notePage = await this.createDatabasePage(
+      datasourceId,
+      name,
+      description,
+      '📘'
+    );
+
+    const chunksDatabase = await this.createChunksPage(notePage.id);
+    if (
+      !isFullDatabase(chunksDatabase) ||
+      !chunksDatabase.data_sources?.length
+    ) {
+      throw new Error('Failed to create chunks database for note');
+    }
+    const chunkPage = await this.createChunk(chunksDatabase.data_sources[0].id);
+
+    return { notePage, chunksDatabase, chunkPage };
+  }
+
+  /**
+   * Archive (soft-delete) a Notion page.
+   */
+  async archivePage(pageId: string) {
+    return await this.notionClient.pages.update({
+      page_id: pageId,
+      archived: true,
+    });
+  }
+
+  /**
+   * Update Name and Description properties of a Notion page.
+   */
+  async updatePageProperties(
+    pageId: string,
+    name: string,
+    description: string
+  ) {
+    return await this.notionClient.pages.update({
+      page_id: pageId,
+      properties: {
+        Name: {
+          title: [{ text: { content: name } }],
+        },
+        Description: {
+          rich_text: [{ text: { content: description } }],
+        },
+      },
+    });
+  }
+
+  /**
+   * Cascade-archive a page and all children in its child databases.
+   * Walks: page → child_database blocks → datasource pages → archive each.
+   */
+  async cascadeArchivePage(pageId: string) {
+    // Find child databases in this page
+    const children = (await this.getBlockChildren(pageId)).results;
+    for (const child of children) {
+      if (!isFullBlock(child)) continue;
+      if (child.type !== 'child_database') continue;
+
+      const db = await this.getDatabase(child.id);
+      if (!isFullDatabase(db) || !db.data_sources?.length) continue;
+
+      const pages = (await this.queryDataSource(db.data_sources[0].id)).results;
+      for (const page of pages) {
+        // Recursively cascade-archive children first
+        await this.cascadeArchivePage(page.id);
+      }
+    }
+    // Finally archive this page itself
+    await this.archivePage(pageId);
   }
 
   private async createPageContent(parentPageId: string, headingTitle: string) {

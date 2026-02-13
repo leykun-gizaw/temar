@@ -5,6 +5,7 @@ import {
   Post,
   Body,
   Patch,
+  Delete,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
@@ -46,6 +47,11 @@ export class AppController {
   @Get('/block/:id/children')
   async getBlockChildren(@Param('id') id: string) {
     return await this.appService.getBlockChildren(id);
+  }
+
+  @Get('/block/:id/children_with_md')
+  async getBlockChildrenWithMd(@Param('id') id: string) {
+    return await this.appService.getBlockChildrenWithMd(id);
   }
 
   @Patch('/block/:id/appendChildren')
@@ -139,5 +145,50 @@ export class AppController {
       chunksDatabase.data_sources[0].id
     );
     return { topicPage, notePage, chunkPage };
+  }
+
+  @Post('topic/create')
+  async createTopicCascade(
+    @Body('datasourceId') datasourceId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ) {
+    return await this.appService.createTopicCascade(
+      datasourceId,
+      name,
+      description
+    );
+  }
+
+  @Post('note/create')
+  async createNoteCascade(
+    @Body('datasourceId') datasourceId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ) {
+    return await this.appService.createNoteCascade(
+      datasourceId,
+      name,
+      description
+    );
+  }
+
+  @Patch('page/:id/properties')
+  async updatePageProperties(
+    @Param('id') id: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ) {
+    return await this.appService.updatePageProperties(id, name, description);
+  }
+
+  @Delete('page/:id')
+  async archivePage(@Param('id') id: string) {
+    return await this.appService.archivePage(id);
+  }
+
+  @Delete('page/:id/cascade')
+  async cascadeArchivePage(@Param('id') id: string) {
+    return await this.appService.cascadeArchivePage(id);
   }
 }

@@ -8,7 +8,6 @@ import { getLoggedInUser } from '@/lib/fetchers/users';
 import { eq } from 'drizzle-orm';
 
 import { NotionPage } from '@temar/shared-types';
-import { AppendBlockChildrenResponse } from '@notionhq/client/build/src/api-endpoints';
 
 export async function createMasterPage(
   state: MasterPageErrorState | undefined,
@@ -59,7 +58,7 @@ export async function createMasterPage(
       }
 
       const chunkResponse = await fetch(
-        `${notionServiceApiEndpoint}/block/${chunkPage.id}/children`,
+        `${notionServiceApiEndpoint}/block/${chunkPage.id}/children_with_md`,
         {
           headers: {
             ...(notionSyncApiKey && { 'x-api-key': notionSyncApiKey }),
@@ -69,7 +68,7 @@ export async function createMasterPage(
       if (!chunkResponse.ok) {
         throw new Error('Failed to fetch chunk block children');
       }
-      const chunkContent: AppendBlockChildrenResponse =
+      const chunkContent: { results: unknown[]; contentMd: string } =
         await chunkResponse.json();
 
       const getParentIds = (page: NotionPage) => {
@@ -124,6 +123,7 @@ export async function createMasterPage(
           description:
             chunkPage.properties.Description.rich_text[0]?.plain_text ?? '',
           contentJson: chunkContent.results,
+          contentMd: chunkContent.contentMd,
           userId: loggedInUser.id,
         });
       });

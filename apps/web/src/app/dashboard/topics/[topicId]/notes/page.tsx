@@ -4,7 +4,7 @@ import { LayoutGridIcon, Plus, Text } from 'lucide-react';
 import { getTopicById } from '@/lib/fetchers/topics';
 import NotesGalleryList from '@/app/dashboard/topics/[topicId]/_components/notes-gallery-list';
 import Search from '@/app/dashboard/topics/_components/search';
-import AddTopicDialog from '@/app/dashboard/topics/_components/add-topic-dialog';
+import AddNoteDialog from '@/components/add-note-dialog';
 
 export default async function TopicNotesPage({
   params,
@@ -49,7 +49,8 @@ export default async function TopicNotesPage({
 
           <div className="flex gap-2 items-center max-w-sm w-full">
             <Search placeholder="Search..." />
-            <AddTopicDialog
+            <AddNoteDialog
+              topicId={topicId}
               trigger={
                 <Button size="sm" className="">
                   <Plus className="mr-1.5 h-4 w-4" />

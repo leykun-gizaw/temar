@@ -1,19 +1,19 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { TopicInputSchema } from '../zod/topic-schema';
+import { NoteInputSchema } from '../zod/note-schema';
 import { ErrorState } from '../definitions';
-import { dbClient, topic, note, chunk } from '@temar/db-client';
+import { dbClient, note, chunk } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { NotionPage } from '@temar/shared-types';
 import { syncServiceFetch } from '../sync-service';
 
-export async function createTopic(
+export async function createNote(
   state: ErrorState | undefined,
   payload: FormData
 ): Promise<ErrorState> {
-  const validatedFields = TopicInputSchema.safeParse({
+  const validatedFields = NoteInputSchema.safeParse({
     title: payload.get('title'),
     description: payload.get('description'),
   });
@@ -21,8 +21,13 @@ export async function createTopic(
   if (!validatedFields.success)
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Failed to create topic.',
+      message: 'Failed to create note.',
     };
+
+  const topicId = payload.get('topicId') as string;
+  if (!topicId) {
+    return { errors: {}, message: 'Topic ID is required.' };
+  }
 
   try {
     const loggedInUser = await getLoggedInUser();
@@ -30,38 +35,37 @@ export async function createTopic(
 
     const { title, description } = validatedFields.data;
 
-    // Find the datasource ID from an existing sibling topic
-    const [existingTopic] = await dbClient
-      .select({
-        datasourceId: topic.datasourceId,
-        parentPageId: topic.parentPageId,
-      })
-      .from(topic)
-      .where(eq(topic.userId, loggedInUser.id))
+    // Find the datasource ID from an existing sibling note under this topic
+    const [existingNote] = await dbClient
+      .select({ datasourceId: note.datasourceId })
+      .from(note)
+      .where(
+        and(eq(note.userId, loggedInUser.id), eq(note.topicId, topicId))
+      )
       .limit(1);
 
-    if (!existingTopic) {
+    if (!existingNote) {
       return {
         errors: {},
-        message: 'No existing topics found. Please set up a master page first.',
+        message:
+          'No existing notes found for this topic. Cannot determine datasource.',
       };
     }
 
-    // Create topic + notes DB + sample note + chunks DB + sample chunk in Notion
+    // Create note + chunks DB + sample chunk in Notion
     const cascadeData: {
-      topicPage: NotionPage;
       notePage: NotionPage;
       chunkPage: NotionPage;
-    } = await syncServiceFetch('topic/create', {
+    } = await syncServiceFetch('note/create', {
       method: 'POST',
       body: {
-        datasourceId: existingTopic.datasourceId,
+        datasourceId: existingNote.datasourceId,
         name: title,
         description,
       },
     });
 
-    const { topicPage, notePage, chunkPage } = cascadeData;
+    const { notePage, chunkPage } = cascadeData;
 
     // Fetch chunk content with markdown
     const chunkContent: { results: unknown[]; contentMd: string } =
@@ -78,31 +82,19 @@ export async function createTopic(
       throw new Error(`Unexpected parent type: ${p.type}`);
     };
 
-    const topicParent = getParentIds(topicPage);
     const noteParent = getParentIds(notePage);
     const chunkParent = getParentIds(chunkPage);
 
     await dbClient.transaction(async (tx) => {
-      await tx.insert(topic).values({
-        id: topicPage.id,
-        parentPageId: existingTopic.parentPageId,
-        parentDatabaseId: topicParent.databaseId,
-        datasourceId: topicParent.datasourceId,
-        name: topicPage.properties.Name.title[0]?.plain_text ?? title,
-        description:
-          topicPage.properties.Description.rich_text[0]?.plain_text ??
-          description,
-        userId: loggedInUser.id,
-      });
-
       await tx.insert(note).values({
         id: notePage.id,
-        topicId: topicPage.id,
+        topicId,
         parentDatabaseId: noteParent.databaseId,
         datasourceId: noteParent.datasourceId,
-        name: notePage.properties.Name.title[0]?.plain_text ?? '',
+        name: notePage.properties.Name.title[0]?.plain_text ?? title,
         description:
-          notePage.properties.Description.rich_text[0]?.plain_text ?? '',
+          notePage.properties.Description.rich_text[0]?.plain_text ??
+          description,
         userId: loggedInUser.id,
       });
 
@@ -120,13 +112,13 @@ export async function createTopic(
       });
     });
 
-    revalidatePath('/dashboard/topics');
-    return { errors: {}, message: 'Topic created successfully.' };
+    revalidatePath(`/dashboard/topics/${topicId}/notes`);
+    return { errors: {}, message: 'Note created successfully.' };
   } catch (err) {
-    console.error('createTopic error:', err);
+    console.error('createNote error:', err);
     return {
       errors: {},
-      message: `Database Error: Failed to create topic. ${
+      message: `Database Error: Failed to create note. ${
         err instanceof Error ? err.message : String(err)
       }`,
     };

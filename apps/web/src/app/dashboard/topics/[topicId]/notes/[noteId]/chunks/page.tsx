@@ -53,7 +53,7 @@ export default async function NoteChunksPage({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        <ChunksGalleryList query={query} noteId={noteId} />
+        <ChunksGalleryList query={query} noteId={noteId} topicId={topicId} />
       </div>
     </div>
   );
