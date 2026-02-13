@@ -1,7 +1,7 @@
 'use client';
 
 import { topic } from '@temar/db-client';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 type Topic = typeof topic.$inferSelect;
 

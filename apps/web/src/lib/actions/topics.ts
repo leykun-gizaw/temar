@@ -45,7 +45,7 @@ export async function createTopic(
 
     if (existingTopic) {
       datasourceId = existingTopic.datasourceId;
-      parentPageId = existingTopic.parentPageId;
+      parentPageId = existingTopic.parentPageId ?? '';
     } else {
       // Fallback: resolve datasource from user's master page using existing endpoints
       const masterPageId = loggedInUser.notionPageId;
