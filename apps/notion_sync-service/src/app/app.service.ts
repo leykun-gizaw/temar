@@ -100,6 +100,19 @@ export class AppService {
     return await this.notionClient.databases.retrieve({ database_id: id });
   }
 
+  async getPageDatasourceId(id: string): Promise<string | null> {
+    const pageChildren = (await this.getBlockChildren(id)).results;
+    const pageDB = pageChildren.find((child) => {
+      if (!isFullBlock(child)) return false;
+      return child.type === 'child_database';
+    });
+    if (!pageDB) return null;
+    const database = await this.getDatabase(pageDB.id);
+    if (!isFullDatabase(database)) return null;
+    if (!database.data_sources?.length) return null;
+    return database.data_sources[0].id;
+  }
+
   async getPageDatasourceList(id: string) {
     const pageChildren = (await this.getBlockChildren(id)).results;
     const pageDB = pageChildren.find((child) => {

@@ -64,6 +64,12 @@ export class AppController {
     return await this.appService.getPage(id);
   }
 
+  @Get('/page/:id/datasource_id')
+  async getPageDatasourceId(@Param('id') id: string) {
+    const datasourceId = await this.appService.getPageDatasourceId(id);
+    return { datasourceId };
+  }
+
   @Get('/page/:id/get_datasource_list')
   async getPageDatasourceList(@Param('id') id: string) {
     return await this.appService.getPageDatasourceList(id);
@@ -170,6 +176,20 @@ export class AppController {
       datasourceId,
       name,
       description
+    );
+  }
+
+  @Post('chunk/create')
+  async createChunkPage(
+    @Body('datasourceId') datasourceId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ) {
+    return await this.appService.createDatabasePage(
+      datasourceId,
+      name,
+      description,
+      '📄'
     );
   }
 

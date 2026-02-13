@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { LayoutGridIcon, Text } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { LayoutGridIcon, Plus, Text } from 'lucide-react';
 import { getNoteById } from '@/lib/fetchers/notes';
 import { getTopicById } from '@/lib/fetchers/topics';
 import ChunksGalleryList from '@/app/dashboard/topics/[topicId]/notes/[noteId]/_components/chunks-gallery-list';
 import Search from '@/app/dashboard/topics/_components/search';
+import AddChunkDialog from '@/app/dashboard/topics/[topicId]/notes/[noteId]/_components/add-chunk-dialog';
 
 export default async function NoteChunksPage({
   params,
@@ -48,6 +50,16 @@ export default async function NoteChunksPage({
 
           <div className="flex gap-2 items-center max-w-sm w-full">
             <Search placeholder="Search..." />
+            <AddChunkDialog
+              noteId={noteId}
+              topicId={topicId}
+              trigger={
+                <Button size="sm">
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  New
+                </Button>
+              }
+            />
           </div>
         </div>
       </div>

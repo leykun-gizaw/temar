@@ -82,14 +82,14 @@ export default function ChunkCard({
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-7xl max-h-[80vh] flex flex-col">
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>📄 {name}</DialogTitle>
             {description && (
               <DialogDescription>{description}</DialogDescription>
             )}
           </DialogHeader>
-          <div className="flex-1 min-h-0 overflow-y-auto max-h-[80vh]">
+          <div className="flex-1 min-h-0 overflow-y-auto max-h-[60vh]">
             {contentMd ? (
               <div className="prose prose-sm dark:prose-invert max-w-none p-4">
                 <Markdown
@@ -105,7 +105,7 @@ export default function ChunkCard({
                       }
 
                       return lang ? (
-                        <pre className="bg-muted/50 rounded-md p-3 overflow-hidden">
+                        <pre className="bg-muted/50 rounded-md p-3 overflow-auto">
                           <code className={className} {...props}>
                             {children}
                           </code>

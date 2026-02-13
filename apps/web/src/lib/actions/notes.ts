@@ -39,17 +39,41 @@ export async function createNote(
     const [existingNote] = await dbClient
       .select({ datasourceId: note.datasourceId })
       .from(note)
-      .where(
-        and(eq(note.userId, loggedInUser.id), eq(note.topicId, topicId))
-      )
+      .where(and(eq(note.userId, loggedInUser.id), eq(note.topicId, topicId)))
       .limit(1);
 
-    if (!existingNote) {
-      return {
-        errors: {},
-        message:
-          'No existing notes found for this topic. Cannot determine datasource.',
-      };
+    let datasourceId: string;
+
+    if (existingNote) {
+      datasourceId = existingNote.datasourceId;
+    } else {
+      // Fallback: resolve datasource from the topic page's child database
+      const blockChildren: {
+        results: Array<{ id: string; type?: string }>;
+      } = await syncServiceFetch(`block/${topicId}/children`);
+
+      const childDb = blockChildren.results.find(
+        (b) => b.type === 'child_database'
+      );
+      if (!childDb) {
+        return {
+          errors: {},
+          message: 'Could not find Notes database under this topic.',
+        };
+      }
+
+      const database: {
+        data_sources?: Array<{ id: string }>;
+      } = await syncServiceFetch(`database/${childDb.id}`);
+
+      if (!database.data_sources?.length) {
+        return {
+          errors: {},
+          message: 'Notes database has no data sources.',
+        };
+      }
+
+      datasourceId = database.data_sources[0].id;
     }
 
     // Create note + chunks DB + sample chunk in Notion
@@ -59,7 +83,7 @@ export async function createNote(
     } = await syncServiceFetch('note/create', {
       method: 'POST',
       body: {
-        datasourceId: existingNote.datasourceId,
+        datasourceId,
         name: title,
         description,
       },

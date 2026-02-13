@@ -16,13 +16,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
-import { createNote } from '@/lib/actions/notes';
+import { createChunk } from '@/lib/actions/chunks';
 import { ErrorState } from '@/lib/definitions';
 
-export default function AddNoteDialog({
+export default function AddChunkDialog({
+  noteId,
   topicId,
   trigger,
 }: {
+  noteId: string;
   topicId: string;
   trigger?: React.ReactNode;
 }) {
@@ -30,35 +32,35 @@ export default function AddNoteDialog({
 
   const initialErrorState: ErrorState = { errors: {}, message: null };
   const [errorState, formAction, isPending] = useActionState(
-    createNote,
+    createChunk,
     initialErrorState
   );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger ?? <Button size="sm">New note</Button>}
+        {trigger ?? <Button size="sm">New chunk</Button>}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <form className="space-y-4" action={formAction}>
+      <DialogContent className="max-h-[85vh] overflow-auto">
+        <form className="flex flex-col h-full" action={formAction}>
+          <input type="hidden" name="noteId" value={noteId} />
           <input type="hidden" name="topicId" value={topicId} />
           <DialogHeader>
             <DialogTitle className="flex flex-col items-center gap-2">
-              <span className="text-5xl">📗</span>
-              Add Note
+              <span className="text-5xl">📄</span>
+              Add Chunk
             </DialogTitle>
             <DialogDescription className="text-center">
-              Create a new note for this topic
+              Create a new chunk for this note.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-2">
+          <div className="flex-1 p-1 overflow-auto space-y-4 mt-2">
             <div className="space-y-2">
-              <Label htmlFor="note-title">Title</Label>
+              <Label htmlFor="chunk-title">Title</Label>
               <Input
-                id="note-title"
+                id="chunk-title"
                 name="title"
-                placeholder="e.g. Chapter 1 Notes"
+                placeholder="e.g. Key Definitions"
                 aria-required="true"
               />
               {errorState.errors?.title && (
@@ -68,11 +70,11 @@ export default function AddNoteDialog({
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="note-description">Description</Label>
+              <Label htmlFor="chunk-description">Description</Label>
               <textarea
-                id="note-description"
+                id="chunk-description"
                 name="description"
-                placeholder="Describe the note..."
+                placeholder="Describe the chunk..."
                 rows={4}
                 aria-required="true"
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -86,25 +88,27 @@ export default function AddNoteDialog({
           </div>
 
           {errorState.message && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground pt-2">
               {errorState.message}
             </p>
           )}
 
-          <DialogFooter className="gap-2">
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                Cancel
+          <DialogFooter className="pt-2">
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isPending ? 'Creating...' : 'Create'}
               </Button>
-            </DialogClose>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isPending ? 'Creating...' : 'Create'}
-            </Button>
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

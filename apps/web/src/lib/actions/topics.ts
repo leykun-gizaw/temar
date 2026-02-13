@@ -40,11 +40,51 @@ export async function createTopic(
       .where(eq(topic.userId, loggedInUser.id))
       .limit(1);
 
-    if (!existingTopic) {
-      return {
-        errors: {},
-        message: 'No existing topics found. Please set up a master page first.',
-      };
+    let datasourceId: string;
+    let parentPageId: string;
+
+    if (existingTopic) {
+      datasourceId = existingTopic.datasourceId;
+      parentPageId = existingTopic.parentPageId;
+    } else {
+      // Fallback: resolve datasource from user's master page using existing endpoints
+      const masterPageId = loggedInUser.notionPageId;
+      if (!masterPageId) {
+        return {
+          errors: {},
+          message: 'No master page found. Please set up a master page first.',
+        };
+      }
+
+      // Find the Topics child_database block under the master page
+      const blockChildren: {
+        results: Array<{ id: string; type?: string }>;
+      } = await syncServiceFetch(`block/${masterPageId}/children`);
+
+      const childDb = blockChildren.results.find(
+        (b) => b.type === 'child_database'
+      );
+      if (!childDb) {
+        return {
+          errors: {},
+          message: 'Could not find Topics database under master page.',
+        };
+      }
+
+      // Get the database to extract its datasource ID
+      const database: {
+        data_sources?: Array<{ id: string }>;
+      } = await syncServiceFetch(`database/${childDb.id}`);
+
+      if (!database.data_sources?.length) {
+        return {
+          errors: {},
+          message: 'Topics database has no data sources.',
+        };
+      }
+
+      datasourceId = database.data_sources[0].id;
+      parentPageId = masterPageId;
     }
 
     // Create topic + notes DB + sample note + chunks DB + sample chunk in Notion
@@ -55,7 +95,7 @@ export async function createTopic(
     } = await syncServiceFetch('topic/create', {
       method: 'POST',
       body: {
-        datasourceId: existingTopic.datasourceId,
+        datasourceId,
         name: title,
         description,
       },
@@ -85,7 +125,7 @@ export async function createTopic(
     await dbClient.transaction(async (tx) => {
       await tx.insert(topic).values({
         id: topicPage.id,
-        parentPageId: existingTopic.parentPageId,
+        parentPageId,
         parentDatabaseId: topicParent.databaseId,
         datasourceId: topicParent.datasourceId,
         name: topicPage.properties.Name.title[0]?.plain_text ?? title,

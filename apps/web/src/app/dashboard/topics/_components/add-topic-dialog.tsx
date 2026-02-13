@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LibraryBig } from 'lucide-react';
+import { LibraryBig, Loader2 } from 'lucide-react';
 import { createTopic } from '@/lib/actions/topics';
 import { ErrorState } from '@/lib/definitions';
 
@@ -27,7 +27,7 @@ export function AddTopicDialog({ trigger }: AddTopicDialogProps) {
   const [open, setOpen] = useState(false);
 
   const initialErrorState: ErrorState = { errors: {}, message: null };
-  const [errorState, formAction] = useActionState(
+  const [errorState, formAction, isPending] = useActionState(
     createTopic,
     initialErrorState
   );
@@ -93,9 +93,19 @@ export function AddTopicDialog({ trigger }: AddTopicDialogProps) {
               )}
             </div>
           </div>
+
+          {errorState.message && (
+            <p className="text-sm text-muted-foreground pt-2">
+              {errorState.message}
+            </p>
+          )}
+
           <DialogFooter className="pt-2">
             <div className="flex gap-2">
-              <Button type="submit">Create</Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isPending ? 'Creating...' : 'Create'}
+              </Button>
               <DialogClose asChild>
                 <Button
                   type="button"

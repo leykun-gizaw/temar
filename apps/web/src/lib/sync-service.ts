@@ -27,10 +27,10 @@ export async function syncServiceFetch<T = unknown>(
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(
-      `Sync service error ${res.status} on ${path}: ${text}`
-    );
+    throw new Error(`Sync service error ${res.status} on ${path}: ${text}`);
   }
 
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  if (!text) return undefined as T;
+  return JSON.parse(text) as T;
 }
