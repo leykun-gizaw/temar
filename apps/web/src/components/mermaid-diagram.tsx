@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import mermaid from 'mermaid';
 
 export default function MermaidDiagram({ chart }: { chart: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -12,7 +13,6 @@ export default function MermaidDiagram({ chart }: { chart: string }) {
 
     async function render() {
       try {
-        const mermaid = (await import('mermaid')).default;
         mermaid.initialize({
           startOnLoad: false,
           theme: 'default',
