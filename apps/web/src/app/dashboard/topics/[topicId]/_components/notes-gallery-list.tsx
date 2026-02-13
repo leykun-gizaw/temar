@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import AddNoteDialog from '@/components/add-note-dialog';
 import { getFilteredNotes } from '@/lib/fetchers/notes';
 import NoteCardWrapper from './note-card-wrapper';
