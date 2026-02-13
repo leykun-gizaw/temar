@@ -1,6 +1,13 @@
 {$DOMAIN:localhost} {
-	# Next.js web app
-	reverse_proxy web:5173
+	# Notion webhook endpoint — forwarded to the sync service
+	handle /api/webhook/* {
+		reverse_proxy notion_sync-service:3333
+	}
+
+	# Next.js web app (everything else)
+	handle {
+		reverse_proxy web:5173
+	}
 
 	# Encode responses with gzip/zstd
 	encode zstd gzip
@@ -12,9 +19,3 @@
 		Referrer-Policy strict-origin-when-cross-origin
 	}
 }
-
-# Notion sync service (internal API, not exposed publicly by default)
-# Uncomment below if you need to expose it externally:
-# api.{$DOMAIN:localhost} {
-# 	reverse_proxy notion_sync-service:3333
-# }

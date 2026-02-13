@@ -4,3 +4,9 @@ declare module '*.svg' {
   export const ReactComponent: any;
   export default content;
 }
+
+declare module 'remark-gfm' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const remarkGfm: any;
+  export default remarkGfm;
+}

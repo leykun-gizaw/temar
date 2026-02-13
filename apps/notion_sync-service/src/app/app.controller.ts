@@ -1,4 +1,14 @@
-import { Controller, Get, Param, Post, Body, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Body,
+  Patch,
+  Delete,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { isFullDatabase } from '@notionhq/client';
 
@@ -39,6 +49,11 @@ export class AppController {
     return await this.appService.getBlockChildren(id);
   }
 
+  @Get('/block/:id/children_with_md')
+  async getBlockChildrenWithMd(@Param('id') id: string) {
+    return await this.appService.getBlockChildrenWithMd(id);
+  }
+
   @Patch('/block/:id/appendChildren')
   async appendBlockChildren(@Param('id') id: string) {
     return await this.appService.appendBlockChildren(id);
@@ -47,6 +62,12 @@ export class AppController {
   @Get('/page/:id')
   async getPage(@Param('id') id: string) {
     return await this.appService.getPage(id);
+  }
+
+  @Get('/page/:id/datasource_id')
+  async getPageDatasourceId(@Param('id') id: string) {
+    const datasourceId = await this.appService.getPageDatasourceId(id);
+    return { datasourceId };
   }
 
   @Get('/page/:id/get_datasource_list')
@@ -86,22 +107,108 @@ export class AppController {
   async createTopicsPage(@Param('id') id: string) {
     const topicsDatabase = await this.appService.createTopicsPage(id);
 
-    if (!isFullDatabase(topicsDatabase)) return null;
+    if (!isFullDatabase(topicsDatabase))
+      throw new HttpException(
+        'Failed to create topics database',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    if (!topicsDatabase.data_sources?.length)
+      throw new HttpException(
+        'Topics database has no data sources',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     const topicPage = await this.appService.createTopic(
       topicsDatabase.data_sources[0].id
     );
 
     const notesDatabase = await this.appService.createNotesPage(topicPage.id);
-    if (!isFullDatabase(notesDatabase)) return null;
+    if (!isFullDatabase(notesDatabase))
+      throw new HttpException(
+        'Failed to create notes database',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    if (!notesDatabase.data_sources?.length)
+      throw new HttpException(
+        'Notes database has no data sources',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     const notePage = await this.appService.createNote(
       notesDatabase.data_sources[0].id
     );
 
     const chunksDatabase = await this.appService.createChunksPage(notePage.id);
-    if (!isFullDatabase(chunksDatabase)) return null;
+    if (!isFullDatabase(chunksDatabase))
+      throw new HttpException(
+        'Failed to create chunks database',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    if (!chunksDatabase.data_sources?.length)
+      throw new HttpException(
+        'Chunks database has no data sources',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     const chunkPage = await this.appService.createChunk(
       chunksDatabase.data_sources[0].id
     );
     return { topicPage, notePage, chunkPage };
+  }
+
+  @Post('topic/create')
+  async createTopicCascade(
+    @Body('datasourceId') datasourceId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ) {
+    return await this.appService.createTopicCascade(
+      datasourceId,
+      name,
+      description
+    );
+  }
+
+  @Post('note/create')
+  async createNoteCascade(
+    @Body('datasourceId') datasourceId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ) {
+    return await this.appService.createNoteCascade(
+      datasourceId,
+      name,
+      description
+    );
+  }
+
+  @Post('chunk/create')
+  async createChunkPage(
+    @Body('datasourceId') datasourceId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ) {
+    return await this.appService.createDatabasePage(
+      datasourceId,
+      name,
+      description,
+      '📄'
+    );
+  }
+
+  @Patch('page/:id/properties')
+  async updatePageProperties(
+    @Param('id') id: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ) {
+    return await this.appService.updatePageProperties(id, name, description);
+  }
+
+  @Delete('page/:id')
+  async archivePage(@Param('id') id: string) {
+    return await this.appService.archivePage(id);
+  }
+
+  @Delete('page/:id/cascade')
+  async cascadeArchivePage(@Param('id') id: string) {
+    return await this.appService.cascadeArchivePage(id);
   }
 }

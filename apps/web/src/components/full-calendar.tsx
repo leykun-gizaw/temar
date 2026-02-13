@@ -279,7 +279,6 @@ const CalendarWeekView = () => {
     return daysOfWeek;
   }, [weekStartsOn]);
 
-  // console.log(weekDates[0][0]);
   if (view !== 'week') return null;
 
   return (

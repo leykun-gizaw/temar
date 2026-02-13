@@ -4,7 +4,7 @@ import { dbClient, topic } from '@temar/db-client';
 import { getLoggedInUser } from './users';
 import { eq, and } from 'drizzle-orm';
 
-export async function getFilteredTopics(pageId: string, query: string) {
+export async function getFilteredTopics(query: string) {
   const loggedInUser = await getLoggedInUser();
 
   if (!loggedInUser) return [];
