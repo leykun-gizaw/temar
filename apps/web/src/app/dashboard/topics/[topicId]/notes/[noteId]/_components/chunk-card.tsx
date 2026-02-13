@@ -11,8 +11,10 @@ import { useState } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import MermaidDiagram from '@/components/mermaid-diagram';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { deleteChunk } from '@/lib/actions/delete';
+import { updateChunk } from '@/lib/actions/update';
+import EditDialog from '@/components/edit-dialog';
 
 interface ChunkCardProps {
   id: string;
@@ -56,28 +58,49 @@ export default function ChunkCard({
         </div>
         <div className="h-1/4 flex items-center justify-between pl-4 pr-3">
           <span className="text-sm font-semibold">📄 {name}</span>
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (confirm('Delete this chunk?')) {
-                deleteChunk(id, noteId, topicId);
+          <div className="flex items-center gap-1">
+            <EditDialog
+              entityType="chunk"
+              currentName={name}
+              currentDescription={description}
+              onSave={async (newName, newDesc) => {
+                await updateChunk(id, noteId, topicId, newName, newDesc);
+              }}
+              trigger={
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1"
+                  title="Edit chunk"
+                >
+                  <Pencil size={14} />
+                </span>
               }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+            />
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
                 e.stopPropagation();
                 if (confirm('Delete this chunk?')) {
                   deleteChunk(id, noteId, topicId);
                 }
-              }
-            }}
-            className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer p-1"
-            title="Delete chunk"
-          >
-            <Trash2 size={14} />
-          </span>
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.stopPropagation();
+                  if (confirm('Delete this chunk?')) {
+                    deleteChunk(id, noteId, topicId);
+                  }
+                }
+              }}
+              className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer p-1"
+              title="Delete chunk"
+            >
+              <Trash2 size={14} />
+            </span>
+          </div>
         </div>
       </button>
 

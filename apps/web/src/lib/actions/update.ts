@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { dbClient, topic, note } from '@temar/db-client';
+import { dbClient, topic, note, chunk } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { eq, and } from 'drizzle-orm';
 import { syncServiceFetch } from '../sync-service';
@@ -65,4 +65,36 @@ export async function updateNote(
     .where(eq(note.id, noteId));
 
   revalidatePath(`/dashboard/topics/${topicId}/notes`);
+}
+
+export async function updateChunk(
+  chunkId: string,
+  noteId: string,
+  topicId: string,
+  name: string,
+  description: string
+) {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) throw new Error('User not logged in');
+
+  const [existing] = await dbClient
+    .select({ id: chunk.id })
+    .from(chunk)
+    .where(and(eq(chunk.id, chunkId), eq(chunk.userId, loggedInUser.id)));
+
+  if (!existing) throw new Error('Chunk not found');
+
+  // Update in Notion
+  await syncServiceFetch(`page/${chunkId}/properties`, {
+    method: 'PATCH',
+    body: { name, description },
+  });
+
+  // Update in DB
+  await dbClient
+    .update(chunk)
+    .set({ name, description })
+    .where(eq(chunk.id, chunkId));
+
+  revalidatePath(`/dashboard/topics/${topicId}/notes/${noteId}/chunks`);
 }

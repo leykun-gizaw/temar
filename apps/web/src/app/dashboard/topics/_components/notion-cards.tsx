@@ -1,16 +1,18 @@
 'use client';
 
 import { topic } from '@temar/db-client';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 
 type Topic = typeof topic.$inferSelect;
 
 export default function NotionCard({
   item,
   onDelete,
+  onEdit,
 }: {
   item: Topic;
   onDelete?: () => void;
+  onEdit?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col justify-between h-full">
@@ -22,20 +24,23 @@ export default function NotionCard({
           📚
           {item.name}
         </span>
-        {onDelete && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer p-1"
-            title="Delete topic"
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {onEdit}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer p-1"
+              title="Delete topic"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
