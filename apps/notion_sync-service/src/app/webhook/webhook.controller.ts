@@ -27,6 +27,7 @@ export class WebhookController {
     // Step 1: Subscription verification handshake
     if (body.verification_token) {
       this.logger.log('Webhook verification handshake received');
+      this.logger.log(`Webhook verification token: ${body.verification_token}`);
       return { verification_token: body.verification_token };
     }
 
