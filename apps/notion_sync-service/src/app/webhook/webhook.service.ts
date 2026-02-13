@@ -1,450 +1,440 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Client, isFullDatabase } from '@notionhq/client';
-import { NotionToMarkdown } from 'notion-to-md';
+import { isFullDatabase, isFullPage } from '@notionhq/client';
+import { AppService } from '../app.service';
 import { dbClient, user, topic, note, chunk } from '@temar/db-client';
 import { eq } from 'drizzle-orm';
-import { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints';
-
-type NotionPageProperties = {
-  Name: Extract<PageObjectResponse['properties'][string], { type: 'title' }>;
-  Description: Extract<
-    PageObjectResponse['properties'][string],
-    { type: 'rich_text' }
-  >;
-};
-
-interface NotionPage extends PageObjectResponse {
-  properties: NotionPageProperties;
-  parent:
-    | Extract<PageObjectResponse['parent'], { type: 'data_source_id' }>
-    | Extract<PageObjectResponse['parent'], { type: 'database_id' }>
-    | Extract<PageObjectResponse['parent'], { type: 'page_id' }>;
-}
-
-interface WebhookEvent {
-  id: string;
-  timestamp: string;
-  type: string;
-  entity: { id: string; type: string };
-  data: {
-    parent?: { id: string; type: string };
-    updated_properties?: string[];
-    updated_blocks?: { id: string; type: string }[];
-  };
-}
-
-type EntityType = 'topic' | 'note' | 'chunk' | null;
-
-interface ResolvedEntity {
-  entityType: EntityType;
-  datasourceId: string;
-  databaseId: string;
-  userId: string | null;
-  parentEntityId: string | null;
-}
 
 @Injectable()
 export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
-  private notionClient: Client;
-  private n2m: NotionToMarkdown;
 
-  constructor() {
-    this.notionClient = new Client({
-      auth: process.env.NOTION_INTEGRATION_SECRET,
-    });
-    this.n2m = new NotionToMarkdown({ notionClient: this.notionClient });
-  }
+  constructor(private readonly appService: AppService) {}
 
-  async handlePageCreated(event: WebhookEvent) {
-    const pageId = event.entity.id;
-    this.logger.log(`page.created: ${pageId}`);
-    await this.upsertPage(pageId);
-  }
-
-  async handlePagePropertiesUpdated(event: WebhookEvent) {
-    const pageId = event.entity.id;
-    this.logger.log(`page.properties_updated: ${pageId}`);
-    await this.upsertPage(pageId);
-  }
-
-  async handlePageContentUpdated(event: WebhookEvent) {
-    const pageId = event.entity.id;
-    this.logger.log(`page.content_updated: ${pageId}`);
-
-    try {
-      // Content updates matter primarily for chunks — refresh block children
-      const existing = await dbClient
-        .select({ id: chunk.id })
-        .from(chunk)
-        .where(eq(chunk.id, pageId));
-
-      if (existing.length) {
-        const { contentJson, contentMd } = await this.fetchBlockChildrenWithMd(
-          pageId
-        );
-        await dbClient
-          .update(chunk)
-          .set({ contentJson, contentMd })
-          .where(eq(chunk.id, pageId));
-        this.logger.log(`Updated chunk content: ${pageId}`);
-      } else {
-        // Page might not be in DB yet (race with page.created); full upsert
-        this.logger.log(
-          `page.content_updated for unknown page ${pageId}, attempting upsert`
-        );
-        await this.upsertPage(pageId);
-      }
-    } catch (err) {
-      this.logger.error(
-        `Error handling page.content_updated for ${pageId}`,
-        err
-      );
+  async handlePageCreated(entityId: string): Promise<void> {
+    // Loop guard: skip if the page already exists in our DB
+    const existsInDb = await this.entityExists(entityId);
+    if (existsInDb) {
+      this.logger.log(`Entity ${entityId} already exists in DB, skipping.`);
+      return;
     }
-  }
 
-  async handlePageDeleted(event: WebhookEvent) {
-    const pageId = event.entity.id;
-    this.logger.log(`page.deleted: ${pageId}`);
-
-    try {
-      // Delete from whichever table contains this ID
-      // Cascade deletes will handle children (topic→notes→chunks)
-      const topicResult = await dbClient
-        .delete(topic)
-        .where(eq(topic.id, pageId))
-        .returning({ id: topic.id });
-
-      if (topicResult.length) {
-        this.logger.log(`Deleted topic (+ cascaded notes/chunks): ${pageId}`);
-        return;
-      }
-
-      const noteResult = await dbClient
-        .delete(note)
-        .where(eq(note.id, pageId))
-        .returning({ id: note.id });
-
-      if (noteResult.length) {
-        this.logger.log(`Deleted note (+ cascaded chunks): ${pageId}`);
-        return;
-      }
-
-      const chunkResult = await dbClient
-        .delete(chunk)
-        .where(eq(chunk.id, pageId))
-        .returning({ id: chunk.id });
-
-      if (chunkResult.length) {
-        this.logger.log(`Deleted chunk: ${pageId}`);
-        return;
-      }
-
-      this.logger.warn(`No matching entity found for delete: ${pageId}`);
-    } catch (err) {
-      this.logger.error(`Error handling page.deleted for ${pageId}`, err);
+    // Fetch the created page from Notion
+    const page = await this.appService.getPage(entityId);
+    if (!isFullPage(page)) {
+      this.logger.warn(`Page ${entityId} is not a full page, skipping.`);
+      return;
     }
-  }
 
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
+    // Extract page properties
+    const nameProperty = page.properties['Name'];
+    const descProperty = page.properties['Description'];
+    const name =
+      nameProperty?.type === 'title'
+        ? nameProperty.title[0]?.plain_text ?? ''
+        : '';
+    const description =
+      descProperty?.type === 'rich_text'
+        ? descProperty.rich_text[0]?.plain_text ?? ''
+        : '';
 
-  /**
-   * Determine whether a Notion page is a topic, note, or chunk.
-   *
-   * Fast path: look up existing DB rows by datasourceId.
-   * Slow path: traverse the Notion parent chain via the API:
-   *   Page → parent datasource/database → database → owner page
-   *     - owner page is user.notionPageId  → page is a topic
-   *     - owner page is in topic table     → page is a note
-   *     - owner page is in note table      → page is a chunk
-   */
-  private async resolveEntityType(page: NotionPage): Promise<ResolvedEntity> {
+    // Determine the parent database/datasource of the created page
     const parent = page.parent;
+    let parentDatabaseId = '';
     let datasourceId = '';
-    let databaseId = '';
 
     if (parent.type === 'data_source_id') {
+      parentDatabaseId = parent.database_id;
       datasourceId = parent.data_source_id;
-      databaseId = parent.database_id;
     } else if (parent.type === 'database_id') {
-      databaseId = parent.database_id;
+      parentDatabaseId = parent.database_id;
     } else {
+      this.logger.log(
+        `Page ${entityId} parent type is '${parent.type}', not a database page. Skipping.`
+      );
+      return;
+    }
+
+    // Get the parent database to find its parent page
+    const database = await this.appService.getDatabase(parentDatabaseId);
+    if (!isFullDatabase(database)) {
+      this.logger.warn(
+        `Database ${parentDatabaseId} is not a full database, skipping.`
+      );
+      return;
+    }
+
+    const dbParent = database.parent;
+    let grandparentPageId: string | null = null;
+    if (dbParent.type === 'page_id') {
+      grandparentPageId = dbParent.page_id;
+    } else if (dbParent.type === 'block_id') {
+      grandparentPageId = dbParent.block_id;
+    }
+
+    if (!grandparentPageId) {
+      this.logger.log(
+        `Database ${parentDatabaseId} parent is not a page (type: ${dbParent.type}), skipping.`
+      );
+      return;
+    }
+
+    // Classify: is the grandparent page a master page, topic, or note?
+    const classification = await this.classifyParentPage(grandparentPageId);
+
+    if (!classification) {
+      this.logger.log(
+        `Grandparent page ${grandparentPageId} not found in any table, skipping.`
+      );
+      return;
+    }
+
+    this.logger.log(
+      `Classified page ${entityId} as ${classification.type} (name: "${name}")`
+    );
+
+    switch (classification.type) {
+      case 'topic':
+        await this.handleNewTopic(
+          entityId,
+          name,
+          description,
+          parentDatabaseId,
+          datasourceId,
+          grandparentPageId,
+          classification.userId
+        );
+        break;
+      case 'note':
+        await this.handleNewNote(
+          entityId,
+          name,
+          description,
+          parentDatabaseId,
+          datasourceId,
+          classification.parentTopicId,
+          classification.userId
+        );
+        break;
+      case 'chunk':
+        await this.handleNewChunk(
+          entityId,
+          name,
+          description,
+          parentDatabaseId,
+          datasourceId,
+          classification.parentNoteId,
+          classification.userId
+        );
+        break;
+    }
+  }
+
+  private async entityExists(id: string): Promise<boolean> {
+    const [t] = await dbClient
+      .select({ id: topic.id })
+      .from(topic)
+      .where(eq(topic.id, id))
+      .limit(1);
+    if (t) return true;
+
+    const [n] = await dbClient
+      .select({ id: note.id })
+      .from(note)
+      .where(eq(note.id, id))
+      .limit(1);
+    if (n) return true;
+
+    const [c] = await dbClient
+      .select({ id: chunk.id })
+      .from(chunk)
+      .where(eq(chunk.id, id))
+      .limit(1);
+    if (c) return true;
+
+    return false;
+  }
+
+  private async classifyParentPage(
+    pageId: string
+  ): Promise<
+    | { type: 'topic'; userId: string }
+    | { type: 'note'; userId: string; parentTopicId: string }
+    | { type: 'chunk'; userId: string; parentNoteId: string }
+    | null
+  > {
+    // Check if it's the master page (user.notionPageId) → new page is a Topic
+    const [masterUser] = await dbClient
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.notionPageId, pageId))
+      .limit(1);
+    if (masterUser) {
+      return { type: 'topic', userId: masterUser.id };
+    }
+
+    // Check if it's a topic page → new page is a Note
+    const [parentTopic] = await dbClient
+      .select({ id: topic.id, userId: topic.userId })
+      .from(topic)
+      .where(eq(topic.id, pageId))
+      .limit(1);
+    if (parentTopic && parentTopic.userId) {
       return {
-        entityType: null,
-        datasourceId: '',
-        databaseId: '',
-        userId: null,
-        parentEntityId: null,
+        type: 'note',
+        userId: parentTopic.userId,
+        parentTopicId: parentTopic.id,
       };
     }
 
-    // ----- Fast path: existing rows share the same datasourceId -----
-    if (datasourceId) {
-      const topicMatch = await dbClient
-        .select({ userId: topic.userId, parentPageId: topic.parentPageId })
-        .from(topic)
-        .where(eq(topic.datasourceId, datasourceId))
-        .limit(1);
-
-      if (topicMatch.length) {
-        return {
-          entityType: 'topic',
-          datasourceId,
-          databaseId,
-          userId: topicMatch[0].userId,
-          parentEntityId: topicMatch[0].parentPageId,
-        };
-      }
-
-      const noteMatch = await dbClient
-        .select({ userId: note.userId, topicId: note.topicId })
-        .from(note)
-        .where(eq(note.datasourceId, datasourceId))
-        .limit(1);
-
-      if (noteMatch.length) {
-        return {
-          entityType: 'note',
-          datasourceId,
-          databaseId,
-          userId: noteMatch[0].userId,
-          parentEntityId: noteMatch[0].topicId,
-        };
-      }
-
-      const chunkMatch = await dbClient
-        .select({ userId: chunk.userId, noteId: chunk.noteId })
-        .from(chunk)
-        .where(eq(chunk.datasourceId, datasourceId))
-        .limit(1);
-
-      if (chunkMatch.length) {
-        return {
-          entityType: 'chunk',
-          datasourceId,
-          databaseId,
-          userId: chunkMatch[0].userId,
-          parentEntityId: chunkMatch[0].noteId,
-        };
-      }
+    // Check if it's a note page → new page is a Chunk
+    const [parentNote] = await dbClient
+      .select({ id: note.id, userId: note.userId })
+      .from(note)
+      .where(eq(note.id, pageId))
+      .limit(1);
+    if (parentNote && parentNote.userId) {
+      return {
+        type: 'chunk',
+        userId: parentNote.userId,
+        parentNoteId: parentNote.id,
+      };
     }
 
-    // ----- Slow path: traverse Notion parent chain via API -----
-    this.logger.log(
-      `Fast path miss for datasourceId=${datasourceId}, traversing parent chain for database ${databaseId}`
-    );
+    return null;
+  }
 
-    try {
-      const database = await this.notionClient.databases.retrieve({
-        database_id: databaseId,
+  private async handleNewTopic(
+    topicPageId: string,
+    name: string,
+    description: string,
+    parentDatabaseId: string,
+    datasourceId: string,
+    masterPageId: string,
+    userId: string
+  ): Promise<void> {
+    this.logger.log(`Creating cascade for new topic: ${topicPageId}`);
+
+    // Create Notes database under the topic page
+    const notesDatabase = await this.appService.createNotesPage(topicPageId);
+    if (!isFullDatabase(notesDatabase) || !notesDatabase.data_sources?.length) {
+      this.logger.error('Failed to create notes database for new topic');
+      return;
+    }
+
+    // Create a sample note in the Notes database
+    const notePage = await this.appService.createNote(
+      notesDatabase.data_sources[0].id
+    );
+    if (!isFullPage(notePage)) {
+      this.logger.error('Failed to create sample note for new topic');
+      return;
+    }
+
+    // Create Chunks database under the note page
+    const chunksDatabase = await this.appService.createChunksPage(notePage.id);
+    if (
+      !isFullDatabase(chunksDatabase) ||
+      !chunksDatabase.data_sources?.length
+    ) {
+      this.logger.error('Failed to create chunks database for new topic');
+      return;
+    }
+
+    // Create a sample chunk in the Chunks database
+    const chunkPage = await this.appService.createChunk(
+      chunksDatabase.data_sources[0].id
+    );
+    if (!isFullPage(chunkPage)) {
+      this.logger.error('Failed to create sample chunk for new topic');
+      return;
+    }
+
+    // Fetch chunk content
+    const chunkContent = await this.appService.getBlockChildren(chunkPage.id);
+
+    // Extract parent IDs for note and chunk
+    const noteParent = notePage.parent;
+    let noteParentDbId = '';
+    let noteDatasourceId = '';
+    if (noteParent.type === 'data_source_id') {
+      noteParentDbId = noteParent.database_id;
+      noteDatasourceId = noteParent.data_source_id;
+    } else if (noteParent.type === 'database_id') {
+      noteParentDbId = noteParent.database_id;
+    }
+
+    const chunkParent = chunkPage.parent;
+    let chunkParentDbId = '';
+    let chunkDatasourceId = '';
+    if (chunkParent.type === 'data_source_id') {
+      chunkParentDbId = chunkParent.database_id;
+      chunkDatasourceId = chunkParent.data_source_id;
+    } else if (chunkParent.type === 'database_id') {
+      chunkParentDbId = chunkParent.database_id;
+    }
+
+    const noteName =
+      notePage.properties['Name']?.type === 'title'
+        ? notePage.properties['Name'].title[0]?.plain_text ?? ''
+        : '';
+    const noteDesc =
+      notePage.properties['Description']?.type === 'rich_text'
+        ? notePage.properties['Description'].rich_text[0]?.plain_text ?? ''
+        : '';
+    const chunkName =
+      chunkPage.properties['Name']?.type === 'title'
+        ? chunkPage.properties['Name'].title[0]?.plain_text ?? ''
+        : '';
+    const chunkDesc =
+      chunkPage.properties['Description']?.type === 'rich_text'
+        ? chunkPage.properties['Description'].rich_text[0]?.plain_text ?? ''
+        : '';
+
+    // Insert all three records in a transaction
+    await dbClient.transaction(async (tx) => {
+      await tx.insert(topic).values({
+        id: topicPageId,
+        parentPageId: masterPageId,
+        parentDatabaseId,
+        datasourceId,
+        name,
+        description,
+        userId,
       });
 
-      if (!isFullDatabase(database)) {
-        this.logger.warn(`Database ${databaseId} is not a full database`);
-        return {
-          entityType: null,
-          datasourceId,
-          databaseId,
-          userId: null,
-          parentEntityId: null,
-        };
-      }
+      await tx.insert(note).values({
+        id: notePage.id,
+        topicId: topicPageId,
+        parentDatabaseId: noteParentDbId,
+        datasourceId: noteDatasourceId,
+        name: noteName,
+        description: noteDesc,
+        userId,
+      });
 
-      // Extract the page that owns this database
-      const dbParent = database.parent;
-      let ownerPageId: string | null = null;
-
-      if (dbParent.type === 'page_id') {
-        ownerPageId = dbParent.page_id;
-      } else if (dbParent.type === 'block_id') {
-        ownerPageId = dbParent.block_id;
-      }
-
-      if (!ownerPageId) {
-        this.logger.warn(
-          `Database ${databaseId} has unexpected parent type: ${dbParent.type}`
-        );
-        return {
-          entityType: null,
-          datasourceId,
-          databaseId,
-          userId: null,
-          parentEntityId: null,
-        };
-      }
-
-      // Owner is the master page → new page is a topic
-      const userMatch = await dbClient
-        .select({ id: user.id })
-        .from(user)
-        .where(eq(user.notionPageId, ownerPageId))
-        .limit(1);
-
-      if (userMatch.length) {
-        return {
-          entityType: 'topic',
-          datasourceId,
-          databaseId,
-          userId: userMatch[0].id,
-          parentEntityId: ownerPageId,
-        };
-      }
-
-      // Owner is a topic → new page is a note
-      const topicMatch = await dbClient
-        .select({ id: topic.id, userId: topic.userId })
-        .from(topic)
-        .where(eq(topic.id, ownerPageId))
-        .limit(1);
-
-      if (topicMatch.length) {
-        return {
-          entityType: 'note',
-          datasourceId,
-          databaseId,
-          userId: topicMatch[0].userId,
-          parentEntityId: topicMatch[0].id,
-        };
-      }
-
-      // Owner is a note → new page is a chunk
-      const noteMatch = await dbClient
-        .select({ id: note.id, userId: note.userId })
-        .from(note)
-        .where(eq(note.id, ownerPageId))
-        .limit(1);
-
-      if (noteMatch.length) {
-        return {
-          entityType: 'chunk',
-          datasourceId,
-          databaseId,
-          userId: noteMatch[0].userId,
-          parentEntityId: noteMatch[0].id,
-        };
-      }
-
-      this.logger.warn(
-        `Owner page ${ownerPageId} of database ${databaseId} not found in any table`
-      );
-    } catch (err) {
-      this.logger.error(
-        `Error traversing parent chain for database ${databaseId}`,
-        err
-      );
-    }
-
-    return {
-      entityType: null,
-      datasourceId,
-      databaseId,
-      userId: null,
-      parentEntityId: null,
-    };
-  }
-
-  /**
-   * Fetch page from Notion, resolve its entity type, and upsert into the DB.
-   * Uses INSERT ... ON CONFLICT DO UPDATE so duplicate/rapid events are harmless.
-   */
-  private async upsertPage(pageId: string) {
-    try {
-      const page = (await this.notionClient.pages.retrieve({
-        page_id: pageId,
-      })) as unknown as NotionPage;
-
-      const resolved = await this.resolveEntityType(page);
-
-      if (!resolved.entityType || !resolved.userId) {
-        this.logger.warn(`Could not resolve entity type for page ${pageId}`);
-        return;
-      }
-
-      const name = page.properties.Name?.title[0]?.plain_text ?? '';
-      const description =
-        page.properties.Description?.rich_text[0]?.plain_text ?? '';
-
-      switch (resolved.entityType) {
-        case 'topic': {
-          await dbClient
-            .insert(topic)
-            .values({
-              id: pageId,
-              parentPageId: resolved.parentEntityId,
-              parentDatabaseId: resolved.databaseId,
-              datasourceId: resolved.datasourceId,
-              name,
-              description,
-              userId: resolved.userId,
-            })
-            .onConflictDoUpdate({
-              target: topic.id,
-              set: { name, description },
-            });
-          this.logger.log(`Upserted topic: ${pageId}`);
-          break;
-        }
-        case 'note': {
-          await dbClient
-            .insert(note)
-            .values({
-              id: pageId,
-              topicId: resolved.parentEntityId,
-              parentDatabaseId: resolved.databaseId,
-              datasourceId: resolved.datasourceId,
-              name,
-              description,
-              userId: resolved.userId,
-            })
-            .onConflictDoUpdate({
-              target: note.id,
-              set: { name, description },
-            });
-          this.logger.log(`Upserted note: ${pageId}`);
-          break;
-        }
-        case 'chunk': {
-          const { contentJson, contentMd } =
-            await this.fetchBlockChildrenWithMd(pageId);
-          await dbClient
-            .insert(chunk)
-            .values({
-              id: pageId,
-              noteId: resolved.parentEntityId,
-              parentDatabaseId: resolved.databaseId,
-              datasourceId: resolved.datasourceId,
-              name,
-              description,
-              contentJson,
-              contentMd,
-              userId: resolved.userId,
-            })
-            .onConflictDoUpdate({
-              target: chunk.id,
-              set: { name, description, contentJson, contentMd },
-            });
-          this.logger.log(`Upserted chunk: ${pageId}`);
-          break;
-        }
-      }
-    } catch (err) {
-      this.logger.error(`Error upserting page ${pageId}`, err);
-    }
-  }
-
-  private async fetchBlockChildrenWithMd(
-    pageId: string
-  ): Promise<{ contentJson: unknown; contentMd: string }> {
-    const response = await this.notionClient.blocks.children.list({
-      block_id: pageId,
+      await tx.insert(chunk).values({
+        id: chunkPage.id,
+        noteId: notePage.id,
+        parentDatabaseId: chunkParentDbId,
+        datasourceId: chunkDatasourceId,
+        name: chunkName,
+        description: chunkDesc,
+        contentJson: chunkContent.results,
+        userId,
+      });
     });
-    const mdBlocks = await this.n2m.blocksToMarkdown(response.results);
-    const mdString = this.n2m.toMarkdownString(mdBlocks);
-    return {
-      contentJson: response.results,
-      contentMd: mdString.parent,
-    };
+
+    this.logger.log(
+      `Topic cascade complete: topic=${topicPageId}, note=${notePage.id}, chunk=${chunkPage.id}`
+    );
+  }
+
+  private async handleNewNote(
+    notePageId: string,
+    name: string,
+    description: string,
+    parentDatabaseId: string,
+    datasourceId: string,
+    topicId: string,
+    userId: string
+  ): Promise<void> {
+    this.logger.log(`Creating cascade for new note: ${notePageId}`);
+
+    // Create Chunks database under the note page
+    const chunksDatabase = await this.appService.createChunksPage(notePageId);
+    if (
+      !isFullDatabase(chunksDatabase) ||
+      !chunksDatabase.data_sources?.length
+    ) {
+      this.logger.error('Failed to create chunks database for new note');
+      return;
+    }
+
+    // Create a sample chunk
+    const chunkPage = await this.appService.createChunk(
+      chunksDatabase.data_sources[0].id
+    );
+    if (!isFullPage(chunkPage)) {
+      this.logger.error('Failed to create sample chunk for new note');
+      return;
+    }
+
+    // Fetch chunk content
+    const chunkContent = await this.appService.getBlockChildren(chunkPage.id);
+
+    // Extract parent IDs for chunk
+    const chunkParent = chunkPage.parent;
+    let chunkParentDbId = '';
+    let chunkDatasourceId = '';
+    if (chunkParent.type === 'data_source_id') {
+      chunkParentDbId = chunkParent.database_id;
+      chunkDatasourceId = chunkParent.data_source_id;
+    } else if (chunkParent.type === 'database_id') {
+      chunkParentDbId = chunkParent.database_id;
+    }
+
+    const chunkName =
+      chunkPage.properties['Name']?.type === 'title'
+        ? chunkPage.properties['Name'].title[0]?.plain_text ?? ''
+        : '';
+    const chunkDesc =
+      chunkPage.properties['Description']?.type === 'rich_text'
+        ? chunkPage.properties['Description'].rich_text[0]?.plain_text ?? ''
+        : '';
+
+    await dbClient.transaction(async (tx) => {
+      await tx.insert(note).values({
+        id: notePageId,
+        topicId,
+        parentDatabaseId,
+        datasourceId,
+        name,
+        description,
+        userId,
+      });
+
+      await tx.insert(chunk).values({
+        id: chunkPage.id,
+        noteId: notePageId,
+        parentDatabaseId: chunkParentDbId,
+        datasourceId: chunkDatasourceId,
+        name: chunkName,
+        description: chunkDesc,
+        contentJson: chunkContent.results,
+        userId,
+      });
+    });
+
+    this.logger.log(
+      `Note cascade complete: note=${notePageId}, chunk=${chunkPage.id}`
+    );
+  }
+
+  private async handleNewChunk(
+    chunkPageId: string,
+    name: string,
+    description: string,
+    parentDatabaseId: string,
+    datasourceId: string,
+    noteId: string,
+    userId: string
+  ): Promise<void> {
+    this.logger.log(`Inserting new chunk: ${chunkPageId}`);
+
+    // Fetch chunk content
+    const chunkContent = await this.appService.getBlockChildren(chunkPageId);
+
+    await dbClient.insert(chunk).values({
+      id: chunkPageId,
+      noteId,
+      parentDatabaseId,
+      datasourceId,
+      name,
+      description,
+      contentJson: chunkContent.results,
+      userId,
+    });
+
+    this.logger.log(`Chunk inserted: ${chunkPageId}`);
   }
 }
