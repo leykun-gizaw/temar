@@ -10,18 +10,3 @@ declare module 'remark-gfm' {
   const remarkGfm: any;
   export default remarkGfm;
 }
-<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/web/index.d.ts
-<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/web/index.d.ts
-=======
-=======
->>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/web/index.d.ts
-
-declare module 'mermaid' {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mermaid: any;
-  export default mermaid;
-}
-<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/web/index.d.ts
->>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/web/index.d.ts
-=======
->>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/web/index.d.ts
