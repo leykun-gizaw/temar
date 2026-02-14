@@ -19,8 +19,7 @@ export default async function TopicsPage({
   const currentUser = await getLoggedInUser();
 
   if (!currentUser?.notionPageId) {
-    const authUrl =
-      'https://api.notion.com/v1/oauth/authorize?client_id=306d872b-594c-80b5-b21b-0037c6be4454&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A5173%2Fapi%2Fnotion%2Fcallback';
+    const authUrl = process.env.NOTION_AUTHORIZATION_URL || '';
     return (
       <div className="col-span-full flex flex-col p-6 h-full m-2">
         <div className="space-y-1 border-b pb-4 mb-6">
