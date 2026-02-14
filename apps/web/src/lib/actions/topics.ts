@@ -45,11 +45,7 @@ export async function createTopic(
 
     if (existingTopic) {
       datasourceId = existingTopic.datasourceId;
-<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/web/src/lib/actions/topics.ts
-      parentPageId = existingTopic.parentPageId ?? '';
-=======
-      parentPageId = existingTopic.parentPageId;
->>>>>>> /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/web/src/lib/actions/topics.ts.undo_before
+      parentPageId = existingTopic.parentPageId || '';
     } else {
       // Fallback: resolve datasource from user's master page using existing endpoints
       const masterPageId = loggedInUser.notionPageId;
@@ -63,7 +59,9 @@ export async function createTopic(
       // Find the Topics child_database block under the master page
       const blockChildren: {
         results: Array<{ id: string; type?: string }>;
-      } = await syncServiceFetch(`block/${masterPageId}/children`);
+      } = await syncServiceFetch(`block/${masterPageId}/children`, {
+        userId: loggedInUser.id,
+      });
 
       const childDb = blockChildren.results.find(
         (b) => b.type === 'child_database'
@@ -78,7 +76,9 @@ export async function createTopic(
       // Get the database to extract its datasource ID
       const database: {
         data_sources?: Array<{ id: string }>;
-      } = await syncServiceFetch(`database/${childDb.id}`);
+      } = await syncServiceFetch(`database/${childDb.id}`, {
+        userId: loggedInUser.id,
+      });
 
       if (!database.data_sources?.length) {
         return {
@@ -103,13 +103,16 @@ export async function createTopic(
         name: title,
         description,
       },
+      userId: loggedInUser.id,
     });
 
     const { topicPage, notePage, chunkPage } = cascadeData;
 
     // Fetch chunk content with markdown
     const chunkContent: { results: unknown[]; contentMd: string } =
-      await syncServiceFetch(`block/${chunkPage.id}/children_with_md`);
+      await syncServiceFetch(`block/${chunkPage.id}/children_with_md`, {
+        userId: loggedInUser.id,
+      });
 
     const getParentIds = (page: NotionPage) => {
       const p = page.parent;

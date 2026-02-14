@@ -6,9 +6,10 @@
  */
 export async function syncServiceFetch<T = unknown>(
   path: string,
-  options?: {
+  options: {
     method?: string;
     body?: Record<string, unknown>;
+    userId: string;
   }
 ): Promise<T> {
   const baseUrl = process.env.NOTION_SERVICE_API_ENDPOINT;
@@ -21,6 +22,7 @@ export async function syncServiceFetch<T = unknown>(
     headers: {
       'Content-Type': 'application/json',
       ...(apiKey && { 'x-api-key': apiKey }),
+      ...(options?.userId && { 'x-user-id': options.userId }),
     },
     ...(options?.body && { body: JSON.stringify(options.body) }),
   });

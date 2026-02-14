@@ -1,20 +1,35 @@
 import { Test } from '@nestjs/testing';
-import { AppService } from './app.service';
+import { NotionAuthService } from './services/notion-auth.service';
+import { NotionApiService } from './services/notion-api.service';
+import { NotionContentService } from './services/notion-content.service';
+import { UserRepository } from './services/user.repository';
 
-describe('AppService', () => {
-  let service: AppService;
+describe('Services', () => {
+  let notionAuth: NotionAuthService;
+  let notionApi: NotionApiService;
+  let notionContent: NotionContentService;
+  let userRepository: UserRepository;
 
   beforeAll(async () => {
     const app = await Test.createTestingModule({
-      providers: [AppService],
+      providers: [
+        NotionAuthService,
+        NotionApiService,
+        NotionContentService,
+        UserRepository,
+      ],
     }).compile();
 
-    service = app.get<AppService>(AppService);
+    notionAuth = app.get<NotionAuthService>(NotionAuthService);
+    notionApi = app.get<NotionApiService>(NotionApiService);
+    notionContent = app.get<NotionContentService>(NotionContentService);
+    userRepository = app.get<UserRepository>(UserRepository);
   });
 
-  describe('getGreeting', () => {
-    it('should return "Hello API"', async () => {
-      expect(await service.getGreeting()).toEqual({ message: 'Hello API' });
-    });
+  it('should resolve all services', () => {
+    expect(notionAuth).toBeDefined();
+    expect(notionApi).toBeDefined();
+    expect(notionContent).toBeDefined();
+    expect(userRepository).toBeDefined();
   });
 });

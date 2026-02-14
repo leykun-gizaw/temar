@@ -1,13 +1,18 @@
 import { Controller, Post, Body, Logger } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SkipApiKey } from './skip-api-key.decorator';
 import { WebhookService } from './webhook.service';
 
+@ApiTags('Webhooks')
 @Controller('webhook')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
 
   constructor(private readonly webhookService: WebhookService) {}
 
+  @ApiOperation({
+    summary: 'Handle incoming Notion webhook events (no API key required)',
+  })
   @SkipApiKey()
   @Post('notion')
   async handleNotionWebhook(@Body() body: Record<string, unknown>) {
@@ -22,19 +27,45 @@ export class WebhookController {
 
     this.logger.log(`Received webhook event: ${eventType}`);
 
-    if (eventType === 'page.created' && entity?.type === 'page') {
+    if (entity?.type === 'page') {
       const workspaceId = body.workspace_id as string | undefined;
-      // Fire-and-forget so Notion gets a fast 200
-      this.webhookService
-        .handlePageCreated(entity.id, workspaceId)
-        .catch((err) => {
+
+      const handler = this.resolveHandler(eventType, entity.id, workspaceId);
+      if (handler) {
+        handler.catch((err) => {
           this.logger.error(
-            `Error processing page.created for ${entity.id}: ${err.message}`,
+            `Error processing ${eventType} for ${entity.id}: ${err.message}`,
             err.stack
           );
         });
+      }
     }
 
     return { ok: true };
+  }
+
+  private resolveHandler(
+    eventType: string | undefined,
+    entityId: string,
+    workspaceId?: string
+  ): Promise<void> | null {
+    switch (eventType) {
+      case 'page.created':
+        return this.webhookService.handlePageCreated(entityId, workspaceId);
+      case 'page.properties_updated':
+        return this.webhookService.handlePagePropertyUpdated(
+          entityId,
+          workspaceId
+        );
+      case 'page.content_updated':
+        return this.webhookService.handlePageContentUpdated(
+          entityId,
+          workspaceId
+        );
+      case 'page.deleted':
+        return this.webhookService.handlePageDeleted(entityId, workspaceId);
+      default:
+        return null;
+    }
   }
 }
