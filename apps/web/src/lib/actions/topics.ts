@@ -45,7 +45,11 @@ export async function createTopic(
 
     if (existingTopic) {
       datasourceId = existingTopic.datasourceId;
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/web/src/lib/actions/topics.ts
       parentPageId = existingTopic.parentPageId ?? '';
+=======
+      parentPageId = existingTopic.parentPageId;
+>>>>>>> /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/web/src/lib/actions/topics.ts.undo_before
     } else {
       // Fallback: resolve datasource from user's master page using existing endpoints
       const masterPageId = loggedInUser.notionPageId;

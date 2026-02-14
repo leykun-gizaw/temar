@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import Search from './_components/search';
 import GalleryList from './_components/topics-gallery-list';
 
-import AddMasterPageDialog from '@/app/dashboard/topics/_components/add-master-page-dialog';
+import ConnectNotionButton from '@/app/dashboard/topics/_components/connect-notion-button';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 
 export default async function TopicsPage({
@@ -19,6 +19,12 @@ export default async function TopicsPage({
   const currentUser = await getLoggedInUser();
 
   if (!currentUser?.notionPageId) {
+    const clientId = process.env.NOTION_OAUTH_CLIENT_ID || '';
+    const redirectUri = process.env.NOTION_OAUTH_REDIRECT_URI || '';
+    const authUrl = `https://api.notion.com/v1/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&response_type=code&owner=user`;
+
     return (
       <div className="col-span-full flex flex-col p-6 h-full m-2">
         <div className="space-y-1 border-b pb-4 mb-6">
@@ -29,18 +35,19 @@ export default async function TopicsPage({
           <div className="border shadow max-w-xl w-full h-fit bg-muted/5 rounded-lg p-6 text-center space-y-8">
             <div className="space-y-2">
               <h2 className="text-lg font-semibold">
-                Connect a Notion master page
+                Connect your Notion workspace
               </h2>
               <p className="text-sm text-muted-foreground">
-                Add a master Notion page to start syncing topics and notes to
-                your workspace.
+                Connect to Notion to duplicate the Temar template and start
+                syncing topics and notes to your workspace.
               </p>
             </div>
-            <AddMasterPageDialog
+            <ConnectNotionButton
+              authUrl={authUrl}
               trigger={
                 <Button size="sm">
                   <Plus className="mr-1.5 h-4 w-4" />
-                  Add master page
+                  Connect to Notion
                 </Button>
               }
             />

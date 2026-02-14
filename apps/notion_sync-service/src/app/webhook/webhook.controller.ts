@@ -13,27 +13,26 @@ export class WebhookController {
   async handleNotionWebhook(@Body() body: Record<string, unknown>) {
     // Verification handshake
     if (body.verification_token) {
-      this.logger.log(
-        `Webhook verification token: ${body.verification_token}`
-      );
+      this.logger.log(`Webhook verification token: ${body.verification_token}`);
       return { verification_token: body.verification_token };
     }
 
     const eventType = body.type as string | undefined;
-    const entity = body.entity as
-      | { id: string; type: string }
-      | undefined;
+    const entity = body.entity as { id: string; type: string } | undefined;
 
     this.logger.log(`Received webhook event: ${eventType}`);
 
     if (eventType === 'page.created' && entity?.type === 'page') {
+      const workspaceId = body.workspace_id as string | undefined;
       // Fire-and-forget so Notion gets a fast 200
-      this.webhookService.handlePageCreated(entity.id).catch((err) => {
-        this.logger.error(
-          `Error processing page.created for ${entity.id}: ${err.message}`,
-          err.stack
-        );
-      });
+      this.webhookService
+        .handlePageCreated(entity.id, workspaceId)
+        .catch((err) => {
+          this.logger.error(
+            `Error processing page.created for ${entity.id}: ${err.message}`,
+            err.stack
+          );
+        });
     }
 
     return { ok: true };

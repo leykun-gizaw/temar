@@ -5,16 +5,34 @@ import {
   Post,
   Body,
   Patch,
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.controller.ts
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.controller.ts
   Delete,
+=======
+  Headers,
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.controller.ts
+=======
+  Headers,
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.controller.ts
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { AppService } from './app.service';
-import { isFullDatabase } from '@notionhq/client';
+import { Client, isFullDatabase } from '@notionhq/client';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
+
+  private async getClient(userId: string | undefined): Promise<Client> {
+    if (!userId) {
+      throw new HttpException(
+        'X-User-Id header is required',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    return this.appService.getNotionClientForUser(userId);
+  }
 
   @Get()
   getGreeting() {
@@ -40,72 +58,133 @@ export class AppController {
   }
 
   @Get('/block/:id')
-  async getBlock(@Param('id') id: string) {
-    return await this.appService.getBlock(id);
+  async getBlock(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.getClient(userId);
+    return await this.appService.getBlock(client, id);
   }
 
   @Get('/block/:id/children')
-  async getBlockChildren(@Param('id') id: string) {
-    return await this.appService.getBlockChildren(id);
+  async getBlockChildren(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.getClient(userId);
+    return await this.appService.getBlockChildren(client, id);
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.controller.ts
   }
 
   @Get('/block/:id/children_with_md')
   async getBlockChildrenWithMd(@Param('id') id: string) {
     return await this.appService.getBlockChildrenWithMd(id);
+=======
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.controller.ts
   }
 
   @Patch('/block/:id/appendChildren')
-  async appendBlockChildren(@Param('id') id: string) {
-    return await this.appService.appendBlockChildren(id);
+  async appendBlockChildren(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.getClient(userId);
+    return await this.appService.appendBlockChildren(client, id);
   }
 
   @Get('/page/:id')
-  async getPage(@Param('id') id: string) {
-    return await this.appService.getPage(id);
+  async getPage(@Param('id') id: string, @Headers('x-user-id') userId: string) {
+    const client = await this.getClient(userId);
+    return await this.appService.getPage(client, id);
+  }
+
+  @Patch('page/:id/properties')
+  async updatePageProperties(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ) {
+    const client = await this.getClient(userId);
+    return await this.appService.updatePageProperties(
+      client,
+      id,
+      name,
+      description
+    );
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.controller.ts
   }
 
   @Get('/page/:id/datasource_id')
   async getPageDatasourceId(@Param('id') id: string) {
     const datasourceId = await this.appService.getPageDatasourceId(id);
     return { datasourceId };
+=======
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.controller.ts
   }
 
   @Get('/page/:id/get_datasource_list')
-  async getPageDatasourceList(@Param('id') id: string) {
-    return await this.appService.getPageDatasourceList(id);
+  async getPageDatasourceList(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.getClient(userId);
+    return await this.appService.getPageDatasourceList(client, id);
   }
 
   @Get('database/:id')
-  async getDatabase(@Param('id') id: string) {
-    return await this.appService.getDatabase(id);
+  async getDatabase(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.getClient(userId);
+    return await this.appService.getDatabase(client, id);
   }
 
   @Post('page/:id/create_page_database')
   async createPageDatabase(
     @Param('id') id: string,
+    @Headers('x-user-id') userId: string,
     @Body('title') title: string
   ) {
-    return await this.appService.createPageDatabase(id, title);
+    const client = await this.getClient(userId);
+    return await this.appService.createPageDatabase(client, id, title);
   }
 
   @Get('datasource/:id')
-  async getDataSource(@Param('id') id: string) {
-    return await this.appService.getDataSource(id);
+  async getDataSource(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.getClient(userId);
+    return await this.appService.getDataSource(client, id);
   }
 
   @Post('datasource/:id/create_topics')
-  async createTopics(@Param('id') datasourceId: string) {
-    return await this.appService.createTopic(datasourceId);
+  async createTopics(
+    @Param('id') datasourceId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.getClient(userId);
+    return await this.appService.createTopic(client, datasourceId);
   }
 
   @Get('datasource/:id/pages')
-  async getDataSourcePages(@Param('id') id: string) {
-    return await this.appService.queryDataSource(id);
+  async getDataSourcePages(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.getClient(userId);
+    return await this.appService.queryDataSource(client, id);
   }
 
   @Post('page/:id/prep_notion')
-  async createTopicsPage(@Param('id') id: string) {
-    const topicsDatabase = await this.appService.createTopicsPage(id);
+  async createTopicsPage(
+    @Param('id') id: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.getClient(userId);
+    const topicsDatabase = await this.appService.createTopicsPage(client, id);
 
     if (!isFullDatabase(topicsDatabase))
       throw new HttpException(
@@ -118,10 +197,14 @@ export class AppController {
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     const topicPage = await this.appService.createTopic(
+      client,
       topicsDatabase.data_sources[0].id
     );
 
-    const notesDatabase = await this.appService.createNotesPage(topicPage.id);
+    const notesDatabase = await this.appService.createNotesPage(
+      client,
+      topicPage.id
+    );
     if (!isFullDatabase(notesDatabase))
       throw new HttpException(
         'Failed to create notes database',
@@ -133,10 +216,14 @@ export class AppController {
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     const notePage = await this.appService.createNote(
+      client,
       notesDatabase.data_sources[0].id
     );
 
-    const chunksDatabase = await this.appService.createChunksPage(notePage.id);
+    const chunksDatabase = await this.appService.createChunksPage(
+      client,
+      notePage.id
+    );
     if (!isFullDatabase(chunksDatabase))
       throw new HttpException(
         'Failed to create chunks database',
@@ -148,6 +235,7 @@ export class AppController {
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     const chunkPage = await this.appService.createChunk(
+      client,
       chunksDatabase.data_sources[0].id
     );
     return { topicPage, notePage, chunkPage };

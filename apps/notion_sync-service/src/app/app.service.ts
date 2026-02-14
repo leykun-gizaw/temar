@@ -1,19 +1,128 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Client, isFullBlock, isFullDatabase } from '@notionhq/client';
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
 import { NotionToMarkdown } from 'notion-to-md';
 import { dbClient, user } from '@temar/db-client';
+=======
+import { dbClient, user, decrypt, encrypt } from '@temar/db-client';
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
+=======
+import { dbClient, user, decrypt, encrypt } from '@temar/db-client';
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
 import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class AppService {
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
   private notionClient: Client;
   private n2m: NotionToMarkdown;
+=======
+  private readonly logger = new Logger(AppService.name);
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
+=======
+  private readonly logger = new Logger(AppService.name);
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
 
-  constructor() {
-    this.notionClient = new Client({
-      auth: process.env.NOTION_INTEGRATION_SECRET,
+  /**
+   * Get a Notion Client authenticated with the given user's OAuth token.
+   * Automatically refreshes the token if it has expired.
+   */
+  async getNotionClientForUser(userId: string): Promise<Client> {
+    const [row] = await dbClient
+      .select({
+        notionAccessToken: user.notionAccessToken,
+        notionRefreshToken: user.notionRefreshToken,
+        notionTokenExpiresAt: user.notionTokenExpiresAt,
+      })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (!row?.notionAccessToken) {
+      throw new Error(`User ${userId} has no Notion access token`);
+    }
+
+    let accessToken = decrypt(row.notionAccessToken);
+
+    // Refresh if expired (or expiring within 5 minutes)
+    const expiresAt = row.notionTokenExpiresAt;
+    const buffer = 5 * 60 * 1000; // 5 min
+    if (expiresAt && expiresAt.getTime() - buffer < Date.now()) {
+      if (!row.notionRefreshToken) {
+        throw new Error(`User ${userId} token expired and no refresh token`);
+      }
+      accessToken = await this.refreshToken(userId, row.notionRefreshToken);
+    }
+
+    return new Client({ auth: accessToken });
+  }
+
+  private async refreshToken(
+    userId: string,
+    encryptedRefreshToken: string
+  ): Promise<string> {
+    const clientId = process.env.NOTION_OAUTH_CLIENT_ID;
+    const clientSecret = process.env.NOTION_OAUTH_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      throw new Error(
+        'Missing NOTION_OAUTH_CLIENT_ID or NOTION_OAUTH_CLIENT_SECRET'
+      );
+    }
+
+    const refreshToken = decrypt(encryptedRefreshToken);
+    const encoded = Buffer.from(`${clientId}:${clientSecret}`).toString(
+      'base64'
+    );
+
+    const response = await fetch('https://api.notion.com/v1/oauth/token', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${encoded}`,
+      },
+      body: JSON.stringify({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }),
     });
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
     this.n2m = new NotionToMarkdown({ notionClient: this.notionClient });
+=======
+=======
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
+
+    if (!response.ok) {
+      const body = await response.text();
+      this.logger.error(`Token refresh failed for user ${userId}: ${body}`);
+      throw new Error(`Token refresh failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const newAccessToken = data.access_token as string;
+    const newRefreshToken = data.refresh_token as string | undefined;
+
+    // Update DB with new tokens
+    await dbClient
+      .update(user)
+      .set({
+        notionAccessToken: encrypt(newAccessToken),
+        ...(newRefreshToken
+          ? { notionRefreshToken: encrypt(newRefreshToken) }
+          : {}),
+        notionTokenExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      })
+      .where(eq(user.id, userId));
+
+    this.logger.log(`Refreshed Notion token for user ${userId}`);
+    return newAccessToken;
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
+=======
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
   }
 
   async getGreeting() {
@@ -41,17 +150,18 @@ export class AppService {
       .returning();
   }
 
-  async getPage(id: string) {
-    return await this.notionClient.pages.retrieve({ page_id: id });
+  async getPage(client: Client, id: string) {
+    return await client.pages.retrieve({ page_id: id });
   }
 
   async createDatabasePage(
+    client: Client,
     dataSourceId: string,
     name: string,
     description: string,
     emoji: string
   ) {
-    return await this.notionClient.pages.create({
+    return await client.pages.create({
       icon: { type: 'emoji', emoji },
       parent: { type: 'data_source_id', data_source_id: dataSourceId },
       properties: {
@@ -65,14 +175,16 @@ export class AppService {
     });
   }
 
-  async getBlock(id: string) {
-    return await this.notionClient.blocks.retrieve({ block_id: id });
+  async getBlock(client: Client, id: string) {
+    return await client.blocks.retrieve({ block_id: id });
   }
 
-  async getBlockChildren(id: string) {
-    return await this.notionClient.blocks.children.list({ block_id: id });
+  async getBlockChildren(client: Client, id: string) {
+    return await client.blocks.children.list({ block_id: id });
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
   }
 
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
   async getBlockChildrenWithMd(id: string) {
     const response = await this.notionClient.blocks.children.list({
       block_id: id,
@@ -87,6 +199,16 @@ export class AppService {
 
   async appendBlockChildren(blockId: string) {
     return await this.notionClient.blocks.children.append({
+=======
+  async appendBlockChildren(client: Client, blockId: string) {
+    return await client.blocks.children.append({
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
+=======
+  }
+
+  async appendBlockChildren(client: Client, blockId: string) {
+    return await client.blocks.children.append({
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
       block_id: blockId,
       children: [
         {
@@ -96,10 +218,12 @@ export class AppService {
     });
   }
 
-  async getDatabase(id: string) {
-    return await this.notionClient.databases.retrieve({ database_id: id });
+  async getDatabase(client: Client, id: string) {
+    return await client.databases.retrieve({ database_id: id });
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
   }
 
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
   async getPageDatasourceId(id: string): Promise<string | null> {
     const pageChildren = (await this.getBlockChildren(id)).results;
     const pageDB = pageChildren.find((child) => {
@@ -115,33 +239,62 @@ export class AppService {
 
   async getPageDatasourceList(id: string) {
     const pageChildren = (await this.getBlockChildren(id)).results;
+=======
+  async getPageDatasourceList(client: Client, id: string) {
+    const pageChildren = (await this.getBlockChildren(client, id)).results;
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
+=======
+  }
+
+  async getPageDatasourceList(client: Client, id: string) {
+    const pageChildren = (await this.getBlockChildren(client, id)).results;
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
     const pageDB = pageChildren.find((child) => {
       if (!isFullBlock(child)) return false;
       return child.type === 'child_database';
     });
 
     if (!pageDB) return null;
-    const database = await this.getDatabase(pageDB.id);
+    const database = await this.getDatabase(client, pageDB.id);
 
     if (!isFullDatabase(database)) return null;
     if (!database.data_sources?.length) return null;
     const databaseDatasourceID = database.data_sources[0].id;
     const datasourcePagesList = (
-      await this.queryDataSource(databaseDatasourceID)
+      await this.queryDataSource(client, databaseDatasourceID)
     ).results;
     return datasourcePagesList;
   }
 
-  async getDataSource(id: string) {
-    return await this.notionClient.dataSources.retrieve({ data_source_id: id });
+  async getDataSource(client: Client, id: string) {
+    return await client.dataSources.retrieve({ data_source_id: id });
   }
 
-  async queryDataSource(id: string) {
-    return await this.notionClient.dataSources.query({ data_source_id: id });
+  async queryDataSource(client: Client, id: string) {
+    return await client.dataSources.query({ data_source_id: id });
   }
 
-  async createTopicsPage(parentPageId: string) {
-    await this.notionClient.pages.update({
+  async updatePageProperties(
+    client: Client,
+    id: string,
+    name: string,
+    description: string
+  ) {
+    return await client.pages.update({
+      page_id: id,
+      properties: {
+        Name: {
+          title: [{ text: { content: name } }],
+        },
+        Description: {
+          rich_text: [{ text: { content: description } }],
+        },
+      },
+    });
+  }
+
+  async createTopicsPage(client: Client, parentPageId: string) {
+    await client.pages.update({
       page_id: parentPageId,
       properties: {
         title: {
@@ -150,19 +303,20 @@ export class AppService {
       },
       icon: { emoji: '📖' },
     });
-    return await this.createPageContent(parentPageId, '📚 Topics');
+    return await this.createPageContent(client, parentPageId, '📚 Topics');
   }
 
-  async createNotesPage(parentPageId: string) {
-    return await this.createPageContent(parentPageId, '📘 Notes');
+  async createNotesPage(client: Client, parentPageId: string) {
+    return await this.createPageContent(client, parentPageId, '📘 Notes');
   }
 
-  async createChunksPage(parentPageId: string) {
-    return await this.createPageContent(parentPageId, '📄 Chunks');
+  async createChunksPage(client: Client, parentPageId: string) {
+    return await this.createPageContent(client, parentPageId, '📄 Chunks');
   }
 
-  async createTopic(dataSourceId: string) {
+  async createTopic(client: Client, dataSourceId: string) {
     return await this.createDatabasePage(
+      client,
       dataSourceId,
       'Sample Topic',
       'Sample topics demo description',
@@ -170,8 +324,9 @@ export class AppService {
     );
   }
 
-  async createNote(dataSourceId: string) {
+  async createNote(client: Client, dataSourceId: string) {
     return await this.createDatabasePage(
+      client,
       dataSourceId,
       'Sample Note',
       'Sample notes demo description',
@@ -179,8 +334,9 @@ export class AppService {
     );
   }
 
-  async createChunk(dataSourceId: string) {
+  async createChunk(client: Client, dataSourceId: string) {
     return await this.createDatabasePage(
+      client,
       dataSourceId,
       'Sample Chunk',
       'Sample chunks demo description',
@@ -188,8 +344,12 @@ export class AppService {
     );
   }
 
-  async createPageDatabase(parentPageId: string, title: string) {
-    return await this.notionClient.databases.create({
+  async createPageDatabase(
+    client: Client,
+    parentPageId: string,
+    title: string
+  ) {
+    return await client.databases.create({
       parent: { type: 'page_id', page_id: parentPageId },
       initial_data_source: {
         properties: {
@@ -202,6 +362,8 @@ export class AppService {
     });
   }
 
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
   /**
    * Create a topic with full child hierarchy:
    * topic page → notes database → sample note → chunks database → sample chunk
@@ -321,6 +483,19 @@ export class AppService {
 
   private async createPageContent(parentPageId: string, headingTitle: string) {
     await this.notionClient.blocks.children.append({
+=======
+=======
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
+  private async createPageContent(
+    client: Client,
+    parentPageId: string,
+    headingTitle: string
+  ) {
+    await client.blocks.children.append({
+<<<<<<< /Users/leykun/Documents/github-repos/Temar Application Files/temar/apps/notion_sync-service/src/app/app.service.ts
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
+=======
+>>>>>>> /Users/leykun/.windsurf/worktrees/temar/temar-ea7031a5/apps/notion_sync-service/src/app/app.service.ts
       block_id: parentPageId,
       children: [
         {
@@ -336,6 +511,6 @@ export class AppService {
         },
       ],
     });
-    return await this.createPageDatabase(parentPageId, headingTitle);
+    return await this.createPageDatabase(client, parentPageId, headingTitle);
   }
 }

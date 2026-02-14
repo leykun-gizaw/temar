@@ -22,6 +22,11 @@ export const user = pgTable('user', {
     .$onUpdate(() => new Date())
     .notNull(),
   notionPageId: uuid('notion_page_id').unique(),
+  notionAccessToken: text('notion_access_token'),
+  notionRefreshToken: text('notion_refresh_token'),
+  notionBotId: text('notion_bot_id'),
+  notionWorkspaceId: text('notion_workspace_id'),
+  notionTokenExpiresAt: timestamp('notion_token_expires_at'),
 });
 
 export const session = pgTable(

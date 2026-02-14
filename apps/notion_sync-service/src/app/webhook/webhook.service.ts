@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { isFullDatabase, isFullPage } from '@notionhq/client';
+import { Client, isFullDatabase, isFullPage } from '@notionhq/client';
 import { AppService } from '../app.service';
 import { dbClient, user, topic, note, chunk } from '@temar/db-client';
 import { eq } from 'drizzle-orm';
@@ -10,7 +10,10 @@ export class WebhookService {
 
   constructor(private readonly appService: AppService) {}
 
-  async handlePageCreated(entityId: string): Promise<void> {
+  async handlePageCreated(
+    entityId: string,
+    workspaceId?: string
+  ): Promise<void> {
     // Loop guard: skip if the page already exists in our DB
     const existsInDb = await this.entityExists(entityId);
     if (existsInDb) {
@@ -18,8 +21,24 @@ export class WebhookService {
       return;
     }
 
+    // Resolve the user from workspace_id so we can get their Notion client
+    if (!workspaceId) {
+      this.logger.warn(
+        `No workspace_id in webhook for entity ${entityId}, skipping.`
+      );
+      return;
+    }
+
+    const userId = await this.getUserIdByWorkspace(workspaceId);
+    if (!userId) {
+      this.logger.warn(`No user found for workspace ${workspaceId}, skipping.`);
+      return;
+    }
+
+    const client = await this.appService.getNotionClientForUser(userId);
+
     // Fetch the created page from Notion
-    const page = await this.appService.getPage(entityId);
+    const page = await this.appService.getPage(client, entityId);
     if (!isFullPage(page)) {
       this.logger.warn(`Page ${entityId} is not a full page, skipping.`);
       return;
@@ -55,7 +74,10 @@ export class WebhookService {
     }
 
     // Get the parent database to find its parent page
-    const database = await this.appService.getDatabase(parentDatabaseId);
+    const database = await this.appService.getDatabase(
+      client,
+      parentDatabaseId
+    );
     if (!isFullDatabase(database)) {
       this.logger.warn(
         `Database ${parentDatabaseId} is not a full database, skipping.`
@@ -95,38 +117,52 @@ export class WebhookService {
     switch (classification.type) {
       case 'topic':
         await this.handleNewTopic(
+          client,
           entityId,
           name,
           description,
           parentDatabaseId,
           datasourceId,
           grandparentPageId,
-          classification.userId
+          userId
         );
         break;
       case 'note':
         await this.handleNewNote(
+          client,
           entityId,
           name,
           description,
           parentDatabaseId,
           datasourceId,
           classification.parentTopicId,
-          classification.userId
+          userId
         );
         break;
       case 'chunk':
         await this.handleNewChunk(
+          client,
           entityId,
           name,
           description,
           parentDatabaseId,
           datasourceId,
           classification.parentNoteId,
-          classification.userId
+          userId
         );
         break;
     }
+  }
+
+  private async getUserIdByWorkspace(
+    workspaceId: string
+  ): Promise<string | null> {
+    const [row] = await dbClient
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.notionWorkspaceId, workspaceId))
+      .limit(1);
+    return row?.id ?? null;
   }
 
   private async entityExists(id: string): Promise<boolean> {
@@ -204,6 +240,7 @@ export class WebhookService {
   }
 
   private async handleNewTopic(
+    client: Client,
     topicPageId: string,
     name: string,
     description: string,
@@ -215,7 +252,10 @@ export class WebhookService {
     this.logger.log(`Creating cascade for new topic: ${topicPageId}`);
 
     // Create Notes database under the topic page
-    const notesDatabase = await this.appService.createNotesPage(topicPageId);
+    const notesDatabase = await this.appService.createNotesPage(
+      client,
+      topicPageId
+    );
     if (!isFullDatabase(notesDatabase) || !notesDatabase.data_sources?.length) {
       this.logger.error('Failed to create notes database for new topic');
       return;
@@ -223,6 +263,7 @@ export class WebhookService {
 
     // Create a sample note in the Notes database
     const notePage = await this.appService.createNote(
+      client,
       notesDatabase.data_sources[0].id
     );
     if (!isFullPage(notePage)) {
@@ -231,7 +272,10 @@ export class WebhookService {
     }
 
     // Create Chunks database under the note page
-    const chunksDatabase = await this.appService.createChunksPage(notePage.id);
+    const chunksDatabase = await this.appService.createChunksPage(
+      client,
+      notePage.id
+    );
     if (
       !isFullDatabase(chunksDatabase) ||
       !chunksDatabase.data_sources?.length
@@ -242,6 +286,7 @@ export class WebhookService {
 
     // Create a sample chunk in the Chunks database
     const chunkPage = await this.appService.createChunk(
+      client,
       chunksDatabase.data_sources[0].id
     );
     if (!isFullPage(chunkPage)) {
@@ -250,7 +295,10 @@ export class WebhookService {
     }
 
     // Fetch chunk content
-    const chunkContent = await this.appService.getBlockChildren(chunkPage.id);
+    const chunkContent = await this.appService.getBlockChildren(
+      client,
+      chunkPage.id
+    );
 
     // Extract parent IDs for note and chunk
     const noteParent = notePage.parent;
@@ -330,6 +378,7 @@ export class WebhookService {
   }
 
   private async handleNewNote(
+    client: Client,
     notePageId: string,
     name: string,
     description: string,
@@ -341,7 +390,10 @@ export class WebhookService {
     this.logger.log(`Creating cascade for new note: ${notePageId}`);
 
     // Create Chunks database under the note page
-    const chunksDatabase = await this.appService.createChunksPage(notePageId);
+    const chunksDatabase = await this.appService.createChunksPage(
+      client,
+      notePageId
+    );
     if (
       !isFullDatabase(chunksDatabase) ||
       !chunksDatabase.data_sources?.length
@@ -352,6 +404,7 @@ export class WebhookService {
 
     // Create a sample chunk
     const chunkPage = await this.appService.createChunk(
+      client,
       chunksDatabase.data_sources[0].id
     );
     if (!isFullPage(chunkPage)) {
@@ -360,7 +413,10 @@ export class WebhookService {
     }
 
     // Fetch chunk content
-    const chunkContent = await this.appService.getBlockChildren(chunkPage.id);
+    const chunkContent = await this.appService.getBlockChildren(
+      client,
+      chunkPage.id
+    );
 
     // Extract parent IDs for chunk
     const chunkParent = chunkPage.parent;
@@ -411,6 +467,7 @@ export class WebhookService {
   }
 
   private async handleNewChunk(
+    client: Client,
     chunkPageId: string,
     name: string,
     description: string,
@@ -422,7 +479,10 @@ export class WebhookService {
     this.logger.log(`Inserting new chunk: ${chunkPageId}`);
 
     // Fetch chunk content
-    const chunkContent = await this.appService.getBlockChildren(chunkPageId);
+    const chunkContent = await this.appService.getBlockChildren(
+      client,
+      chunkPageId
+    );
 
     await dbClient.insert(chunk).values({
       id: chunkPageId,
