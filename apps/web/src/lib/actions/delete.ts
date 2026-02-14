@@ -19,7 +19,10 @@ export async function deleteTopic(topicId: string) {
   if (!existing) throw new Error('Topic not found');
 
   // Cascade-archive in Notion (archives topic + all child notes + chunks)
-  await syncServiceFetch(`page/${topicId}/cascade`, { method: 'DELETE' });
+  await syncServiceFetch(`page/${topicId}/cascade`, {
+    method: 'DELETE',
+    userId: loggedInUser.id,
+  });
 
   // Delete from DB (ON DELETE CASCADE handles notes + chunks)
   await dbClient.delete(topic).where(eq(topic.id, topicId));
@@ -39,7 +42,10 @@ export async function deleteNote(noteId: string, topicId: string) {
   if (!existing) throw new Error('Note not found');
 
   // Cascade-archive in Notion (archives note + all child chunks)
-  await syncServiceFetch(`page/${noteId}/cascade`, { method: 'DELETE' });
+  await syncServiceFetch(`page/${noteId}/cascade`, {
+    method: 'DELETE',
+    userId: loggedInUser.id,
+  });
 
   // Delete from DB (ON DELETE CASCADE handles chunks)
   await dbClient.delete(note).where(eq(note.id, noteId));
@@ -47,7 +53,11 @@ export async function deleteNote(noteId: string, topicId: string) {
   revalidatePath(`/dashboard/topics/${topicId}/notes`);
 }
 
-export async function deleteChunk(chunkId: string, noteId: string, topicId: string) {
+export async function deleteChunk(
+  chunkId: string,
+  noteId: string,
+  topicId: string
+) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
@@ -59,7 +69,10 @@ export async function deleteChunk(chunkId: string, noteId: string, topicId: stri
   if (!existing) throw new Error('Chunk not found');
 
   // Archive single page in Notion
-  await syncServiceFetch(`page/${chunkId}`, { method: 'DELETE' });
+  await syncServiceFetch(`page/${chunkId}`, {
+    method: 'DELETE',
+    userId: loggedInUser.id,
+  });
 
   // Delete from DB
   await dbClient.delete(chunk).where(eq(chunk.id, chunkId));

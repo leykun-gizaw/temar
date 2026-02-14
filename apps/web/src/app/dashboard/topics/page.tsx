@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import Search from './_components/search';
 import GalleryList from './_components/topics-gallery-list';
 
-import AddMasterPageDialog from '@/app/dashboard/topics/_components/add-master-page-dialog';
+import ConnectNotionButton from '@/app/dashboard/topics/_components/connect-notion-button';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 
 export default async function TopicsPage({
@@ -19,6 +19,8 @@ export default async function TopicsPage({
   const currentUser = await getLoggedInUser();
 
   if (!currentUser?.notionPageId) {
+    const authUrl =
+      'https://api.notion.com/v1/oauth/authorize?client_id=306d872b-594c-80b5-b21b-0037c6be4454&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A5173%2Fapi%2Fnotion%2Fcallback';
     return (
       <div className="col-span-full flex flex-col p-6 h-full m-2">
         <div className="space-y-1 border-b pb-4 mb-6">
@@ -29,18 +31,19 @@ export default async function TopicsPage({
           <div className="border shadow max-w-xl w-full h-fit bg-muted/5 rounded-lg p-6 text-center space-y-8">
             <div className="space-y-2">
               <h2 className="text-lg font-semibold">
-                Connect a Notion master page
+                Connect your Notion workspace
               </h2>
               <p className="text-sm text-muted-foreground">
-                Add a master Notion page to start syncing topics and notes to
-                your workspace.
+                Connect to Notion to duplicate the Temar template and start
+                syncing topics and notes to your workspace.
               </p>
             </div>
-            <AddMasterPageDialog
+            <ConnectNotionButton
+              authUrl={authUrl}
               trigger={
                 <Button size="sm">
                   <Plus className="mr-1.5 h-4 w-4" />
-                  Add master page
+                  Connect to Notion
                 </Button>
               }
             />

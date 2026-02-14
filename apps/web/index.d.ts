@@ -10,3 +10,9 @@ declare module 'remark-gfm' {
   const remarkGfm: any;
   export default remarkGfm;
 }
+
+declare module 'mermaid' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mermaid: any;
+  export default mermaid;
+}

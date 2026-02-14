@@ -1,23 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { NotionAuthService } from './services/notion-auth.service';
+import { NotionApiService } from './services/notion-api.service';
+import { NotionContentService } from './services/notion-content.service';
+import { UserRepository } from './services/user.repository';
 
 describe('AppController', () => {
-  let app: TestingModule;
+  let controller: AppController;
 
   beforeAll(async () => {
-    app = await Test.createTestingModule({
+    const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
+      providers: [
+        NotionAuthService,
+        NotionApiService,
+        NotionContentService,
+        UserRepository,
+      ],
     }).compile();
+
+    controller = app.get<AppController>(AppController);
   });
 
-  describe('getGreeting', () => {
-    it('should return "Hello API"', async () => {
-      const appController = app.get<AppController>(AppController);
-      expect(await appController.getGreeting()).toEqual({
-        message: 'Hello API',
-      });
-    });
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
   });
 });

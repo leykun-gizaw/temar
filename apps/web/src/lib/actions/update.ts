@@ -25,6 +25,7 @@ export async function updateTopic(
   await syncServiceFetch(`page/${topicId}/properties`, {
     method: 'PATCH',
     body: { name, description },
+    userId: loggedInUser.id,
   });
 
   // Update in DB
@@ -56,6 +57,7 @@ export async function updateNote(
   await syncServiceFetch(`page/${noteId}/properties`, {
     method: 'PATCH',
     body: { name, description },
+    userId: loggedInUser.id,
   });
 
   // Update in DB
@@ -88,6 +90,7 @@ export async function updateChunk(
   await syncServiceFetch(`page/${chunkId}/properties`, {
     method: 'PATCH',
     body: { name, description },
+    userId: loggedInUser.id,
   });
 
   // Update in DB
