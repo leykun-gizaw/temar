@@ -51,7 +51,9 @@ export async function createChunk(
       // Fallback: resolve datasource from the note page's child database
       const blockChildren: {
         results: Array<{ id: string; type?: string }>;
-      } = await syncServiceFetch(`block/${noteId}/children`);
+      } = await syncServiceFetch(`block/${noteId}/children`, {
+        userId: loggedInUser.id,
+      });
 
       const childDb = blockChildren.results.find(
         (b) => b.type === 'child_database'
@@ -65,7 +67,9 @@ export async function createChunk(
 
       const database: {
         data_sources?: Array<{ id: string }>;
-      } = await syncServiceFetch(`database/${childDb.id}`);
+      } = await syncServiceFetch(`database/${childDb.id}`, {
+        userId: loggedInUser.id,
+      });
 
       if (!database.data_sources?.length) {
         return {
@@ -85,11 +89,14 @@ export async function createChunk(
         name: title,
         description,
       },
+      userId: loggedInUser.id,
     });
 
     // Fetch chunk content with markdown
     const chunkContent: { results: unknown[]; contentMd: string } =
-      await syncServiceFetch(`block/${chunkPage.id}/children_with_md`);
+      await syncServiceFetch(`block/${chunkPage.id}/children_with_md`, {
+        userId: loggedInUser.id,
+      });
 
     const p = chunkPage.parent;
     let parentDatabaseId = '';
