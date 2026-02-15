@@ -1,109 +1,102 @@
 # Temar
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Temar is an Nx monorepo for a Notion-connected learning system: users manage topic/note/chunk content in Notion, while Temar syncs that content into Postgres and builds workflows for recall, scheduling, and analytics.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## Monorepo Overview
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+### Applications
 
-## Generate a library
+- `apps/web` (`@temar/web`): Next.js frontend (dev server default: `5173`).
+- `apps/notion_sync-service` (`@temar/notion_sync-service`): NestJS service that integrates with Notion APIs and webhooks.
+- `apps/api` (`@temar/api`): NestJS API scaffold for broader domain/business API expansion.
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
-```
+### Libraries
 
-## Run tasks
+- `libs/db-client`: Drizzle ORM client and schema definitions (`topic`, `note`, `chunk`, etc.).
+- `libs/shared-types`: Shared type definitions for cross-app usage.
 
-To build the library use:
+## Current Architecture (High Level)
 
-```sh
-npx nx build pkg1
-```
+1. `web` triggers actions (create/update/delete).
+2. `notion_sync-service` performs Notion operations and receives webhooks.
+3. Sync service writes canonical records to Postgres via `db-client`.
+4. Sync service triggers web cache revalidation (`/api/revalidate`) so UI reflects Notion-side changes.
 
-To run any task with Nx use:
+## Notion Sync Service Highlights
 
-```sh
-npx nx <target> <project-name>
-```
+- Swagger docs available at: `/api/docs`
+- API capabilities include:
+  - create cascades: `POST /topic/create`, `POST /note/create`, `POST /chunk/create`
+  - property updates: `PATCH /page/:pageId/properties`
+  - content retrieval: `GET /block/:blockId/children_with_md`
+  - deletion/archive flows: `DELETE /page/:pageId`, `DELETE /page/:pageId/cascade`
+- Webhook events currently handled:
+  - `page.created`
+  - `page.properties_updated`
+  - `page.content_updated`
+  - `page.deleted`
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+## Planned Services
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+1. **Notion Sync Service** _(exists, partially built)_ — Evolve from REST-call model to **webhook-driven** real-time sync. Add status state machine (`ACTIVE`/`ARCHIVED`/`ORPHANED`) and robust content caching. **Webhooks are already working in production.**
 
-## Versioning and releasing
+2. **Question Generation Service** _(does not exist)_ — LLM-powered recall question + rubric generation per chunk. Triggered on new tracking or post-review. Requires a `recall_items` table.
 
-To version and release the library use
+3. **Answer Analysis Service** _(does not exist)_ — LLM-powered semantic evaluation of free-text answers (Plate.js JSON), mapped to FSRS ratings.
 
-```
-npx nx release
-```
+4. **FSRS Scheduling Service** _(does not exist)_ — Spaced-repetition engine for stability/difficulty/interval calculation with fuzzing, session lifecycle management, and Google Calendar push integration.
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+5. **Analytics & Restoration Service** _(does not exist)_ — Progress/mastery analytics (heatmaps, retention views) and Notion restoration for orphaned records from content cache.
 
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Local Development
 
-## Keep TypeScript project references up to date
+### Prerequisites
 
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
+- Node.js 20+
+- pnpm (workspace uses `pnpm@10.x`)
+- PostgreSQL
 
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
-
-```sh
-npx nx sync
-```
-
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
-
-```sh
-npx nx sync:check
-```
-
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
+### Install
 
 ```sh
-npx nx connect
+pnpm install
 ```
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
+### Run apps
 
 ```sh
-npx nx g ci-workflow
+pnpm nx serve @temar/web
+pnpm nx serve @temar/notion_sync-service
+pnpm nx serve @temar/api
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Build apps
 
-## Install Nx Console
+```sh
+pnpm nx build @temar/web
+pnpm nx build @temar/notion_sync-service
+pnpm nx build @temar/api
+```
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+## Essential Environment Variables
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- `NOTION_SYNC_API_KEY` - shared API key between web and sync-service.
+- `NOTION_SERVICE_API_ENDPOINT` - web app URL target for sync-service calls.
+- `WEB_APP_URL` - sync-service callback target for cache revalidation (`/api/revalidate`).
+- `NOTION_OAUTH_CLIENT_ID`, `NOTION_OAUTH_CLIENT_SECRET` - Notion OAuth credentials.
+- `NOTION_SYNC_SERVICE_PORT` - port used by sync service (commonly `3333` in deployment).
 
-## Useful links
+For production/staging deployment env setup, see `docs/deployment.md`.
 
-Learn more:
+## Database and Migrations
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- Drizzle config lives in `libs/db-client`.
+- Run migrations with:
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```sh
+pnpm migrate
+```
+
+## Deployment
+
+See the full operational guide in `docs/deployment.md` (Docker, Caddy, GHCR, VPS bootstrap, staging/prod rollout, rollback).
