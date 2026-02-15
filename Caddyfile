@@ -9,10 +9,6 @@
 		reverse_proxy web:5173
 	}
 
-	admin.temar.leyk14.com {
-		reverse_proxy appsmith:4443
-	}
-
 	# Encode responses with gzip/zstd
 	encode zstd gzip
 
@@ -22,4 +18,9 @@
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin
 	}
+}
+
+# AppSmith setup
+admin.temar.leyk14.com {
+	reverse_proxy appsmith:4443
 }
