@@ -75,14 +75,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Copy latest Caddyfile to VPS
+      - name: Copy latest Caddyfile and docker-compose.prod.yml to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.VPS_SSH_PORT }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: Caddyfile
+          source: "Caddyfile,docker-compose.prod.yml"
           target: /opt/temar/
 
       - name: Deploy via SSH
