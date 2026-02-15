@@ -72,6 +72,19 @@ jobs:
     if: github.ref_name == 'main'
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy latest Caddyfile to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: Caddyfile
+          target: /opt/temar/
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
