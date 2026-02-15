@@ -73,6 +73,16 @@ services:
     networks:
       - temar-network
 
+  appsmith:
+    image: index.docker.io/appsmith/appsmith-ee
+    container_name: appsmith
+    ports:
+      - "${APPSMITH_HTTP_PORT}:8081"
+      - "${APPSMITH_HTTPS_PORT}:4443"
+    volumes:
+      - ./stacks:/appsmith-stacks
+    restart: unless-stopped
+
 volumes:
   data:
   caddy_data:
