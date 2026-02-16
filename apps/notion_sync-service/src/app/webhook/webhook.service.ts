@@ -286,7 +286,10 @@ export class WebhookService {
     }
 
     const client = await this.notionAuth.resolveClient(entity.userId);
-    const children = await this.notionApi.listBlockChildren(client, entityId);
+    const children = await this.notionApi.listBlockChildrenRecursive(
+      client,
+      entityId
+    );
     const contentMd = this.blocksToMarkdown(children.results);
 
     await this.userRepository.updateChunkContent(
@@ -312,43 +315,83 @@ export class WebhookService {
     this.logger.log(`Deleted ${entity.type} ${entityId} from DB.`);
   }
 
-  private blocksToMarkdown(blocks: unknown[]): string {
+  private blocksToMarkdown(blocks: unknown[], depth = 0): string {
+    const indent = '  '.repeat(depth);
+
     return blocks
       .map((block) => {
         const b = block as Record<string, unknown>;
         const type = b['type'] as string | undefined;
         if (!type) return '';
 
+        const children = b['children'] as unknown[] | undefined;
         const content = b[type] as
           | { rich_text?: Array<{ plain_text?: string }> }
           | undefined;
         const text =
           content?.rich_text?.map((rt) => rt.plain_text ?? '').join('') ?? '';
 
+        if (type === 'column_list' || type === 'column') {
+          return children?.length ? this.blocksToMarkdown(children, depth) : '';
+        }
+
+        let line = '';
         switch (type) {
           case 'heading_1':
-            return `# ${text}`;
+            line = `# ${text}`;
+            break;
           case 'heading_2':
-            return `## ${text}`;
+            line = `## ${text}`;
+            break;
           case 'heading_3':
-            return `### ${text}`;
+            line = `### ${text}`;
+            break;
           case 'bulleted_list_item':
-            return `- ${text}`;
+            line = `${indent}- ${text}`;
+            break;
           case 'numbered_list_item':
-            return `1. ${text}`;
+            line = `${indent}1. ${text}`;
+            break;
           case 'to_do': {
             const checked = (b[type] as { checked?: boolean })?.checked;
-            return `- [${checked ? 'x' : ' '}] ${text}`;
+            line = `${indent}- [${checked ? 'x' : ' '}] ${text}`;
+            break;
           }
           case 'code':
-            return `\`\`\`\n${text}\n\`\`\``;
+            line = `\`\`\`\n${text}\n\`\`\``;
+            break;
           case 'quote':
-            return `> ${text}`;
+            line = `> ${text}`;
+            break;
           case 'divider':
-            return '---';
+            line = '---';
+            break;
+          case 'table_of_contents':
+            break;
+          case 'image': {
+            const img = b[type] as Record<string, unknown> | undefined;
+            const imgType = img?.['type'] as string | undefined;
+            const file = img?.['file'] as { url?: string } | undefined;
+            const external = img?.['external'] as { url?: string } | undefined;
+            const url = imgType === 'file' ? file?.url : external?.url;
+            const caption = (
+              img?.['caption'] as Array<{ plain_text?: string }> | undefined
+            )
+              ?.map((c) => c.plain_text ?? '')
+              .join('');
+            line = url ? `![${caption ?? ''}](${url})` : '';
+            break;
+          }
           default:
-            return text;
+            line = text;
         }
+
+        if (children?.length) {
+          const childMd = this.blocksToMarkdown(children, depth + 1);
+          return childMd ? (line ? `${line}\n\n${childMd}` : childMd) : line;
+        }
+
+        return line;
       })
       .filter(Boolean)
       .join('\n\n');
