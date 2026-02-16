@@ -4,6 +4,19 @@ import { dbClient, topic } from '@temar/db-client';
 import { getLoggedInUser } from './users';
 import { eq, and } from 'drizzle-orm';
 
+export async function getTopicsCount() {
+  const loggedInUser = await getLoggedInUser();
+
+  if (!loggedInUser) return 'N/A';
+
+  const count = await dbClient.$count(
+    topic,
+    eq(topic.userId, loggedInUser?.id)
+  );
+
+  return count;
+}
+
 export async function getFilteredTopics(query: string) {
   const loggedInUser = await getLoggedInUser();
 

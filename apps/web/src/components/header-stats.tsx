@@ -2,7 +2,15 @@
 
 import { Grid2X2, LibraryBigIcon, Notebook } from 'lucide-react';
 
-export function HeaderStats() {
+export function HeaderStats({
+  topicsCount,
+  notesCount,
+  chunksCount,
+}: {
+  topicsCount: number | string;
+  notesCount: number | string;
+  chunksCount: number | string;
+}) {
   return (
     <div className="flex flex-col md:flex-row gap-4">
       <div className="flex flex-col gap-2 p-4 h-fit items-center justify-between w-full rounded-xl border">
@@ -11,10 +19,10 @@ export function HeaderStats() {
             <LibraryBigIcon />
             <h1>Topics</h1>
           </div>
-          <h1 className="text-4xl">4</h1>
+          <h1 className="text-4xl">{topicsCount}</h1>
         </div>
         <span className="text-xs text-muted-foreground w-full">
-          3 in use today
+          0 in use today
         </span>
       </div>
       <div className="flex flex-col gap-2 p-4 h-fit items-center justify-between w-full rounded-xl border">
@@ -23,10 +31,10 @@ export function HeaderStats() {
             <Notebook />
             <h1>Notes</h1>
           </div>
-          <h1 className="text-4xl">13</h1>
+          <h1 className="text-4xl">{notesCount}</h1>
         </div>
         <span className="text-xs text-muted-foreground w-full">
-          7 in use today
+          0 in use today
         </span>
       </div>
       <div className="flex flex-col gap-2 p-4 h-fit items-center justify-between w-full rounded-xl border">
@@ -35,10 +43,10 @@ export function HeaderStats() {
             <Grid2X2 />
             <h1>Chunks</h1>
           </div>
-          <h1 className="text-4xl">32</h1>
+          <h1 className="text-4xl">{chunksCount}</h1>
         </div>
         <span className="text-xs text-muted-foreground w-full">
-          13 in use today
+          0 in use today
         </span>
       </div>
     </div>

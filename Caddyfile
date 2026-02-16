@@ -22,5 +22,5 @@
 
 # AppSmith setup
 admin.temar.leyk14.com {
-	reverse_proxy appsmith:4443
+	reverse_proxy appsmith:80
 }

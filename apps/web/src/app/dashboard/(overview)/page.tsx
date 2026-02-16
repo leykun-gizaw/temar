@@ -4,11 +4,17 @@ import { HeaderStats } from '@/components/header-stats';
 import { Calendar, CalendarDayView } from '@/components/full-calendar';
 import { EventsSummary } from '@/components/events-summary';
 import { getAllCalendarEvents } from '@/lib/fetchers/events';
+import { getTopicsCount } from '@/lib/fetchers/topics';
+import { getNotesCount } from '@/lib/fetchers/notes';
+import { getChunksCount } from '@/lib/fetchers/chunks';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const events = await getAllCalendarEvents();
+  const topicsCount = await getTopicsCount();
+  const notesCount = await getNotesCount();
+  const chunksCount = await getChunksCount();
 
   return (
     <>
@@ -19,7 +25,11 @@ export default async function Page() {
         <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0">
           <div className="flex flex-col w-full flex-grow gap-4">
             <EventsSummary events={events} />
-            <HeaderStats />
+            <HeaderStats
+              topicsCount={topicsCount}
+              notesCount={notesCount}
+              chunksCount={chunksCount}
+            />
             <ReviewsTableCard events={events} />
           </div>
           <ScheduleCard>
