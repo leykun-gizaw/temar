@@ -82,6 +82,8 @@ services:
     volumes:
       - ./stacks:/appsmith-stacks
     restart: unless-stopped
+    networks:
+      - temar-network
 
 volumes:
   data:
