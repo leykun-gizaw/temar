@@ -21,10 +21,6 @@ export interface NoteCascadeResult {
   chunkPage: CreatePageResponse;
 }
 
-export interface ChunkResult {
-  chunkPage: CreatePageResponse;
-}
-
 export interface EntityCreateOptions {
   datasourceId: string;
   name: string;
@@ -127,7 +123,7 @@ export class NotionContentService {
   async createChunkFromDatasource(
     client: Client,
     options: EntityCreateOptions
-  ): Promise<ChunkResult> {
+  ): Promise<CreatePageResponse> {
     const chunkPage = await this.notionApi.createDatabasePage(client, {
       datasourceId: options.datasourceId,
       name: options.name,
@@ -135,7 +131,7 @@ export class NotionContentService {
       emoji: '📄',
     });
 
-    return { chunkPage };
+    return chunkPage;
   }
 
   async createNoteCascade(

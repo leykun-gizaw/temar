@@ -47,62 +47,62 @@ export default function ChunkCard({
   const preview = contentMd || description;
 
   return (
-    <>
+    <div className="flex flex-col h-[180px] justify-between">
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="border rounded-xl flex flex-col h-[180px] text-left hover:bg-accent cursor-pointer w-full"
+        className="cursor-pointer flex-1 h-full border bg-muted/50 rounded-t-xl border-b-0 hover:bg-muted"
       >
-        <div className="flex-1 border-b text-xs text-muted-foreground whitespace-pre-wrap p-4 bg-muted/50 overflow-hidden">
-          {excerpt(preview)}
+        <div className="text-xs flex h-full text-left text-muted-foreground whitespace-pre-wrap p-4 overflow-hidden">
+          <span>{excerpt(preview)}</span>
         </div>
-        <div className="h-1/4 flex items-center justify-between pl-4 pr-3">
-          <span className="text-sm font-semibold">📄 {name}</span>
-          <div className="flex items-center gap-1">
-            <EditDialog
-              entityType="chunk"
-              currentName={name}
-              currentDescription={description}
-              onSave={async (newName, newDesc) => {
-                await updateChunk(id, noteId, topicId, newName, newDesc);
-              }}
-              trigger={
-                <span
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1"
-                  title="Edit chunk"
-                >
-                  <Pencil size={14} />
-                </span>
+      </button>
+      <div className="flex items-end justify-between p-2 border rounded-b-xl">
+        <span className="text-sm font-semibold">📄 {name}</span>
+        <div className="flex items-center gap-1">
+          <EditDialog
+            entityType="chunk"
+            currentName={name}
+            currentDescription={description}
+            onSave={async (newName, newDesc) => {
+              await updateChunk(id, noteId, topicId, newName, newDesc);
+            }}
+            trigger={
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => e.stopPropagation()}
+                className="text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1"
+                title="Edit chunk"
+              >
+                <Pencil size={14} />
+              </span>
+            }
+          />
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (confirm('Delete this chunk?')) {
+                deleteChunk(id, noteId, topicId);
               }
-            />
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
                 e.stopPropagation();
                 if (confirm('Delete this chunk?')) {
                   deleteChunk(id, noteId, topicId);
                 }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.stopPropagation();
-                  if (confirm('Delete this chunk?')) {
-                    deleteChunk(id, noteId, topicId);
-                  }
-                }
-              }}
-              className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer p-1"
-              title="Delete chunk"
-            >
-              <Trash2 size={14} />
-            </span>
-          </div>
+              }
+            }}
+            className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer p-1"
+            title="Delete chunk"
+          >
+            <Trash2 size={14} />
+          </span>
         </div>
-      </button>
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-8xl max-h-[95vh] flex flex-col">
@@ -154,6 +154,6 @@ export default function ChunkCard({
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

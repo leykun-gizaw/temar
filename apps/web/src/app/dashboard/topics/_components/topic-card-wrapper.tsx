@@ -3,53 +3,82 @@
 import Link from 'next/link';
 import { Pencil } from 'lucide-react';
 import { topic } from '@temar/db-client';
-import NotionCard from './notion-cards';
 import EditDialog from '@/components/edit-dialog';
 import { deleteTopic } from '@/lib/actions/delete';
 import { updateTopic } from '@/lib/actions/update';
 
+import { Trash2 } from 'lucide-react';
+
 type Topic = typeof topic.$inferSelect;
 
 export default function TopicCardWrapper({ item }: { item: Topic }) {
-  return (
-    <Link
-      href={`/dashboard/topics/${encodeURIComponent(String(item.id))}/notes`}
-      className="border rounded-xl hover:bg-accent h-[180px] cursor-pointer"
+  const onEdit = (
+    <div
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
     >
-      <NotionCard
-        item={item}
-        onDelete={() => {
-          if (confirm('Delete this topic and all its notes/chunks?')) {
-            deleteTopic(item.id);
-          }
+      <EditDialog
+        entityType="topic"
+        currentName={item.name}
+        currentDescription={item.description}
+        onSave={async (name, description) => {
+          await updateTopic(item.id, name, description);
         }}
-        onEdit={
-          <div
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
+        trigger={
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1"
+            title="Edit topic"
           >
-            <EditDialog
-              entityType="topic"
-              currentName={item.name}
-              currentDescription={item.description}
-              onSave={async (name, description) => {
-                await updateTopic(item.id, name, description);
-              }}
-              trigger={
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1"
-                  title="Edit topic"
-                >
-                  <Pencil size={14} />
-                </button>
-              }
-            />
-          </div>
+            <Pencil size={14} />
+          </button>
         }
       />
-    </Link>
+    </div>
+  );
+
+  const onDelete = () => {
+    if (confirm('Delete this topic and all its notes/chunks?')) {
+      deleteTopic(item.id);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-[180px]">
+      <Link
+        href={`/dashboard/topics/${encodeURIComponent(String(item.id))}/notes`}
+        className="border border-b-0 text-muted-foreground rounded-t-xl hover:bg-accent cursor-pointer flex flex-col flex-1"
+      >
+        <div className="text-xs whitespace-pre-wrap p-4 bg-muted/50 rounded-t-xl h-full">
+          {item.description}
+        </div>
+      </Link>
+
+      <div className="h-fit flex items-center justify-between p-2 border rounded-b-xl">
+        <span className="text-sm font-semibold">
+          📚
+          {item.name}
+        </span>
+        <div className="flex items-center gap-1">
+          {onEdit}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer p-1"
+              title="Delete topic"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
