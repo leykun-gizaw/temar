@@ -103,7 +103,7 @@ jobs:
 
             # Run migrations then restart services
             docker compose -f docker-compose.prod.yml up migrate --abort-on-container-exit
-            docker compose -f docker-compose.prod.yml up -d web notion_sync-service caddy
+            docker compose -f docker-compose.prod.yml up -d web notion_sync-service caddy appsmith
 
             # Clean up old images
             docker image prune -f
