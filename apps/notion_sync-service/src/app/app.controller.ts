@@ -18,14 +18,13 @@ import {
   ApiBody,
   ApiSecurity,
 } from '@nestjs/swagger';
-import { Client } from '@notionhq/client';
+import { Client, CreatePageResponse } from '@notionhq/client';
 import { NotionAuthService } from './services/notion-auth.service';
 import { NotionApiService } from './services/notion-api.service';
 import {
   NotionContentService,
   CascadeResult,
   NoteCascadeResult,
-  ChunkResult,
 } from './services/notion-content.service';
 import { UserRepository } from './services/user.repository';
 
@@ -305,7 +304,7 @@ export class AppController {
     @Body('datasourceId') datasourceId: string,
     @Body('name') name: string,
     @Body('description') description: string
-  ): Promise<ChunkResult> {
+  ): Promise<CreatePageResponse> {
     const client = await this.resolveNotionClient(userId);
     return this.notionContent.createChunkFromDatasource(client, {
       datasourceId,

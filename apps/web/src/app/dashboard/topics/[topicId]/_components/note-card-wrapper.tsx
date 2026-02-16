@@ -21,16 +21,18 @@ export default function NoteCardWrapper({
   topicId: string;
 }) {
   return (
-    <Link
-      href={`/dashboard/topics/${topicId}/notes/${encodeURIComponent(
-        note.id
-      )}/chunks`}
-      className="border rounded-xl flex flex-col hover:bg-accent h-[180px] cursor-pointer"
-    >
-      <div className="flex-1 border-b text-xs text-muted-foreground whitespace-pre-wrap p-4 bg-muted/50">
-        {excerpt(note.description)}
-      </div>
-      <div className="h-1/4 flex items-center justify-between pl-4 pr-3">
+    <div className="h-[180px] flex flex-col">
+      <Link
+        href={`/dashboard/topics/${topicId}/notes/${encodeURIComponent(
+          note.id
+        )}/chunks`}
+        className="flex flex-col flex-1 border border-b-0 hover:bg-muted bg-muted/50 rounded-t-xl cursor-pointer text-muted-foreground"
+      >
+        <div className="flex-1 text-xs whitespace-pre-wrap p-4">
+          {excerpt(note.description)}
+        </div>
+      </Link>
+      <div className="h-1/4 flex items-center justify-between p-2 border rounded-b-xl">
         <span className="text-sm font-semibold">📘 {note.name}</span>
         <div className="flex items-center gap-1">
           <div
@@ -73,6 +75,6 @@ export default function NoteCardWrapper({
           </button>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
