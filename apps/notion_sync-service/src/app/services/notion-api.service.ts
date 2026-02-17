@@ -27,6 +27,22 @@ export class NotionApiService {
     return client.blocks.children.list({ block_id: blockId });
   }
 
+  async listBlockChildrenRecursive(client: Client, blockId: string) {
+    const response = await client.blocks.children.list({ block_id: blockId });
+
+    for (const block of response.results) {
+      if (isFullBlock(block) && block.has_children) {
+        const childResponse = await this.listBlockChildrenRecursive(
+          client,
+          block.id
+        );
+        (block as Record<string, unknown>)['children'] = childResponse.results;
+      }
+    }
+
+    return response;
+  }
+
   async appendBlockChildren(client: Client, blockId: string) {
     return client.blocks.children.append({
       block_id: blockId,

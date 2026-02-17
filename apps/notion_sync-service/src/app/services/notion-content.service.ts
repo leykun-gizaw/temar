@@ -173,7 +173,7 @@ export class NotionContentService {
   }
 
   async fetchBlockContent(client: Client, blockId: string) {
-    return this.notionApi.listBlockChildren(client, blockId);
+    return this.notionApi.listBlockChildrenRecursive(client, blockId);
   }
 
   async createValidatedDatabase(
