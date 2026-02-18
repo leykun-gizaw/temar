@@ -73,6 +73,47 @@ export class ScheduleController {
     return { count };
   }
 
+  @ApiOperation({ summary: 'Get all recall items (paginated)' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Page size (default 20)',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    description: 'Offset (default 0)',
+  })
+  @ApiSecurity('api-key')
+  @Get('recall-items')
+  async getAllItems(
+    @Headers('x-user-id') userId: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string
+  ) {
+    this.requireUserId(userId);
+    return this.recallItemService.getAllItems(userId, {
+      limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
+    });
+  }
+
+  @ApiOperation({ summary: 'Search recall items by name' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiQuery({ name: 'q', required: true, description: 'Search query' })
+  @ApiSecurity('api-key')
+  @Get('recall-items/search')
+  async searchItems(
+    @Headers('x-user-id') userId: string,
+    @Query('q') q: string
+  ) {
+    this.requireUserId(userId);
+    if (!q) return { items: [] };
+    const items = await this.recallItemService.searchItems(userId, q);
+    return { items, total: items.length };
+  }
+
   @ApiOperation({ summary: 'Get a single recall item with context' })
   @ApiParam({ name: 'id', description: 'Recall item UUID' })
   @ApiSecurity('api-key')

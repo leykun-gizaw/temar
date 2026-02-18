@@ -116,6 +116,87 @@ export class RecallItemService {
     return { topicId, untrackedCount: count };
   }
 
+  async getAllItems(
+    userId: string,
+    options?: { search?: string; limit?: number; offset?: number }
+  ) {
+    const limit = options?.limit ?? 50;
+    const offset = options?.offset ?? 0;
+
+    const rows = await dbClient
+      .select({
+        id: recallItem.id,
+        chunkId: recallItem.chunkId,
+        state: recallItem.state,
+        due: recallItem.due,
+        stability: recallItem.stability,
+        difficulty: recallItem.difficulty,
+        elapsedDays: recallItem.elapsedDays,
+        scheduledDays: recallItem.scheduledDays,
+        reps: recallItem.reps,
+        lapses: recallItem.lapses,
+        learningSteps: recallItem.learningSteps,
+        lastReview: recallItem.lastReview,
+        chunkName: chunk.name,
+        noteName: note.name,
+        noteId: note.id,
+        topicName: topic.name,
+        topicId: topic.id,
+      })
+      .from(recallItem)
+      .innerJoin(chunk, eq(recallItem.chunkId, chunk.id))
+      .innerJoin(note, eq(chunk.noteId, note.id))
+      .innerJoin(topic, eq(note.topicId, topic.id))
+      .where(eq(recallItem.userId, userId))
+      .orderBy(recallItem.due)
+      .limit(limit)
+      .offset(offset);
+
+    const [countResult] = await dbClient
+      .select({ count: sql<number>`count(*)::int` })
+      .from(recallItem)
+      .where(eq(recallItem.userId, userId));
+
+    return { items: rows, total: countResult?.count ?? 0 };
+  }
+
+  async searchItems(userId: string, search: string) {
+    const rows = await dbClient
+      .select({
+        id: recallItem.id,
+        chunkId: recallItem.chunkId,
+        state: recallItem.state,
+        due: recallItem.due,
+        stability: recallItem.stability,
+        difficulty: recallItem.difficulty,
+        elapsedDays: recallItem.elapsedDays,
+        scheduledDays: recallItem.scheduledDays,
+        reps: recallItem.reps,
+        lapses: recallItem.lapses,
+        learningSteps: recallItem.learningSteps,
+        lastReview: recallItem.lastReview,
+        chunkName: chunk.name,
+        noteName: note.name,
+        noteId: note.id,
+        topicName: topic.name,
+        topicId: topic.id,
+      })
+      .from(recallItem)
+      .innerJoin(chunk, eq(recallItem.chunkId, chunk.id))
+      .innerJoin(note, eq(chunk.noteId, note.id))
+      .innerJoin(topic, eq(note.topicId, topic.id))
+      .where(eq(recallItem.userId, userId))
+      .orderBy(recallItem.due);
+
+    const lowerSearch = search.toLowerCase();
+    return rows.filter(
+      (r) =>
+        r.chunkName.toLowerCase().includes(lowerSearch) ||
+        r.noteName.toLowerCase().includes(lowerSearch) ||
+        r.topicName.toLowerCase().includes(lowerSearch)
+    );
+  }
+
   async getDueItems(
     userId: string,
     options?: { topicId?: string; noteId?: string; limit?: number }
