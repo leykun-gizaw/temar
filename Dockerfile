@@ -16,6 +16,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml nx.json ./
 COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
 COPY apps/notion_sync-service/package.json apps/notion_sync-service/
+COPY apps/fsrs-service/package.json apps/fsrs-service/
 COPY libs/db-client/package.json libs/db-client/
 COPY libs/shared-types/package.json libs/shared-types/
 RUN pnpm install --frozen-lockfile
@@ -36,13 +37,22 @@ FROM source AS builder
 RUN NX_DAEMON=false pnpm nx build web --prod --verbose
 # Build 'notion_sync-service'
 RUN NX_DAEMON=false pnpm nx build notion_sync-service --prod
+# Build 'fsrs-service'
+RUN NX_DAEMON=false pnpm nx build fsrs-service --prod
 
 # ----------------------------------------------
 
-# STAGE 4.5: NestJS Production Dependencies
+# STAGE 4.5a: Notion Sync Service Production Dependencies
 FROM base AS notion-prod-deps
 WORKDIR /app
 COPY --from=builder /app/dist/apps/notion_sync-service/package.json ./
+COPY --from=source /app/pnpm-lock.yaml ./
+RUN pnpm install --prod
+
+# STAGE 4.5b: FSRS Service Production Dependencies
+FROM base AS fsrs-prod-deps
+WORKDIR /app
+COPY --from=builder /app/dist/apps/fsrs-service/package.json ./
 COPY --from=source /app/pnpm-lock.yaml ./
 RUN pnpm install --prod
 
@@ -91,4 +101,21 @@ COPY --from=notion-prod-deps --chown=nestuser:nestjs /app/node_modules ./node_mo
 USER nestuser
 
 EXPOSE 3333
+CMD [ "node", "main.js" ]
+
+# ----------------------------------------------
+
+# STAGE 7: FSRS Service Production Runner (NestJS)
+FROM base AS fsrs-service
+WORKDIR /app
+ENV NODE_ENV=production
+RUN addgroup --system --gid 1003 nestjs
+RUN adduser --system --uid 1003 fsrsuser
+
+COPY --from=builder --chown=fsrsuser:nestjs /app/dist/apps/fsrs-service ./
+COPY --from=fsrs-prod-deps --chown=fsrsuser:nestjs /app/node_modules ./node_modules
+
+USER fsrsuser
+
+EXPOSE 3334
 CMD [ "node", "main.js" ]
