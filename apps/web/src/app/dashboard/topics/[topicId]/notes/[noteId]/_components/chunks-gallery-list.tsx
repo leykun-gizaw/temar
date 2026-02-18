@@ -1,4 +1,5 @@
 import { getFilteredChunks } from '@/lib/fetchers/chunks';
+import { getTrackingStatus } from '@/lib/actions/tracking';
 import ChunkCard from './chunk-card';
 import AddChunkDialog from './add-chunk-dialog';
 
@@ -11,7 +12,12 @@ export default async function ChunksGalleryList({
   noteId: string;
   topicId: string;
 }) {
-  const filteredChunks = await getFilteredChunks(query, noteId);
+  const [filteredChunks, trackedItems] = await Promise.all([
+    getFilteredChunks(query, noteId),
+    getTrackingStatus(),
+  ]);
+  const trackedChunkIds = new Set(trackedItems.map((t) => t.chunkId));
+
   return (
     <>
       {filteredChunks.map((chunk) => (
@@ -24,6 +30,7 @@ export default async function ChunksGalleryList({
           contentJson={chunk.contentJson}
           topicId={topicId}
           noteId={noteId}
+          isTracked={trackedChunkIds.has(chunk.id)}
         />
       ))}
       <div className="border border-dashed rounded-xl flex flex-col h-[180px]">
