@@ -4,6 +4,12 @@ import { HeaderStats } from '@/components/header-stats';
 import { Calendar, CalendarDayView } from '@/components/full-calendar';
 import { EventsSummary } from '@/components/events-summary';
 import { getAllCalendarEvents } from '@/lib/fetchers/events';
+import {
+  getDueRecallItems,
+  getDueCount,
+  getAllRecallItems,
+} from '@/lib/fetchers/recall-items';
+import { getTrackingStatus } from '@/lib/actions/tracking';
 import { getTopicsCount } from '@/lib/fetchers/topics';
 import { getNotesCount } from '@/lib/fetchers/notes';
 import { getChunksCount } from '@/lib/fetchers/chunks';
@@ -11,10 +17,25 @@ import { getChunksCount } from '@/lib/fetchers/chunks';
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
-  const events = await getAllCalendarEvents();
-  const topicsCount = await getTopicsCount();
-  const notesCount = await getNotesCount();
-  const chunksCount = await getChunksCount();
+  const [
+    dueItems,
+    dueCount,
+    allItemsResult,
+    trackedItems,
+    calendarEvents,
+    topicsCount,
+    notesCount,
+    chunksCount,
+  ] = await Promise.all([
+    getDueRecallItems({ limit: 50 }),
+    getDueCount(),
+    getAllRecallItems({ limit: 10, offset: 0 }),
+    getTrackingStatus(),
+    getAllCalendarEvents(),
+    getTopicsCount(),
+    getNotesCount(),
+    getChunksCount(),
+  ]);
 
   return (
     <>
@@ -24,16 +45,21 @@ export default async function Page() {
         </div>
         <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0">
           <div className="flex flex-col w-full flex-grow gap-4">
-            <EventsSummary events={events} />
+            <EventsSummary items={dueItems} />
             <HeaderStats
               topicsCount={topicsCount}
               notesCount={notesCount}
               chunksCount={chunksCount}
+              trackedCount={trackedItems.length}
+              dueCount={dueCount}
             />
-            <ReviewsTableCard events={events} />
+            <ReviewsTableCard
+              items={allItemsResult.items}
+              total={allItemsResult.total}
+            />
           </div>
-          <ScheduleCard>
-            <Calendar events={events}>
+          <ScheduleCard dueCount={dueCount}>
+            <Calendar events={calendarEvents}>
               <div className="p-4 h-full min-h-0">
                 <CalendarDayView />
               </div>

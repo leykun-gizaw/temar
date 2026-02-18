@@ -60,7 +60,13 @@ const Calendar = ({
 }: CalendarProps) => {
   const [view, setView] = useState<View>(_defaultMode);
   const [date, setDate] = useState(defaultDate);
-  const [events, setEvents] = useState<CalendarEvent[]>(defaultEvents);
+  const [events, setEvents] = useState<CalendarEvent[]>(() =>
+    defaultEvents.map((e) => ({
+      ...e,
+      start: e.start instanceof Date ? e.start : new Date(e.start),
+      end: e.end instanceof Date ? e.end : new Date(e.end),
+    }))
+  );
 
   const changeView = (view: View) => {
     setView(view);
@@ -198,7 +204,7 @@ const EventGroup = ({
 };
 
 const CalendarDayView = () => {
-  const { view, events, date, locale } = useCalendar();
+  const { view, events, date, setDate, locale } = useCalendar();
   const weekStartsOn = startOfWeek(date, { weekStartsOn: 1 });
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -212,6 +218,11 @@ const CalendarDayView = () => {
     return daysOfWeek;
   }, [weekStartsOn]);
 
+  const dayEvents = useMemo(
+    () => events.filter((e) => isSameDay(new Date(e.start), date)),
+    [events, date]
+  );
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -219,34 +230,41 @@ const CalendarDayView = () => {
       const target = (el.scrollHeight - el.clientHeight) * (2 / 3);
       el.scrollTop = target;
     });
-  }, []);
+  }, [date]);
 
   if (view !== 'day') return null;
   return (
     <div className="flex flex-col gap-4 h-full min-h-0">
       <span className="font-semibold text-sm">{format(date, 'MMM yyyy')}</span>
       <div className="flex bg-card z-10 border-b pb-3 mb-3 sticky top-0 gap-2">
-        {headerDays.map((date, i) => (
-          <div
-            key={date.toString()}
-            className={cn(
-              'text-center flex-1 gap-1 p-2 text-sm text-muted-foreground flex flex-col items-center justify-center border rounded-xl',
-              [5, 6].includes(i) && 'text-muted-foreground/50',
-              isToday(date) && 'text-primary border-primary'
-            )}
-          >
-            <span className={cn('h-6 grid place-content-center')}>
-              {format(date, 'd')}
-            </span>
-            {format(date, 'E', { locale })}
-          </div>
-        ))}
+        {headerDays.map((d, i) => {
+          const isSelected = isSameDay(d, date);
+          return (
+            <button
+              type="button"
+              key={d.toString()}
+              onClick={() => setDate(d)}
+              className={cn(
+                'text-center flex-1 gap-1 p-2 text-sm text-muted-foreground flex flex-col items-center justify-center border rounded-xl cursor-pointer transition-colors',
+                [5, 6].includes(i) && 'text-muted-foreground/50',
+                isToday(d) && !isSelected && 'text-primary border-primary',
+                isSelected &&
+                  'bg-primary text-primary-foreground border-primary'
+              )}
+            >
+              <span className={cn('h-6 grid place-content-center')}>
+                {format(d, 'd')}
+              </span>
+              {format(d, 'E', { locale })}
+            </button>
+          );
+        })}
       </div>
       <div className="flex py-4 overflow-auto min-h-0" ref={scrollRef}>
         <TimeTable />
         <div className="flex-1">
           {hours.map((hour) => (
-            <EventGroup key={hour.toString()} hour={hour} events={events} />
+            <EventGroup key={hour.toString()} hour={hour} events={dayEvents} />
           ))}
         </div>
       </div>
