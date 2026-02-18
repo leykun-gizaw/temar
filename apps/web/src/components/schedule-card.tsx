@@ -12,14 +12,20 @@ import { Button } from './ui/button';
 
 export default async function ScheduleCard({
   children,
+  dueCount = 0,
 }: {
   children: React.ReactNode;
+  dueCount?: number;
 }) {
   return (
     <Card className="flex flex-col h-full min-h-0 w-full lg:w-2xl md:w-full">
       <CardHeader>
         <CardTitle>Reviews Schedule</CardTitle>
-        <CardDescription>5 Reviews scheduled for today</CardDescription>
+        <CardDescription>
+          {dueCount > 0
+            ? `${dueCount} review${dueCount !== 1 ? 's' : ''} due`
+            : 'No reviews due'}
+        </CardDescription>
         <CardAction>
           <Button variant={'outline'} asChild>
             <Link href={'/dashboard/reviews'}>

@@ -23,10 +23,30 @@ export interface RecallItemDue {
 export interface SchedulingPreview {
   recallItemId: string;
   options: {
-    again: { rating: number; nextDue: string; nextState: number; scheduledDays: number };
-    hard: { rating: number; nextDue: string; nextState: number; scheduledDays: number };
-    good: { rating: number; nextDue: string; nextState: number; scheduledDays: number };
-    easy: { rating: number; nextDue: string; nextState: number; scheduledDays: number };
+    again: {
+      rating: number;
+      nextDue: string;
+      nextState: number;
+      scheduledDays: number;
+    };
+    hard: {
+      rating: number;
+      nextDue: string;
+      nextState: number;
+      scheduledDays: number;
+    };
+    good: {
+      rating: number;
+      nextDue: string;
+      nextState: number;
+      scheduledDays: number;
+    };
+    easy: {
+      rating: number;
+      nextDue: string;
+      nextState: number;
+      scheduledDays: number;
+    };
   };
 }
 
@@ -45,6 +65,43 @@ export interface ReviewLogEntry {
   reviewedAt: string;
 }
 
+export async function getAllRecallItems(options?: {
+  limit?: number;
+  offset?: number;
+}): Promise<{ items: RecallItemDue[]; total: number }> {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) return { items: [], total: 0 };
+
+  const params = new URLSearchParams();
+  if (options?.limit) params.set('limit', String(options.limit));
+  if (options?.offset) params.set('offset', String(options.offset));
+
+  const qs = params.toString();
+  const path = qs ? `recall-items?${qs}` : 'recall-items';
+
+  const result = await fsrsServiceFetch<{
+    items: RecallItemDue[];
+    total: number;
+  }>(path, { userId: loggedInUser.id });
+
+  return result ?? { items: [], total: 0 };
+}
+
+export async function searchRecallItems(
+  query: string
+): Promise<RecallItemDue[]> {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) return [];
+
+  const params = new URLSearchParams({ q: query });
+  const result = await fsrsServiceFetch<{
+    items: RecallItemDue[];
+    total: number;
+  }>(`recall-items/search?${params.toString()}`, { userId: loggedInUser.id });
+
+  return result?.items ?? [];
+}
+
 export async function getDueRecallItems(options?: {
   topicId?: string;
   noteId?: string;
@@ -61,10 +118,10 @@ export async function getDueRecallItems(options?: {
   const qs = params.toString();
   const path = qs ? `due?${qs}` : 'due';
 
-  const result = await fsrsServiceFetch<{ items: RecallItemDue[]; count: number }>(
-    path,
-    { userId: loggedInUser.id }
-  );
+  const result = await fsrsServiceFetch<{
+    items: RecallItemDue[];
+    count: number;
+  }>(path, { userId: loggedInUser.id });
 
   return result?.items ?? [];
 }

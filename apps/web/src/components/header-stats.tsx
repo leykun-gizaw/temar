@@ -1,15 +1,19 @@
 'use client';
 
-import { Grid2X2, LibraryBigIcon, Notebook } from 'lucide-react';
+import { Grid2X2, LibraryBigIcon, Notebook, Target } from 'lucide-react';
 
 export function HeaderStats({
   topicsCount,
   notesCount,
   chunksCount,
+  trackedCount = 0,
+  dueCount = 0,
 }: {
   topicsCount: number | string;
   notesCount: number | string;
   chunksCount: number | string;
+  trackedCount?: number;
+  dueCount?: number;
 }) {
   return (
     <div className="flex flex-col md:flex-row gap-4">
@@ -21,8 +25,9 @@ export function HeaderStats({
           </div>
           <h1 className="text-4xl">{topicsCount}</h1>
         </div>
-        <span className="text-xs text-muted-foreground w-full">
-          0 in use today
+        <span className="text-xs text-muted-foreground w-full flex items-center gap-1">
+          <Target className="h-3 w-3" />
+          {trackedCount} chunk{trackedCount !== 1 ? 's' : ''} tracked
         </span>
       </div>
       <div className="flex flex-col gap-2 p-4 h-fit items-center justify-between w-full rounded-xl border">
@@ -34,7 +39,7 @@ export function HeaderStats({
           <h1 className="text-4xl">{notesCount}</h1>
         </div>
         <span className="text-xs text-muted-foreground w-full">
-          0 in use today
+          {notesCount} total
         </span>
       </div>
       <div className="flex flex-col gap-2 p-4 h-fit items-center justify-between w-full rounded-xl border">
@@ -46,7 +51,7 @@ export function HeaderStats({
           <h1 className="text-4xl">{chunksCount}</h1>
         </div>
         <span className="text-xs text-muted-foreground w-full">
-          0 in use today
+          {dueCount} due for review
         </span>
       </div>
     </div>

@@ -2,6 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { fsrsServiceFetch } from '../fsrs-service';
+import {
+  searchRecallItems,
+  getAllRecallItems,
+  type RecallItemDue,
+} from '../fetchers/recall-items';
 
 export async function submitReview(
   recallItemId: string,
@@ -25,4 +30,17 @@ export async function submitReview(
   revalidatePath('/dashboard');
   revalidatePath('/dashboard/reviews');
   return result;
+}
+
+export async function searchRecallItemsAction(
+  query: string
+): Promise<RecallItemDue[]> {
+  return searchRecallItems(query);
+}
+
+export async function getAllRecallItemsAction(
+  limit: number,
+  offset: number
+): Promise<{ items: RecallItemDue[]; total: number }> {
+  return getAllRecallItems({ limit, offset });
 }
