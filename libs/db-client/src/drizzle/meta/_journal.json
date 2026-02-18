@@ -50,6 +50,20 @@
       "when": 1771064042905,
       "tag": "0006_aberrant_natasha_romanoff",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771426365092,
+      "tag": "0007_aberrant_onslaught",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1771428133310,
+      "tag": "0008_smooth_catseye",
+      "breakpoints": true
     }
   ]
 }
