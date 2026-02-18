@@ -8,7 +8,8 @@ Temar is an Nx monorepo for a Notion-connected learning system: users manage top
 
 - `apps/web` (`@temar/web`): Next.js frontend (dev server default: `5173`).
 - `apps/notion_sync-service` (`@temar/notion_sync-service`): NestJS service that integrates with Notion APIs and webhooks.
-- `apps/api` (`@temar/api`): NestJS API scaffold for broader domain/business API expansion.
+- `apps/fsrs-service` (`@temar/fsrs-service`): NestJS spaced-repetition scheduling service powered by `ts-fsrs`.
+- `apps/api` (`@temar/api`): NestJS API scaffold (to be decommissioned).
 
 ### Libraries
 
@@ -44,7 +45,7 @@ Temar is an Nx monorepo for a Notion-connected learning system: users manage top
 
 3. **Answer Analysis Service** _(does not exist)_ — LLM-powered semantic evaluation of free-text answers (Plate.js JSON), mapped to FSRS ratings.
 
-4. **FSRS Scheduling Service** _(does not exist)_ — Spaced-repetition engine for stability/difficulty/interval calculation with fuzzing, session lifecycle management, and Google Calendar push integration.
+4. **FSRS Scheduling Service** _(exists)_ — Spaced-repetition engine (`ts-fsrs`) with manual tracking (cascade from topic/note/chunk), review session lifecycle, and `recall_item`/`review_log` tables. Swagger docs at `/api/docs` on port `3334`.
 
 5. **Analytics & Restoration Service** _(does not exist)_ — Progress/mastery analytics (heatmaps, retention views) and Notion restoration for orphaned records from content cache.
 
@@ -68,6 +69,7 @@ pnpm install
 pnpm nx serve @temar/web
 pnpm nx serve @temar/notion_sync-service
 pnpm nx serve @temar/api
+pnpm nx serve @temar/fsrs-service
 ```
 
 ### Build apps
@@ -76,6 +78,7 @@ pnpm nx serve @temar/api
 pnpm nx build @temar/web
 pnpm nx build @temar/notion_sync-service
 pnpm nx build @temar/api
+pnpm nx build @temar/fsrs-service
 ```
 
 ## Essential Environment Variables
@@ -85,6 +88,9 @@ pnpm nx build @temar/api
 - `WEB_APP_URL` - sync-service callback target for cache revalidation (`/api/revalidate`).
 - `NOTION_OAUTH_CLIENT_ID`, `NOTION_OAUTH_CLIENT_SECRET` - Notion OAuth credentials.
 - `NOTION_SYNC_SERVICE_PORT` - port used by sync service (commonly `3333` in deployment).
+- `FSRS_SERVICE_API_ENDPOINT` - web app URL target for FSRS service calls.
+- `FSRS_SERVICE_API_KEY` - shared API key between web and FSRS service.
+- `FSRS_SERVICE_PORT` - port used by FSRS service (default `3334`).
 
 For production/staging deployment env setup, see `docs/deployment.md`.
 
