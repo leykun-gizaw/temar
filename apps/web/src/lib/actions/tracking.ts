@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { fsrsServiceFetch } from '../fsrs-service';
-import { questionGenServiceFetch } from '../question-gen-service';
 
 export async function trackTopic(topicId: string) {
   const loggedInUser = await getLoggedInUser();
@@ -45,12 +44,6 @@ export async function trackChunk(
     method: 'POST',
     userId: loggedInUser.id,
   });
-
-  // Fire-and-forget: trigger question generation
-  questionGenServiceFetch(`generate/${chunkId}`, {
-    method: 'POST',
-    userId: loggedInUser.id,
-  }).catch((err) => console.error('Question generation failed:', err));
 
   revalidatePath('/dashboard');
   revalidatePath(`/dashboard/topics/${topicId}/notes/${noteId}`);

@@ -1,7 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { generateText, Output } from 'ai';
 import { google } from '@ai-sdk/google';
-import { questionSchema, GeneratedQuestion } from '@temar/shared-types';
+import { z } from 'zod';
+
+const questionSchema = z.object({
+  questions: z.array(
+    z.object({
+      question: z.string().describe('A self-contained recall question'),
+      rubric: z.object({
+        criteria: z
+          .array(z.string())
+          .describe('Evaluation criteria for grading the answer'),
+        keyPoints: z
+          .array(z.string())
+          .describe('Key points the answer must cover'),
+      }),
+    })
+  ),
+});
+
+type GeneratedQuestion = z.infer<typeof questionSchema>['questions'][number];
 
 @Injectable()
 export class LlmService {
@@ -13,7 +31,7 @@ export class LlmService {
     noteName: string,
     topicName: string
   ): Promise<GeneratedQuestion[]> {
-    const model = process.env.AI_MODEL || 'gpt-4o-mini';
+    const model = process.env.AI_MODEL || 'gemini-2.5-pro';
 
     const systemPrompt = `You are an expert educator creating recall questions from study material.
 Given a chunk of content, generate 2-5 recall questions with answer rubrics.
@@ -34,7 +52,7 @@ ${chunkContent}`;
 
     try {
       const { output } = await generateText({
-        model: google(model),
+        model: google('gemini-2.0-flash'),
         output: Output.object({
           schema: questionSchema,
         }),

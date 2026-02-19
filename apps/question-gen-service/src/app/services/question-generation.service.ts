@@ -56,12 +56,12 @@ export class QuestionGenerationService {
       const content =
         chunkRow.contentMd ||
         chunkRow.description ||
-        (chunkRow.contentJson
-          ? JSON.stringify(chunkRow.contentJson)
-          : '');
+        (chunkRow.contentJson ? JSON.stringify(chunkRow.contentJson) : '');
 
       if (!content.trim()) {
-        this.logger.warn(`Chunk ${chunkId} has no content to generate questions from`);
+        this.logger.warn(
+          `Chunk ${chunkId} has no content to generate questions from`
+        );
         await dbClient
           .update(chunkTracking)
           .set({ status: 'failed' })
@@ -120,7 +120,8 @@ export class QuestionGenerationService {
       const inserted = await dbClient
         .insert(recallItem)
         .values(recallItemValues)
-        .returning({ id: recallItem.id });
+        .returning({ id: recallItem.id })
+        .onConflictDoNothing();
 
       // Update tracking status to 'ready'
       await dbClient
@@ -165,7 +166,9 @@ export class QuestionGenerationService {
         const result = await this.generateForChunk(chunkId, userId);
         results.push(result);
       } catch (err) {
-        this.logger.error(`Batch generation failed for chunk ${chunkId}: ${err}`);
+        this.logger.error(
+          `Batch generation failed for chunk ${chunkId}: ${err}`
+        );
         results.push({ chunkId, error: String(err) });
       }
     }

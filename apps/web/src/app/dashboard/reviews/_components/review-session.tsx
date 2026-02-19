@@ -45,12 +45,14 @@ interface ReviewSessionProps {
   topics: Array<{ id: string; name: string }>;
   currentTopicId?: string;
   currentNoteId?: string;
+  dueCount: number;
 }
 
 export default function ReviewSession({
   initialItems,
   topics,
   currentTopicId,
+  dueCount,
 }: ReviewSessionProps) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
@@ -134,9 +136,16 @@ export default function ReviewSession({
   } | null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
+    <div className="flex flex-col h-full">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+      <div className="flex items-end justify-between px-6 py-2 border-b shrink-0">
+        <div className="space-y-1 ">
+          <span className="text-5xl">📝</span>
+          <h1 className="text-2xl font-semibold">Reviews</h1>
+          <p className="text-sm text-muted-foreground">
+            {dueCount} item{dueCount !== 1 ? 's' : ''} due for review
+          </p>
+        </div>
         <div className="flex items-center gap-4">
           <Select
             defaultValue={currentTopicId ?? 'all'}

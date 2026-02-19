@@ -32,9 +32,26 @@ export class RecallItemService {
       this.logger.log(
         `Tracked chunk ${chunkId} for user ${userId} (pending generation)`
       );
-      const response = await fetch(
-        `${process.env.QUESTION_GEN_SERVICE_API_ENDPOINT}/generate/${chunkId}`
-      );
+
+      // Fire-and-forget: trigger question generation in question-gen-service
+      const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
+      if (qgenEndpoint) {
+        fetch(`${qgenEndpoint}/generate/${chunkId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
+              'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
+            }),
+            'x-user-id': userId,
+          },
+        }).catch((err) =>
+          this.logger.error(
+            `Fire-and-forget question generation failed for chunk ${chunkId}: ${err}`
+          )
+        );
+      }
+
       return { tracked: true, chunkId, trackingId: row.id, status: 'pending' };
     } catch (err: unknown) {
       if (
