@@ -29,6 +29,7 @@ import {
   ChevronRight,
   ListChecks,
   Lightbulb,
+  ArrowRight,
 } from 'lucide-react';
 import AnswerEditor from '@/components/editor/answer-editor';
 import type { Value } from 'platejs';
@@ -207,20 +208,25 @@ export default function ReviewSession({
   return (
     <div className="flex flex-col h-full">
       {/* Header bar */}
-      <div className="flex items-end justify-between px-6 py-2 border-b shrink-0">
-        <div className="space-y-1 ">
-          <span className="text-5xl">📝</span>
-          <h1 className="text-2xl font-semibold">Reviews</h1>
+      <div className="flex items-end justify-between px-6 py-2 border shrink-0">
+        <div className="flex flex-col">
+          <div className="flex items-end gap-2 space-y-1 ">
+            <span className="text-5xl">📝</span>
+            <h1 className="text-2xl font-semibold">Reviews</h1>
+          </div>
           <p className="text-sm text-muted-foreground">
             {dueCount} item{dueCount !== 1 ? 's' : ''} due for review
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-start gap-4">
+          <span className="text-sm text-muted-foreground">
+            {currentItem.topicName} &gt; {currentItem.noteName}
+          </span>
           <Select
             defaultValue={currentTopicId ?? 'all'}
             onValueChange={handleScopeChange}
           >
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[350px]">
               <SelectValue placeholder="Filter by topic" />
             </SelectTrigger>
             <SelectContent>
@@ -232,9 +238,6 @@ export default function ReviewSession({
               ))}
             </SelectContent>
           </Select>
-          <span className="text-sm text-muted-foreground">
-            {currentItem.topicName} &gt; {currentItem.noteName}
-          </span>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-xs px-2 py-1 rounded-full bg-muted">
@@ -252,14 +255,14 @@ export default function ReviewSession({
         {/* Left column: Question + Rubric */}
         <div className="w-1/2 flex flex-col overflow-y-auto p-6 gap-6">
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-5">
               Question
             </h3>
             {currentItem.questionText ? (
               <div className="prose prose-sm dark:prose-invert max-w-none">
-                <Markdown remarkPlugins={[remarkGfm]}>
-                  {currentItem.questionText}
-                </Markdown>
+                {/* <Markdown remarkPlugins={[remarkGfm]}> */}
+                <b>{currentItem.questionText}</b>
+                {/* </Markdown> */}
               </div>
             ) : (
               <div className="border rounded-lg p-4 bg-muted/30">
@@ -411,17 +414,20 @@ export default function ReviewSession({
                       onClick={() => handleRate(rating)}
                       disabled={isPending}
                       size="sm"
-                      className="flex flex-col items-center gap-0 h-auto py-1.5 px-3 min-w-[80px]"
+                      className="flex items-center justify-between gap-0 h-auto py-1.5 px-3 min-w-[80px] w-40"
                     >
-                      <span className="flex items-center gap-1">
-                        <span className="text-[10px] opacity-50">
-                          {shortcut}
+                      <div className="flex flex-col">
+                        <span className="flex items-center gap-1">
+                          <span className="text-[10px] opacity-50">
+                            {shortcut}
+                          </span>
+                          <span className="text-sm font-medium">{label}</span>
                         </span>
-                        <span className="text-sm font-medium">{label}</span>
-                      </span>
-                      <span className="text-[10px] opacity-60 font-normal">
-                        {subtitle}
-                      </span>
+                        <span className="text-[10px] opacity-60 font-normal">
+                          {subtitle}
+                        </span>
+                      </div>
+                      <ArrowRight />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
