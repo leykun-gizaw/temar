@@ -13,7 +13,10 @@ export interface RecallItemDue {
   reps: number;
   lapses: number;
   lastReview: string | null;
+  questionText: string | null;
+  answerRubric: { criteria: string[]; keyPoints: string[] } | null;
   chunkName: string;
+  chunkContentMd: string | null;
   noteName: string;
   noteId: string;
   topicName: string;

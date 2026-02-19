@@ -1,15 +1,8 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useRef, useTransition, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -21,7 +14,17 @@ import { submitReview } from '@/lib/actions/review';
 import type { RecallItemDue } from '@/lib/fetchers/recall-items';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ChevronRight, RotateCcw, Brain, CheckCircle2 } from 'lucide-react';
+import {
+  RotateCcw,
+  Brain,
+  CheckCircle2,
+  SkipForward,
+  Send,
+  ListChecks,
+  Lightbulb,
+} from 'lucide-react';
+import AnswerEditor from '@/components/editor/answer-editor';
+import type { Value } from 'platejs';
 
 const STATE_LABELS: Record<number, string> = {
   0: 'New',
@@ -48,15 +51,14 @@ export default function ReviewSession({
   initialItems,
   topics,
   currentTopicId,
-  currentNoteId,
 }: ReviewSessionProps) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showContent, setShowContent] = useState(false);
   const [reviewStartTime, setReviewStartTime] = useState<number>(Date.now());
   const [isPending, startTransition] = useTransition();
   const [completedCount, setCompletedCount] = useState(0);
+  const answerRef = useRef<Value | null>(null);
 
   const currentItem = items[currentIndex];
   const isSessionComplete = !currentItem;
@@ -69,32 +71,39 @@ export default function ReviewSession({
     }
   };
 
-  const handleReveal = () => {
-    setShowContent(true);
-  };
+  const advanceToNext = useCallback(() => {
+    answerRef.current = null;
+    setReviewStartTime(Date.now());
+    if (currentIndex + 1 < items.length) {
+      setCurrentIndex((i) => i + 1);
+    } else {
+      setItems([]);
+      setCurrentIndex(0);
+    }
+  }, [currentIndex, items.length]);
 
   const handleRate = (rating: number) => {
     if (!currentItem) return;
-
     const durationMs = Date.now() - reviewStartTime;
 
     startTransition(async () => {
       try {
-        await submitReview(currentItem.id, rating, durationMs);
+        await submitReview(
+          currentItem.id,
+          rating,
+          durationMs,
+          answerRef.current ?? undefined
+        );
         setCompletedCount((c) => c + 1);
-        setShowContent(false);
-        setReviewStartTime(Date.now());
-
-        if (currentIndex + 1 < items.length) {
-          setCurrentIndex((i) => i + 1);
-        } else {
-          setItems([]);
-          setCurrentIndex(0);
-        }
+        advanceToNext();
       } catch (err) {
         console.error('Review submission failed:', err);
       }
     });
+  };
+
+  const handleSkip = () => {
+    advanceToNext();
   };
 
   if (isSessionComplete) {
@@ -105,7 +114,9 @@ export default function ReviewSession({
           <h2 className="text-2xl font-semibold">Session Complete</h2>
           <p className="text-muted-foreground">
             {completedCount > 0
-              ? `You reviewed ${completedCount} item${completedCount !== 1 ? 's' : ''}.`
+              ? `You reviewed ${completedCount} item${
+                  completedCount !== 1 ? 's' : ''
+                }.`
               : 'No items due for review right now.'}
           </p>
         </div>
@@ -117,15 +128,21 @@ export default function ReviewSession({
     );
   }
 
+  const rubric = currentItem.answerRubric as {
+    criteria: string[];
+    keyPoints: string[];
+  } | null;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-8rem)]">
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
         <div className="flex items-center gap-4">
           <Select
             defaultValue={currentTopicId ?? 'all'}
             onValueChange={handleScopeChange}
           >
-            <SelectTrigger className="w-[220px]">
+            <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Filter by topic" />
             </SelectTrigger>
             <SelectContent>
@@ -138,86 +155,165 @@ export default function ReviewSession({
             </SelectContent>
           </Select>
           <span className="text-sm text-muted-foreground">
-            {currentIndex + 1} / {items.length}
+            {currentItem.topicName} &gt; {currentItem.noteName}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Brain className="h-4 w-4" />
-          <span>{completedCount} reviewed this session</span>
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium">
+            Question {currentIndex + 1} / {items.length}
+          </span>
+          <span className="text-xs px-2 py-1 rounded-full bg-muted">
+            {STATE_LABELS[currentItem.state] ?? 'Unknown'}
+          </span>
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Brain className="h-4 w-4" />
+            <span>{completedCount} reviewed</span>
+          </div>
         </div>
       </div>
 
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">{currentItem.chunkName}</CardTitle>
-              <CardDescription>
-                {currentItem.topicName} &gt; {currentItem.noteName}
-              </CardDescription>
-            </div>
-            <span className="text-xs px-2 py-1 rounded-full bg-muted">
-              {STATE_LABELS[currentItem.state] ?? 'Unknown'} &middot; {currentItem.reps} reps
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center py-4">
-            <p className="text-lg font-medium">
-              What do you recall about this chunk?
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Try to recall the content before revealing it.
-            </p>
-          </div>
-
-          {!showContent ? (
-            <div className="flex justify-center">
-              <Button size="lg" onClick={handleReveal}>
-                Show Content
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="border rounded-lg p-4 bg-muted/30 max-h-[400px] overflow-y-auto">
-                {currentItem.chunkName ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
+      {/* Two-column main area */}
+      <div className="flex flex-1 min-h-0 divide-x">
+        {/* Left column: Question + Rubric */}
+        <div className="w-1/2 flex flex-col overflow-y-auto p-6 gap-6">
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              Question
+            </h3>
+            {currentItem.questionText ? (
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <Markdown remarkPlugins={[remarkGfm]}>
+                  {currentItem.questionText}
+                </Markdown>
+              </div>
+            ) : (
+              <div className="border rounded-lg p-4 bg-muted/30">
+                <p className="text-muted-foreground text-sm italic">
+                  No question generated yet for this item. Showing chunk content
+                  as reference:
+                </p>
+                {currentItem.chunkContentMd ? (
+                  <div className="prose prose-sm dark:prose-invert max-w-none mt-3">
                     <Markdown remarkPlugins={[remarkGfm]}>
-                      {`**${currentItem.chunkName}**\n\n_Content from the chunk will be displayed here once the FSRS service is connected._`}
+                      {currentItem.chunkContentMd}
                     </Markdown>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-sm">
-                    No content available for this chunk.
+                  <p className="text-sm mt-2 font-medium">
+                    {currentItem.chunkName}
                   </p>
                 )}
               </div>
+            )}
+          </div>
 
-              <div className="space-y-3">
-                <p className="text-sm text-center text-muted-foreground">
-                  How well did you recall this?
-                </p>
-                <div className="flex justify-center gap-3">
-                  {RATING_CONFIG.map(({ rating, label, variant, shortcut }) => (
-                    <Button
-                      key={rating}
-                      variant={variant}
-                      size="lg"
-                      onClick={() => handleRate(rating)}
-                      disabled={isPending}
-                      className="min-w-[100px]"
-                    >
-                      <span className="mr-1 text-xs opacity-60">{shortcut}</span>
-                      {label}
-                    </Button>
-                  ))}
-                </div>
+          <hr />
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+              <ListChecks className="h-3.5 w-3.5" />
+              Answer Rubric
+            </h3>
+            {rubric ? (
+              <div className="space-y-4">
+                {rubric.criteria.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Criteria</h4>
+                    <ul className="space-y-1.5">
+                      {rubric.criteria.map((c, i) => (
+                        <li
+                          key={i}
+                          className="text-sm text-muted-foreground flex items-start gap-2"
+                        >
+                          <span className="shrink-0 mt-0.5 h-4 w-4 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center">
+                            {i + 1}
+                          </span>
+                          {c}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {rubric.keyPoints.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                      <Lightbulb className="h-3.5 w-3.5" />
+                      Key Points
+                    </h4>
+                    <ul className="space-y-1.5">
+                      {rubric.keyPoints.map((kp, i) => (
+                        <li
+                          key={i}
+                          className="text-sm text-muted-foreground flex items-start gap-2"
+                        >
+                          <span className="shrink-0 text-primary">•</span>
+                          {kp}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">
+                No rubric available. Self-assess your recall based on the
+                question above.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Right column: Plate.js Answer Editor */}
+        <div className="w-1/2 flex flex-col min-h-0">
+          <div className="px-4 py-3 border-b shrink-0">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Your Answer
+            </h3>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <AnswerEditor
+              key={currentItem.id}
+              onChange={(value) => {
+                answerRef.current = value;
+              }}
+              placeholder="Write your answer here... (supports rich text, code blocks, and mermaid diagrams)"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="flex items-center justify-between px-6 py-4 border-t shrink-0 bg-card">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="italic">
+            Answer analysis coming soon — self-assess using the rubric above
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" onClick={handleSkip} disabled={isPending}>
+            <SkipForward className="mr-1.5 h-4 w-4" />
+            Skip
+          </Button>
+          <div className="flex gap-2">
+            {RATING_CONFIG.map(({ rating, label, variant, shortcut }) => (
+              <Button
+                key={rating}
+                variant={variant}
+                onClick={() => handleRate(rating)}
+                disabled={isPending}
+                size="sm"
+              >
+                <span className="mr-1 text-xs opacity-60">{shortcut}</span>
+                {label}
+              </Button>
+            ))}
+          </div>
+          <Button onClick={() => handleRate(3)} disabled={isPending}>
+            <Send className="mr-1.5 h-4 w-4" />
+            Submit Answer
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
