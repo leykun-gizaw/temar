@@ -46,6 +46,11 @@ export class ReviewController {
           type: 'number',
           description: 'Time spent answering in ms (optional)',
         },
+        answerJson: {
+          type: 'object',
+          description:
+            'Plate.js editor JSON value of the user answer (optional)',
+        },
       },
       required: ['rating'],
     },
@@ -54,7 +59,7 @@ export class ReviewController {
   @Post('recall-items/:id/review')
   async submitReview(
     @Param('id') id: string,
-    @Body() body: { rating: number; durationMs?: number }
+    @Body() body: { rating: number; durationMs?: number; answerJson?: unknown }
   ) {
     if (!body.rating || body.rating < 1 || body.rating > 4) {
       throw new HttpException(
@@ -65,7 +70,8 @@ export class ReviewController {
     return this.reviewService.submitReview(
       id,
       body.rating as Grade,
-      body.durationMs
+      body.durationMs,
+      body.answerJson
     );
   }
 
@@ -79,7 +85,11 @@ export class ReviewController {
 
   @ApiOperation({ summary: 'Get review logs for a date range (analytics)' })
   @ApiHeader(USER_ID_HEADER)
-  @ApiQuery({ name: 'from', required: true, description: 'Start date ISO string' })
+  @ApiQuery({
+    name: 'from',
+    required: true,
+    description: 'Start date ISO string',
+  })
   @ApiQuery({ name: 'to', required: true, description: 'End date ISO string' })
   @ApiSecurity('api-key')
   @Get('review-logs')

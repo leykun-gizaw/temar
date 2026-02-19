@@ -1,5 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { dbClient, recallItem, chunk, note, topic } from '@temar/db-client';
+import {
+  dbClient,
+  recallItem,
+  chunk,
+  note,
+  topic,
+  chunkTracking,
+} from '@temar/db-client';
 import { eq, and, lte, sql } from 'drizzle-orm';
 import { FsrsEngineService } from './fsrs-engine.service';
 
@@ -10,32 +17,29 @@ export class RecallItemService {
   constructor(private readonly fsrsEngine: FsrsEngineService) {}
 
   async trackChunk(chunkId: string, userId: string) {
-    const card = this.fsrsEngine.createCard();
-
     try {
-      await dbClient
-        .insert(recallItem)
-        .values({
-          chunkId,
-          userId,
-          state: card.state,
-          due: card.due,
-          stability: card.stability,
-          difficulty: card.difficulty,
-          elapsedDays: card.elapsed_days,
-          scheduledDays: card.scheduled_days,
-          reps: card.reps,
-          lapses: card.lapses,
-          learningSteps: card.learning_steps,
-          lastReview: card.last_review ?? null,
-        })
-        .onConflictDoNothing();
-      this.logger.log(`Tracked chunk ${chunkId} for user ${userId}`);
-      return { tracked: true, chunkId };
+      const [row] = await dbClient
+        .insert(chunkTracking)
+        .values({ chunkId, userId, status: 'pending' })
+        .onConflictDoNothing()
+        .returning({ id: chunkTracking.id });
+
+      if (!row) {
+        this.logger.log(`Chunk ${chunkId} already tracked for user ${userId}`);
+        return { tracked: false, chunkId, reason: 'already_tracked' };
+      }
+
+      this.logger.log(
+        `Tracked chunk ${chunkId} for user ${userId} (pending generation)`
+      );
+      const response = await fetch(
+        `${process.env.QUESTION_GEN_SERVICE_API_ENDPOINT}/generate/${chunkId}`
+      );
+      return { tracked: true, chunkId, trackingId: row.id, status: 'pending' };
     } catch (err: unknown) {
       if (
         err instanceof Error &&
-        err.message.includes('recall_item_chunk_user_idx')
+        err.message.includes('chunk_tracking_chunk_user_idx')
       ) {
         this.logger.log(`Chunk ${chunkId} already tracked for user ${userId}`);
         return { tracked: false, chunkId, reason: 'already_tracked' };
@@ -79,12 +83,23 @@ export class RecallItemService {
   }
 
   async untrackChunk(chunkId: string, userId: string) {
-    const deleted = await dbClient
+    // Delete associated recall items first
+    await dbClient
       .delete(recallItem)
       .where(
         and(eq(recallItem.chunkId, chunkId), eq(recallItem.userId, userId))
+      );
+
+    // Delete chunk_tracking row
+    const deleted = await dbClient
+      .delete(chunkTracking)
+      .where(
+        and(
+          eq(chunkTracking.chunkId, chunkId),
+          eq(chunkTracking.userId, userId)
+        )
       )
-      .returning({ id: recallItem.id });
+      .returning({ id: chunkTracking.id });
     return { untracked: deleted.length > 0, chunkId };
   }
 
@@ -137,7 +152,10 @@ export class RecallItemService {
         lapses: recallItem.lapses,
         learningSteps: recallItem.learningSteps,
         lastReview: recallItem.lastReview,
+        questionText: recallItem.questionText,
+        answerRubric: recallItem.answerRubric,
         chunkName: chunk.name,
+        chunkContentMd: chunk.contentMd,
         noteName: note.name,
         noteId: note.id,
         topicName: topic.name,
@@ -175,7 +193,10 @@ export class RecallItemService {
         lapses: recallItem.lapses,
         learningSteps: recallItem.learningSteps,
         lastReview: recallItem.lastReview,
+        questionText: recallItem.questionText,
+        answerRubric: recallItem.answerRubric,
         chunkName: chunk.name,
+        chunkContentMd: chunk.contentMd,
         noteName: note.name,
         noteId: note.id,
         topicName: topic.name,
@@ -218,7 +239,10 @@ export class RecallItemService {
         lapses: recallItem.lapses,
         learningSteps: recallItem.learningSteps,
         lastReview: recallItem.lastReview,
+        questionText: recallItem.questionText,
+        answerRubric: recallItem.answerRubric,
         chunkName: chunk.name,
+        chunkContentMd: chunk.contentMd,
         noteName: note.name,
         noteId: note.id,
         topicName: topic.name,
@@ -293,14 +317,13 @@ export class RecallItemService {
   async getTrackedStatus(userId: string) {
     const items = await dbClient
       .select({
-        id: recallItem.id,
-        chunkId: recallItem.chunkId,
-        state: recallItem.state,
-        due: recallItem.due,
-        reps: recallItem.reps,
+        id: chunkTracking.id,
+        chunkId: chunkTracking.chunkId,
+        status: chunkTracking.status,
+        createdAt: chunkTracking.createdAt,
       })
-      .from(recallItem)
-      .where(eq(recallItem.userId, userId));
+      .from(chunkTracking)
+      .where(eq(chunkTracking.userId, userId));
     return items;
   }
 
