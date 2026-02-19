@@ -74,13 +74,43 @@ export class QuestionGenerationService {
         return { chunkId, questions: [], error: 'No content available' };
       }
 
-      // Generate questions via LLM
-      const questions = await this.llmService.generateQuestions(
-        content,
-        chunkRow.name,
-        chunkRow.noteName,
-        chunkRow.topicName
-      );
+      // Generate questions via LLM with exponential backoff on rate-limit errors
+      const MAX_RETRIES = 3;
+      const BASE_DELAY_MS = 5_000;
+      let questions: Awaited<
+        ReturnType<typeof this.llmService.generateQuestions>
+      > = [];
+
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          questions = await this.llmService.generateQuestions(
+            content,
+            chunkRow.name,
+            chunkRow.noteName,
+            chunkRow.topicName
+          );
+          break;
+        } catch (err: unknown) {
+          const isRetryable =
+            err instanceof Error &&
+            (err.message.includes('429') ||
+              err.message.includes('RESOURCE_EXHAUSTED') ||
+              err.message.includes('quota') ||
+              err.message.includes('rate limit'));
+
+          if (isRetryable && attempt < MAX_RETRIES) {
+            const delayMs = BASE_DELAY_MS * Math.pow(3, attempt - 1);
+            this.logger.warn(
+              `Rate limited on attempt ${attempt}/${MAX_RETRIES} for chunk ${chunkId}. Retrying in ${
+                delayMs / 1000
+              }s...`
+            );
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+          } else {
+            throw err;
+          }
+        }
+      }
 
       if (questions.length === 0) {
         await dbClient

@@ -31,7 +31,7 @@ export class LlmService {
     noteName: string,
     topicName: string
   ): Promise<GeneratedQuestion[]> {
-    const model = process.env.AI_MODEL || 'gemini-2.5-pro';
+    const model = process.env.AI_MODEL || 'gemini-2.0-flash';
 
     const systemPrompt = `You are an expert educator creating recall questions from study material.
 Given a chunk of content, generate 2-5 recall questions with answer rubrics.
@@ -52,7 +52,8 @@ ${chunkContent}`;
 
     try {
       const { output } = await generateText({
-        model: google('gemini-2.0-flash'),
+        model: google(model),
+        maxRetries: 0,
         output: Output.object({
           schema: questionSchema,
         }),

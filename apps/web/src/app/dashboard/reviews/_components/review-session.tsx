@@ -10,6 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { submitReview } from '@/lib/actions/review';
 import type { RecallItemDue } from '@/lib/fetchers/recall-items';
 import Markdown from 'react-markdown';
@@ -19,7 +25,8 @@ import {
   Brain,
   CheckCircle2,
   SkipForward,
-  Send,
+  ChevronLeft,
+  ChevronRight,
   ListChecks,
   Lightbulb,
 } from 'lucide-react';
@@ -34,10 +41,39 @@ const STATE_LABELS: Record<number, string> = {
 };
 
 const RATING_CONFIG = [
-  { rating: 1, label: 'Again', variant: 'destructive' as const, shortcut: '1' },
-  { rating: 2, label: 'Hard', variant: 'outline' as const, shortcut: '2' },
-  { rating: 3, label: 'Good', variant: 'default' as const, shortcut: '3' },
-  { rating: 4, label: 'Easy', variant: 'secondary' as const, shortcut: '4' },
+  {
+    rating: 1,
+    label: 'Again',
+    subtitle: "Didn't recall",
+    tooltip:
+      "You couldn't recall the answer — this card will be shown again soon",
+    variant: 'destructive' as const,
+    shortcut: '1',
+  },
+  {
+    rating: 2,
+    label: 'Hard',
+    subtitle: 'Barely recalled',
+    tooltip: 'You recalled with significant difficulty — shorter interval',
+    variant: 'outline' as const,
+    shortcut: '2',
+  },
+  {
+    rating: 3,
+    label: 'Good',
+    subtitle: 'Recalled with effort',
+    tooltip: 'You recalled correctly after some thought — normal interval',
+    variant: 'default' as const,
+    shortcut: '3',
+  },
+  {
+    rating: 4,
+    label: 'Easy',
+    subtitle: 'Instant recall',
+    tooltip: 'You recalled instantly and effortlessly — longer interval',
+    variant: 'secondary' as const,
+    shortcut: '4',
+  },
 ];
 
 interface ReviewSessionProps {
@@ -60,7 +96,8 @@ export default function ReviewSession({
   const [reviewStartTime, setReviewStartTime] = useState<number>(Date.now());
   const [isPending, startTransition] = useTransition();
   const [completedCount, setCompletedCount] = useState(0);
-  const answerRef = useRef<Value | null>(null);
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
+  const answersRef = useRef<Map<string, Value>>(new Map());
 
   const currentItem = items[currentIndex];
   const isSessionComplete = !currentItem;
@@ -73,20 +110,46 @@ export default function ReviewSession({
     }
   };
 
-  const advanceToNext = useCallback(() => {
-    answerRef.current = null;
-    setReviewStartTime(Date.now());
-    if (currentIndex + 1 < items.length) {
-      setCurrentIndex((i) => i + 1);
-    } else {
-      setItems([]);
-      setCurrentIndex(0);
+  const navigateTo = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= items.length) return;
+      setCurrentIndex(index);
+      if (!reviewedIds.has(items[index].id)) {
+        setReviewStartTime(Date.now());
+      }
+    },
+    [items, reviewedIds]
+  );
+
+  const handlePrev = () => navigateTo(currentIndex - 1);
+  const handleNext = () => navigateTo(currentIndex + 1);
+
+  const advanceAfterReview = useCallback(() => {
+    // Find the next unreviewed item
+    for (let i = currentIndex + 1; i < items.length; i++) {
+      if (!reviewedIds.has(items[i].id)) {
+        setCurrentIndex(i);
+        setReviewStartTime(Date.now());
+        return;
+      }
     }
-  }, [currentIndex, items.length]);
+    // Wrap around from the start
+    for (let i = 0; i < currentIndex; i++) {
+      if (!reviewedIds.has(items[i].id)) {
+        setCurrentIndex(i);
+        setReviewStartTime(Date.now());
+        return;
+      }
+    }
+    // All reviewed — session complete
+    setItems([]);
+    setCurrentIndex(0);
+  }, [currentIndex, items, reviewedIds]);
 
   const handleRate = (rating: number) => {
     if (!currentItem) return;
     const durationMs = Date.now() - reviewStartTime;
+    const answer = answersRef.current.get(currentItem.id);
 
     startTransition(async () => {
       try {
@@ -94,10 +157,11 @@ export default function ReviewSession({
           currentItem.id,
           rating,
           durationMs,
-          answerRef.current ?? undefined
+          answer ?? undefined
         );
         setCompletedCount((c) => c + 1);
-        advanceToNext();
+        setReviewedIds((prev) => new Set(prev).add(currentItem.id));
+        advanceAfterReview();
       } catch (err) {
         console.error('Review submission failed:', err);
       }
@@ -105,7 +169,11 @@ export default function ReviewSession({
   };
 
   const handleSkip = () => {
-    advanceToNext();
+    if (currentIndex + 1 < items.length) {
+      navigateTo(currentIndex + 1);
+    } else {
+      navigateTo(0);
+    }
   };
 
   if (isSessionComplete) {
@@ -134,6 +202,7 @@ export default function ReviewSession({
     criteria: string[];
     keyPoints: string[];
   } | null;
+  const isCurrentReviewed = reviewedIds.has(currentItem.id);
 
   return (
     <div className="flex flex-col h-full">
@@ -168,9 +237,6 @@ export default function ReviewSession({
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">
-            Question {currentIndex + 1} / {items.length}
-          </span>
           <span className="text-xs px-2 py-1 rounded-full bg-muted">
             {STATE_LABELS[currentItem.state] ?? 'Unknown'}
           </span>
@@ -283,7 +349,7 @@ export default function ReviewSession({
             <AnswerEditor
               key={currentItem.id}
               onChange={(value) => {
-                answerRef.current = value;
+                answersRef.current.set(currentItem.id, value);
               }}
               placeholder="Write your answer here... (supports rich text, code blocks, and mermaid diagrams)"
             />
@@ -292,36 +358,80 @@ export default function ReviewSession({
       </div>
 
       {/* Bottom bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-t shrink-0 bg-card">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="italic">
-            Answer analysis coming soon — self-assess using the rubric above
+      <div className="flex items-center justify-between px-6 py-3 border-t shrink-0 bg-card">
+        {/* Left: Navigation */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handlePrev}
+            disabled={currentIndex === 0 || isPending}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Prev
+          </Button>
+          <span className="text-sm font-medium tabular-nums px-2">
+            {currentIndex + 1} / {items.length}
           </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={handleSkip} disabled={isPending}>
-            <SkipForward className="mr-1.5 h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleNext}
+            disabled={currentIndex >= items.length - 1 || isPending}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSkip}
+            disabled={isPending}
+          >
+            <SkipForward className="h-4 w-4" />
             Skip
           </Button>
-          <div className="flex gap-2">
-            {RATING_CONFIG.map(({ rating, label, variant, shortcut }) => (
-              <Button
-                key={rating}
-                variant={variant}
-                onClick={() => handleRate(rating)}
-                disabled={isPending}
-                size="sm"
-              >
-                <span className="mr-1 text-xs opacity-60">{shortcut}</span>
-                {label}
-              </Button>
-            ))}
-          </div>
-          <Button onClick={() => handleRate(3)} disabled={isPending}>
-            <Send className="mr-1.5 h-4 w-4" />
-            Submit Answer
-          </Button>
         </div>
+
+        {/* Right: Rating buttons with descriptions */}
+        <TooltipProvider delayDuration={200}>
+          <div className="flex items-center gap-2">
+            {isCurrentReviewed && (
+              <span className="text-xs text-muted-foreground mr-2 flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                Reviewed
+              </span>
+            )}
+            {RATING_CONFIG.map(
+              ({ rating, label, subtitle, tooltip, variant, shortcut }) => (
+                <Tooltip key={rating}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={'outline'}
+                      onClick={() => handleRate(rating)}
+                      disabled={isPending}
+                      size="sm"
+                      className="flex flex-col items-center gap-0 h-auto py-1.5 px-3 min-w-[80px]"
+                    >
+                      <span className="flex items-center gap-1">
+                        <span className="text-[10px] opacity-50">
+                          {shortcut}
+                        </span>
+                        <span className="text-sm font-medium">{label}</span>
+                      </span>
+                      <span className="text-[10px] opacity-60 font-normal">
+                        {subtitle}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>{tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )
+            )}
+          </div>
+        </TooltipProvider>
       </div>
     </div>
   );
