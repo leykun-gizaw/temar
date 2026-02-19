@@ -5,6 +5,8 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { deleteNote } from '@/lib/actions/delete';
 import { updateNote } from '@/lib/actions/update';
 import EditDialog from '@/components/edit-dialog';
+import TrackingButton from '@/components/tracking-button';
+import Blinker from '@/components/blinker';
 
 function excerpt(value: unknown, max = 140) {
   const text =
@@ -16,12 +18,19 @@ function excerpt(value: unknown, max = 140) {
 export default function NoteCardWrapper({
   note,
   topicId,
+  isTracked = false,
 }: {
   note: { id: string; name: string; description: string };
   topicId: string;
+  isTracked?: boolean;
 }) {
   return (
-    <div className="h-[180px] flex flex-col">
+    <div className="relative h-[180px] flex flex-col">
+      {isTracked && (
+        <div className="absolute top-2 right-2 z-10">
+          <Blinker />
+        </div>
+      )}
       <Link
         href={`/dashboard/topics/${topicId}/notes/${encodeURIComponent(
           note.id
@@ -34,7 +43,7 @@ export default function NoteCardWrapper({
       </Link>
       <div className="h-1/4 flex items-center justify-between p-2 border rounded-b-xl">
         <span className="text-sm font-semibold">📘 {note.name}</span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <div
             onClick={(e) => {
               e.preventDefault();
@@ -73,6 +82,20 @@ export default function NoteCardWrapper({
           >
             <Trash2 size={14} />
           </button>
+          <div
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <TrackingButton
+              entityType="note"
+              entityId={note.id}
+              topicId={topicId}
+              isTracked={isTracked}
+              compact
+            />
+          </div>
         </div>
       </div>
     </div>

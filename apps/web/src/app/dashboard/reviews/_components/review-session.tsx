@@ -28,8 +28,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ListChecks,
-  Lightbulb,
-  ArrowRight,
 } from 'lucide-react';
 import AnswerEditor from '@/components/editor/answer-editor';
 import type { Value } from 'platejs';
@@ -258,6 +256,11 @@ export default function ReviewSession({
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-5">
               Question
             </h3>
+            {currentItem.questionTitle && (
+              <h2 className="text-lg font-semibold mb-2">
+                {currentItem.questionTitle}
+              </h2>
+            )}
             {currentItem.questionText ? (
               <div className="prose prose-sm dark:prose-invert max-w-none">
                 {/* <Markdown remarkPlugins={[remarkGfm]}> */}
@@ -296,7 +299,9 @@ export default function ReviewSession({
               <div className="space-y-4">
                 {rubric.criteria.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium mb-2">Criteria</h4>
+                    <h4 className="text-sm font-medium mb-2">
+                      How to structure your answer
+                    </h4>
                     <ul className="space-y-1.5">
                       {rubric.criteria.map((c, i) => (
                         <li
@@ -307,25 +312,6 @@ export default function ReviewSession({
                             {i + 1}
                           </span>
                           {c}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {rubric.keyPoints.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
-                      <Lightbulb className="h-3.5 w-3.5" />
-                      Key Points
-                    </h4>
-                    <ul className="space-y-1.5">
-                      {rubric.keyPoints.map((kp, i) => (
-                        <li
-                          key={i}
-                          className="text-sm text-muted-foreground flex items-start gap-2"
-                        >
-                          <span className="shrink-0 text-primary">•</span>
-                          {kp}
                         </li>
                       ))}
                     </ul>
@@ -427,7 +413,6 @@ export default function ReviewSession({
                           {subtitle}
                         </span>
                       </div>
-                      <ArrowRight />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">

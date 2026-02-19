@@ -132,6 +132,7 @@ export class QuestionGenerationService {
       const recallItemValues = questions.map((q) => ({
         chunkId,
         userId,
+        questionTitle: q.title,
         questionText: q.question,
         answerRubric: q.rubric,
         generationBatchId: batchId,

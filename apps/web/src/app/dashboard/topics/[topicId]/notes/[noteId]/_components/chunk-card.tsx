@@ -11,11 +11,12 @@ import { useState } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import MermaidDiagram from '@/components/mermaid-diagram';
-import { Pencil, Trash2, Target, Loader2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { deleteChunk } from '@/lib/actions/delete';
 import { updateChunk } from '@/lib/actions/update';
-import { trackChunk, untrackChunk } from '@/lib/actions/tracking';
 import EditDialog from '@/components/edit-dialog';
+import TrackingButton from '@/components/tracking-button';
+import Blinker from '@/components/blinker';
 
 interface ChunkCardProps {
   id: string;
@@ -43,16 +44,19 @@ export default function ChunkCard({
   contentJson,
   topicId,
   noteId,
-  isTracked: initialTracked,
+  isTracked,
 }: ChunkCardProps) {
   const [open, setOpen] = useState(false);
-  const [tracked, setTracked] = useState(initialTracked);
-  const [trackingPending, setTrackingPending] = useState(false);
 
   const preview = contentMd || description;
 
   return (
-    <div className="flex flex-col h-[180px] justify-between">
+    <div className="relative flex flex-col h-[180px] justify-between">
+      {isTracked && (
+        <div className="absolute top-2 right-2 z-10">
+          <Blinker />
+        </div>
+      )}
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -65,39 +69,6 @@ export default function ChunkCard({
       <div className="flex items-end justify-between p-2 border rounded-b-xl">
         <span className="text-sm font-semibold">📄 {name}</span>
         <div className="flex items-center gap-1">
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={async (e) => {
-              e.stopPropagation();
-              setTrackingPending(true);
-              try {
-                if (tracked) {
-                  await untrackChunk(id, noteId, topicId);
-                  setTracked(false);
-                } else {
-                  await trackChunk(id, noteId, topicId);
-                  setTracked(true);
-                }
-              } catch (err) {
-                console.error('Tracking toggle failed:', err);
-              } finally {
-                setTrackingPending(false);
-              }
-            }}
-            className={`transition-colors cursor-pointer p-1 ${
-              tracked
-                ? 'text-primary hover:text-primary/70'
-                : 'text-muted-foreground hover:text-primary'
-            }`}
-            title={tracked ? 'Untrack chunk' : 'Track chunk for recall'}
-          >
-            {trackingPending ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Target size={14} />
-            )}
-          </span>
           <EditDialog
             entityType="chunk"
             currentName={name}
@@ -139,6 +110,16 @@ export default function ChunkCard({
           >
             <Trash2 size={14} />
           </span>
+          <div onClick={(e) => e.stopPropagation()}>
+            <TrackingButton
+              entityType="chunk"
+              entityId={id}
+              topicId={topicId}
+              noteId={noteId}
+              isTracked={isTracked}
+              compact
+            />
+          </div>
         </div>
       </div>
 

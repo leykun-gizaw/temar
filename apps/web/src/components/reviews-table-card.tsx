@@ -216,7 +216,9 @@ export default function ReviewsTableCard({
                 <TableRow key={item.id}>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium">{item.chunkName}</span>
+                      <span className="font-medium">
+                        {item.questionTitle || item.chunkName}
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         {item.topicName} &gt; {item.noteName}
                       </span>

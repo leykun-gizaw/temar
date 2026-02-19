@@ -6,14 +6,21 @@ import { z } from 'zod';
 const questionSchema = z.object({
   questions: z.array(
     z.object({
+      title: z
+        .string()
+        .describe('Short descriptive title for the question (3-8 words)'),
       question: z.string().describe('A self-contained recall question'),
       rubric: z.object({
         criteria: z
           .array(z.string())
-          .describe('Evaluation criteria for grading the answer'),
+          .describe(
+            'Structural guidance for how to organize and approach the answer'
+          ),
         keyPoints: z
           .array(z.string())
-          .describe('Key points the answer must cover'),
+          .describe(
+            'Internal grading notes with specific facts/details expected (hidden from student)'
+          ),
       }),
     })
   ),
@@ -37,9 +44,12 @@ export class LlmService {
 Given a chunk of content, generate 2-5 recall questions with answer rubrics.
 
 Rules:
+- Each question must have a short descriptive title (3-8 words)
 - Questions should test understanding, not just memorization
 - Include a mix of: factual recall, conceptual understanding, and application questions
-- Each rubric should have clear criteria for evaluation and key points the answer must cover
+- The rubric criteria should describe HOW to structure a good answer (e.g. "Address X aspect", "Compare Y with Z"), NOT reveal the actual answer content
+- Criteria should guide answer organization and completeness, not give away key facts
+- Key points are internal grading notes — they WILL be hidden from the student, so include specific facts/details expected in the answer there
 - Questions should be self-contained (answerable without seeing the original content)
 - Scale question count with content complexity: short/simple content = 2, long/complex = up to 5`;
 

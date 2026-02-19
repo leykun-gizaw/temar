@@ -24,6 +24,7 @@ export const recallItem = pgTable('recall_item', {
   userId: uuid('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
+  questionTitle: text('question_title'),
   questionText: text('question_text'),
   answerRubric: jsonb('answer_rubric'),
   state: smallint('state').notNull().default(0),
