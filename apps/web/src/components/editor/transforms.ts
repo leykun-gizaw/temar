@@ -50,8 +50,9 @@ const insertBlockMap: Record<
   [KEYS.audio]: (editor) => insertAudioPlaceholder(editor, { select: true }),
   [KEYS.callout]: (editor) => insertCallout(editor, { select: true }),
   [KEYS.codeBlock]: (editor) => insertCodeBlock(editor, { select: true }),
-  ['code_drawing' as string]: (editor: PlateEditor) =>
-    insertCodeDrawing(editor, {}, { select: true }),
+  ['code_drawing' as string]: (editor: PlateEditor) => {
+    insertCodeDrawing(editor, {}, {});
+  },
   [KEYS.equation]: (editor) => insertEquation(editor, { select: true }),
   [KEYS.file]: (editor) => insertFilePlaceholder(editor, { select: true }),
   [KEYS.img]: (editor) =>
@@ -116,9 +117,15 @@ export const insertBlock = (
     }
 
     if (!isSameBlockType) {
-      editor.getApi(SuggestionPlugin).suggestion.withoutSuggestions(() => {
+      const suggestionApi = editor.getApi(SuggestionPlugin).suggestion;
+
+      if (suggestionApi?.withoutSuggestions) {
+        suggestionApi.withoutSuggestions(() => {
+          editor.tf.removeNodes({ previousEmptyBlock: true });
+        });
+      } else {
         editor.tf.removeNodes({ previousEmptyBlock: true });
-      });
+      }
     }
   });
 };

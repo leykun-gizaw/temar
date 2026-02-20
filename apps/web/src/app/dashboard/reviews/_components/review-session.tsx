@@ -31,6 +31,11 @@ import {
 } from 'lucide-react';
 import AnswerEditor from '@/components/editor/answer-editor';
 import type { Value } from 'platejs';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable';
 
 const STATE_LABELS: Record<number, string> = {
   0: 'New',
@@ -249,102 +254,108 @@ export default function ReviewSession({
       </div>
 
       {/* Two-column main area */}
-      <div className="flex flex-1 min-h-0 divide-x">
+      <ResizablePanelGroup orientation="horizontal" className="flex-1 min-h-0">
         {/* Left column: Question + Rubric */}
-        <div className="w-1/2 flex flex-col overflow-y-auto p-6 gap-6">
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-5">
-              Question
-            </h3>
-            {currentItem.questionTitle && (
-              <h2 className="text-lg font-semibold mb-2">
-                {currentItem.questionTitle}
-              </h2>
-            )}
-            {currentItem.questionText ? (
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                {/* <Markdown remarkPlugins={[remarkGfm]}> */}
-                <b>{currentItem.questionText}</b>
-                {/* </Markdown> */}
-              </div>
-            ) : (
-              <div className="border rounded-lg p-4 bg-muted/30">
-                <p className="text-muted-foreground text-sm italic">
-                  No question generated yet for this item. Showing chunk content
-                  as reference:
-                </p>
-                {currentItem.chunkContentMd ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none mt-3">
-                    <Markdown remarkPlugins={[remarkGfm]}>
-                      {currentItem.chunkContentMd}
-                    </Markdown>
-                  </div>
-                ) : (
-                  <p className="text-sm mt-2 font-medium">
-                    {currentItem.chunkName}
+        <ResizablePanel defaultSize={50} minSize={25}>
+          <div className="h-full overflow-y-auto p-6 flex flex-col gap-6">
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-5">
+                Question
+              </h3>
+              {currentItem.questionTitle && (
+                <h2 className="text-lg font-semibold mb-2">
+                  {currentItem.questionTitle}
+                </h2>
+              )}
+              {currentItem.questionText ? (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  {/* <Markdown remarkPlugins={[remarkGfm]}> */}
+                  <b>{currentItem.questionText}</b>
+                  {/* </Markdown> */}
+                </div>
+              ) : (
+                <div className="border rounded-lg p-4 bg-muted/30">
+                  <p className="text-muted-foreground text-sm italic">
+                    No question generated yet for this item. Showing chunk
+                    content as reference:
                   </p>
-                )}
-              </div>
-            )}
-          </div>
+                  {currentItem.chunkContentMd ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none mt-3">
+                      <Markdown remarkPlugins={[remarkGfm]}>
+                        {currentItem.chunkContentMd}
+                      </Markdown>
+                    </div>
+                  ) : (
+                    <p className="text-sm mt-2 font-medium">
+                      {currentItem.chunkName}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
 
-          <hr />
+            <hr />
 
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-              <ListChecks className="h-3.5 w-3.5" />
-              Answer Rubric
-            </h3>
-            {rubric ? (
-              <div className="space-y-4">
-                {rubric.criteria.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">
-                      How to structure your answer
-                    </h4>
-                    <ul className="space-y-1.5">
-                      {rubric.criteria.map((c, i) => (
-                        <li
-                          key={i}
-                          className="text-sm text-muted-foreground flex items-start gap-2"
-                        >
-                          <span className="shrink-0 mt-0.5 h-4 w-4 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center">
-                            {i + 1}
-                          </span>
-                          {c}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">
-                No rubric available. Self-assess your recall based on the
-                question above.
-              </p>
-            )}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+                <ListChecks className="h-3.5 w-3.5" />
+                Answer Rubric
+              </h3>
+              {rubric ? (
+                <div className="space-y-4">
+                  {rubric.criteria.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">
+                        How to structure your answer
+                      </h4>
+                      <ul className="space-y-1.5">
+                        {rubric.criteria.map((c, i) => (
+                          <li
+                            key={i}
+                            className="text-sm text-muted-foreground flex items-start gap-2"
+                          >
+                            <span className="shrink-0 mt-0.5 h-4 w-4 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center">
+                              {i + 1}
+                            </span>
+                            {c}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  No rubric available. Self-assess your recall based on the
+                  question above.
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
 
         {/* Right column: Plate.js Answer Editor */}
-        <div className="w-1/2 flex flex-col min-h-0">
-          <div className="px-4 py-3 border-b shrink-0">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Your Answer
-            </h3>
+        <ResizablePanel defaultSize={50} minSize={25}>
+          <div className="flex flex-col h-full min-h-0">
+            <div className="px-4 py-3 border-b shrink-0">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Your Answer
+              </h3>
+            </div>
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <AnswerEditor
+                key={currentItem.id}
+                onChange={(value) => {
+                  answersRef.current.set(currentItem.id, value);
+                }}
+                placeholder="Write your answer here... Type / for commands"
+              />
+            </div>
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            <AnswerEditor
-              key={currentItem.id}
-              onChange={(value) => {
-                answersRef.current.set(currentItem.id, value);
-              }}
-              placeholder="Write your answer here... (supports rich text, code blocks, and mermaid diagrams)"
-            />
-          </div>
-        </div>
-      </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
 
       {/* Bottom bar */}
       <div className="flex items-center justify-between px-6 py-3 border-t shrink-0 bg-card">

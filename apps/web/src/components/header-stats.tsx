@@ -1,6 +1,12 @@
 'use client';
 
-import { Grid2X2, LibraryBigIcon, Notebook, Target } from 'lucide-react';
+import {
+  Grid2X2,
+  LibraryBigIcon,
+  Notebook,
+  Target,
+  TestTubeDiagonal,
+} from 'lucide-react';
 
 export function HeaderStats({
   topicsCount,
@@ -47,6 +53,18 @@ export function HeaderStats({
           <div className="flex gap-2 items-center pr-2 h-full border-r">
             <Grid2X2 />
             <h1>Chunks</h1>
+          </div>
+          <h1 className="text-4xl">{chunksCount}</h1>
+        </div>
+        <span className="text-xs text-muted-foreground w-full">
+          {dueCount} due for review
+        </span>
+      </div>
+      <div className="flex flex-col gap-2 p-4 h-fit items-center justify-between w-full rounded-xl border">
+        <div className="flex justify-between w-full items-center">
+          <div className="flex gap-2 items-center pr-2 h-full border-r">
+            <TestTubeDiagonal />
+            <h1>Reviews</h1>
           </div>
           <h1 className="text-4xl">{chunksCount}</h1>
         </div>

@@ -3,8 +3,7 @@
 import { Plate, usePlateEditor } from 'platejs/react';
 import { Editor, EditorContainer } from '@/components/ui/editor';
 import { FixedToolbar } from '@/components/ui/fixed-toolbar';
-import { BaseEditorKit } from './editor-base-kit';
-import { CodeDrawingKit } from './plugins/code-drawing-kit';
+import { AnswerEditorKit } from './answer-editor-kit';
 import { AnswerToolbarButtons } from './answer-toolbar-buttons';
 import type { Value } from 'platejs';
 
@@ -18,7 +17,7 @@ export default function AnswerEditor({
   placeholder = 'Write your answer here...',
 }: AnswerEditorProps) {
   const editor = usePlateEditor({
-    plugins: [...BaseEditorKit, ...CodeDrawingKit],
+    plugins: AnswerEditorKit,
   });
 
   return (
@@ -31,8 +30,12 @@ export default function AnswerEditor({
       <FixedToolbar>
         <AnswerToolbarButtons />
       </FixedToolbar>
-      <EditorContainer className="h-full min-h-0">
-        <Editor placeholder={placeholder} className="min-h-[300px] p-4" />
+      <EditorContainer className="flex-1 min-h-0 overflow-y-auto">
+        <Editor
+          variant="none"
+          placeholder={placeholder}
+          className="min-h-[200px] px-6 py-4 pb-20"
+        />
       </EditorContainer>
     </Plate>
   );

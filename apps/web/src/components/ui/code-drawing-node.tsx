@@ -44,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import Image from 'next/image';
 
 function useCodeDrawingElement({ element }: { element: TCodeDrawingElement }) {
   const editor = useEditorRef();
@@ -80,6 +81,13 @@ function useCodeDrawingElement({ element }: { element: TCodeDrawingElement }) {
 
             // Only update if this is still the latest request
             if (lastRequestRef.current === requestId) {
+              if (
+                imageData.includes('error-icon') ||
+                imageData.includes('syntax error')
+              ) {
+                setError('Syntax error in diagram');
+                setImage('');
+              }
               setImage(imageData);
               setError(null);
             }
@@ -310,7 +318,9 @@ function CodeDrawingPreview({
 
   return (
     <div
-      className={`flex ${isMobile ? 'flex-col-reverse' : 'flex-col'} group my-4 w-full items-stretch border bg-muted/50 md:flex-row`}
+      className={`flex ${
+        isMobile ? 'flex-col-reverse' : 'flex-col'
+      } group my-4 w-full items-stretch border bg-muted/50 md:flex-row`}
       style={{
         minHeight: `${DEFAULT_MIN_HEIGHT}px`,
       }}
