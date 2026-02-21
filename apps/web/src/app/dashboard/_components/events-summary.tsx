@@ -21,7 +21,7 @@ export function EventsSummary({
 
   return (
     <div
-      className={clsx('flex flex-col gap-2 h-full justify-between', className)}
+      className={clsx('flex flex-col gap-2 h-full justify-around', className)}
     >
       <div className="flex flex-col">
         <span className="text-xl">Due Items</span>
@@ -46,7 +46,7 @@ export function EventsSummary({
             </Link>
           </Button>
         ) : (
-          'No items due right now'
+          <span>No items due right now</span>
         )}
       </span>
     </div>

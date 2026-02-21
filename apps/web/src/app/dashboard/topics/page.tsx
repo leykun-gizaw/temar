@@ -22,12 +22,12 @@ export default async function TopicsPage({
     const authUrl = process.env.NOTION_AUTHORIZATION_URL || '';
     return (
       <div className="col-span-full flex flex-col p-6 h-full m-2">
-        <div className="space-y-1 border-b pb-4 mb-6">
+        <div className="flex items-end gap-2 space-y-1 border-b pb-4 mb-6">
           <span className="text-5xl">📚</span>
           <h1 className="text-2xl font-semibold mb-4">Topics</h1>
         </div>
         <div className="flex h-1/2 items-center justify-center">
-          <div className="border shadow max-w-xl w-full h-fit bg-muted/5 rounded-lg p-6 text-center space-y-8">
+          <div className="shadow max-w-xl w-full h-fit bg-muted/5 rounded-lg p-6 text-center space-y-8">
             <div className="space-y-2">
               <h2 className="text-lg font-semibold">
                 Connect your Notion workspace
@@ -53,13 +53,15 @@ export default async function TopicsPage({
   }
 
   return (
-    <div className="h-full p-6 space-y-6">
-      <div className="space-y-1">
-        <span className="text-5xl">📚</span>
-        <h1 className="text-2xl font-semibold mb-4">Topics</h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="h-full px-6 py-2 space-y-4">
+      <div className="flex flex-col w-fit">
+        <div className="flex items-baseline gap-2">
+          <span className="text-5xl">📚</span>
+          <h1 className="text-2xl font-semibold">Topics</h1>
+        </div>
+        <span className="text-sm text-muted-foreground">
           Select a topic to view its notes.
-        </p>
+        </span>
       </div>
       <hr />
 
