@@ -10,7 +10,7 @@ const compat = new FlatCompat({
   recommendedConfig: js.configs.recommended,
 });
 
-export default [
+const config = [
   ...fixupConfigRules(compat.extends('next')),
   ...fixupConfigRules(compat.extends('next/core-web-vitals')),
   ...baseConfig,
@@ -18,4 +18,22 @@ export default [
   {
     ignores: ['.next/**/*', 'next-env.d.ts'],
   },
+  {
+    files: ['src/components/ui/**/*.tsx', 'src/components/ui/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@next/next/no-img-element': 'off',
+      'react/display-name': 'off',
+    },
+  },
+  {
+    files: ['src/components/editor/plugins/**/*.tsx'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 ];
+
+export default config;

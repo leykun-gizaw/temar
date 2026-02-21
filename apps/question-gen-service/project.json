@@ -1,0 +1,46 @@
+{
+  "name": "@temar/question-gen-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/question-gen-service/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/question-gen-service"],
+      "options": {
+        "command": "webpack-cli build --config apps/question-gen-service/webpack.config.js --output-path=dist/apps/question-gen-service",
+        "args": ["--node-env=production"],
+        "cwd": "."
+      },
+      "configurations": {
+        "development": {
+          "args": ["--node-env=development"]
+        }
+      }
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "@temar/question-gen-service:build",
+        "runBuildTargetDependencies": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "@temar/question-gen-service:build:development"
+        },
+        "production": {
+          "buildTarget": "@temar/question-gen-service:build:production"
+        }
+      }
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

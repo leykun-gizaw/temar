@@ -3,6 +3,7 @@ import {
   CalendarDaysIcon,
   ChartNoAxesCombinedIcon,
   LibraryBig,
+  Settings,
   Trash2,
 } from 'lucide-react';
 
@@ -29,6 +30,12 @@ export const NAV_ITEMS = [
     title: 'Analytics',
     url: '#',
     icon: ChartNoAxesCombinedIcon,
+    isActive: false,
+  },
+  {
+    title: 'Settings',
+    url: '/dashboard/settings',
+    icon: Settings,
     isActive: false,
   },
   {

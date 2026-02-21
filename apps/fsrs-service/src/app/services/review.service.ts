@@ -10,7 +10,12 @@ export class ReviewService {
 
   constructor(private readonly fsrsEngine: FsrsEngineService) {}
 
-  async submitReview(recallItemId: string, rating: Grade, durationMs?: number) {
+  async submitReview(
+    recallItemId: string,
+    rating: Grade,
+    durationMs?: number,
+    answerJson?: unknown
+  ) {
     const [item] = await dbClient
       .select()
       .from(recallItem)
@@ -66,6 +71,7 @@ export class ReviewService {
         elapsedDays: log.elapsed_days,
         scheduledDays: log.scheduled_days,
         durationMs: durationMs ?? null,
+        answerJson: answerJson ?? null,
       });
     });
 

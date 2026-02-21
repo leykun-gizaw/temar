@@ -1,5 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { dbClient, recallItem, chunk, note, topic } from '@temar/db-client';
+import {
+  dbClient,
+  recallItem,
+  chunk,
+  note,
+  topic,
+  chunkTracking,
+} from '@temar/db-client';
 import { eq, and, lte, sql } from 'drizzle-orm';
 import { FsrsEngineService } from './fsrs-engine.service';
 
@@ -9,33 +16,54 @@ export class RecallItemService {
 
   constructor(private readonly fsrsEngine: FsrsEngineService) {}
 
-  async trackChunk(chunkId: string, userId: string) {
-    const card = this.fsrsEngine.createCard();
-
+  async trackChunk(
+    chunkId: string,
+    userId: string,
+    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+  ) {
     try {
-      await dbClient
-        .insert(recallItem)
-        .values({
-          chunkId,
-          userId,
-          state: card.state,
-          due: card.due,
-          stability: card.stability,
-          difficulty: card.difficulty,
-          elapsedDays: card.elapsed_days,
-          scheduledDays: card.scheduled_days,
-          reps: card.reps,
-          lapses: card.lapses,
-          learningSteps: card.learning_steps,
-          lastReview: card.last_review ?? null,
-        })
-        .onConflictDoNothing();
-      this.logger.log(`Tracked chunk ${chunkId} for user ${userId}`);
-      return { tracked: true, chunkId };
+      const [row] = await dbClient
+        .insert(chunkTracking)
+        .values({ chunkId, userId, status: 'pending' })
+        .onConflictDoNothing()
+        .returning({ id: chunkTracking.id });
+
+      if (!row) {
+        this.logger.log(`Chunk ${chunkId} already tracked for user ${userId}`);
+        return { tracked: false, chunkId, reason: 'already_tracked' };
+      }
+
+      this.logger.log(
+        `Tracked chunk ${chunkId} for user ${userId} (pending generation)`
+      );
+
+      // Fire-and-forget: trigger question generation in question-gen-service
+      const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
+      if (qgenEndpoint) {
+        fetch(`${qgenEndpoint}/generate/${chunkId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
+              'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
+            }),
+            'x-user-id': userId,
+            ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
+            ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
+            ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
+          },
+        }).catch((err) =>
+          this.logger.error(
+            `Fire-and-forget question generation failed for chunk ${chunkId}: ${err}`
+          )
+        );
+      }
+
+      return { tracked: true, chunkId, trackingId: row.id, status: 'pending' };
     } catch (err: unknown) {
       if (
         err instanceof Error &&
-        err.message.includes('recall_item_chunk_user_idx')
+        err.message.includes('chunk_tracking_chunk_user_idx')
       ) {
         this.logger.log(`Chunk ${chunkId} already tracked for user ${userId}`);
         return { tracked: false, chunkId, reason: 'already_tracked' };
@@ -79,12 +107,23 @@ export class RecallItemService {
   }
 
   async untrackChunk(chunkId: string, userId: string) {
-    const deleted = await dbClient
+    // Delete associated recall items first
+    await dbClient
       .delete(recallItem)
       .where(
         and(eq(recallItem.chunkId, chunkId), eq(recallItem.userId, userId))
+      );
+
+    // Delete chunk_tracking row
+    const deleted = await dbClient
+      .delete(chunkTracking)
+      .where(
+        and(
+          eq(chunkTracking.chunkId, chunkId),
+          eq(chunkTracking.userId, userId)
+        )
       )
-      .returning({ id: recallItem.id });
+      .returning({ id: chunkTracking.id });
     return { untracked: deleted.length > 0, chunkId };
   }
 
@@ -137,7 +176,11 @@ export class RecallItemService {
         lapses: recallItem.lapses,
         learningSteps: recallItem.learningSteps,
         lastReview: recallItem.lastReview,
+        questionTitle: recallItem.questionTitle,
+        questionText: recallItem.questionText,
+        answerRubric: recallItem.answerRubric,
         chunkName: chunk.name,
+        chunkContentMd: chunk.contentMd,
         noteName: note.name,
         noteId: note.id,
         topicName: topic.name,
@@ -175,7 +218,11 @@ export class RecallItemService {
         lapses: recallItem.lapses,
         learningSteps: recallItem.learningSteps,
         lastReview: recallItem.lastReview,
+        questionTitle: recallItem.questionTitle,
+        questionText: recallItem.questionText,
+        answerRubric: recallItem.answerRubric,
         chunkName: chunk.name,
+        chunkContentMd: chunk.contentMd,
         noteName: note.name,
         noteId: note.id,
         topicName: topic.name,
@@ -218,7 +265,11 @@ export class RecallItemService {
         lapses: recallItem.lapses,
         learningSteps: recallItem.learningSteps,
         lastReview: recallItem.lastReview,
+        questionTitle: recallItem.questionTitle,
+        questionText: recallItem.questionText,
+        answerRubric: recallItem.answerRubric,
         chunkName: chunk.name,
+        chunkContentMd: chunk.contentMd,
         noteName: note.name,
         noteId: note.id,
         topicName: topic.name,
@@ -262,6 +313,7 @@ export class RecallItemService {
         id: recallItem.id,
         chunkId: recallItem.chunkId,
         userId: recallItem.userId,
+        questionTitle: recallItem.questionTitle,
         questionText: recallItem.questionText,
         answerRubric: recallItem.answerRubric,
         state: recallItem.state,
@@ -293,15 +345,117 @@ export class RecallItemService {
   async getTrackedStatus(userId: string) {
     const items = await dbClient
       .select({
-        id: recallItem.id,
+        id: chunkTracking.id,
+        chunkId: chunkTracking.chunkId,
+        status: chunkTracking.status,
+        errorMessage: chunkTracking.errorMessage,
+        retryCount: chunkTracking.retryCount,
+        lastAttemptAt: chunkTracking.lastAttemptAt,
+        createdAt: chunkTracking.createdAt,
+        chunkName: chunk.name,
+      })
+      .from(chunkTracking)
+      .innerJoin(chunk, eq(chunkTracking.chunkId, chunk.id))
+      .where(eq(chunkTracking.userId, userId));
+    return items;
+  }
+
+  async retryChunk(
+    chunkId: string,
+    userId: string,
+    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+  ) {
+    const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
+    if (!qgenEndpoint) {
+      throw new Error('QUESTION_GEN_SERVICE_API_ENDPOINT not configured');
+    }
+    // Fire-and-forget: trigger retry in question-gen-service
+    fetch(`${qgenEndpoint}/generate/retry/${chunkId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
+          'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
+        }),
+        'x-user-id': userId,
+        ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
+        ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
+        ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
+      },
+    }).catch((err) =>
+      this.logger.error(
+        `Fire-and-forget retry failed for chunk ${chunkId}: ${err}`
+      )
+    );
+    return { chunkId, status: 'retry_triggered' };
+  }
+
+  async retryAllFailed(
+    userId: string,
+    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+  ) {
+    const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
+    if (!qgenEndpoint) {
+      throw new Error('QUESTION_GEN_SERVICE_API_ENDPOINT not configured');
+    }
+    fetch(`${qgenEndpoint}/generate/retry-failed`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
+          'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
+        }),
+        'x-user-id': userId,
+        ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
+        ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
+        ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
+      },
+    }).catch((err) =>
+      this.logger.error(`Fire-and-forget retry-all-failed failed: ${err}`)
+    );
+    return { status: 'retry_all_triggered' };
+  }
+
+  async getUnderperformingChunks(
+    userId: string,
+    minLapses = 2,
+    maxStability = 1.0
+  ) {
+    const rows = await dbClient
+      .select({
         chunkId: recallItem.chunkId,
-        state: recallItem.state,
-        due: recallItem.due,
-        reps: recallItem.reps,
+        chunkName: chunk.name,
+        noteName: note.name,
+        noteId: note.id,
+        topicName: topic.name,
+        topicId: topic.id,
+        itemCount: sql<number>`count(*)::int`,
+        totalLapses: sql<number>`sum(${recallItem.lapses})::int`,
+        avgStability: sql<number>`round(avg(${recallItem.stability})::numeric, 2)::float`,
       })
       .from(recallItem)
-      .where(eq(recallItem.userId, userId));
-    return items;
+      .innerJoin(chunk, eq(recallItem.chunkId, chunk.id))
+      .innerJoin(note, eq(chunk.noteId, note.id))
+      .innerJoin(topic, eq(note.topicId, topic.id))
+      .where(
+        and(
+          eq(recallItem.userId, userId),
+          sql`(${recallItem.lapses} >= ${minLapses} OR (${recallItem.stability} < ${maxStability} AND ${recallItem.reps} >= 1))`
+        )
+      )
+      .groupBy(
+        recallItem.chunkId,
+        chunk.name,
+        note.name,
+        note.id,
+        topic.name,
+        topic.id
+      )
+      .orderBy(
+        sql`sum(${recallItem.lapses}) desc`,
+        sql`avg(${recallItem.stability}) asc`
+      );
+    return rows;
   }
 
   async getDueCount(userId: string) {

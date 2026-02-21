@@ -17,6 +17,7 @@ COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
 COPY apps/notion_sync-service/package.json apps/notion_sync-service/
 COPY apps/fsrs-service/package.json apps/fsrs-service/
+COPY apps/question-gen-service/package.json apps/question-gen-service/
 COPY libs/db-client/package.json libs/db-client/
 COPY libs/shared-types/package.json libs/shared-types/
 RUN pnpm install --frozen-lockfile
@@ -39,6 +40,8 @@ RUN NX_DAEMON=false pnpm nx build web --prod --verbose
 RUN NX_DAEMON=false pnpm nx build notion_sync-service --prod
 # Build 'fsrs-service'
 RUN NX_DAEMON=false pnpm nx build fsrs-service --prod
+# Build 'question-gen-service'
+RUN NX_DAEMON=false pnpm nx build question-gen-service --prod
 
 # ----------------------------------------------
 
@@ -53,6 +56,13 @@ RUN pnpm install --prod
 FROM base AS fsrs-prod-deps
 WORKDIR /app
 COPY --from=builder /app/dist/apps/fsrs-service/package.json ./
+COPY --from=source /app/pnpm-lock.yaml ./
+RUN pnpm install --prod
+
+# STAGE 4.5c: Question Gen Service Production Dependencies
+FROM base AS questiongen-prod-deps
+WORKDIR /app
+COPY --from=builder /app/dist/apps/question-gen-service/package.json ./
 COPY --from=source /app/pnpm-lock.yaml ./
 RUN pnpm install --prod
 
@@ -118,4 +128,21 @@ COPY --from=fsrs-prod-deps --chown=fsrsuser:nestjs /app/node_modules ./node_modu
 USER fsrsuser
 
 EXPOSE 3334
+CMD [ "node", "main.js" ]
+
+# ----------------------------------------------
+
+# STAGE 8: Question Gen Service Production Runner (NestJS)
+FROM base AS question-gen-service
+WORKDIR /app
+ENV NODE_ENV=production
+RUN addgroup --system --gid 1004 nestjs
+RUN adduser --system --uid 1004 qgenuser
+
+COPY --from=builder --chown=qgenuser:nestjs /app/dist/apps/question-gen-service ./
+COPY --from=questiongen-prod-deps --chown=qgenuser:nestjs /app/node_modules ./node_modules
+
+USER qgenuser
+
+EXPOSE 3335
 CMD [ "node", "main.js" ]

@@ -243,7 +243,7 @@ export class WebhookService {
 
   async handlePagePropertyUpdated(
     entityId: string,
-    workspaceId?: string
+    _workspaceId?: string
   ): Promise<void> {
     const entity = await this.userRepository.identifyEntity(entityId);
     if (!entity) {
@@ -275,7 +275,7 @@ export class WebhookService {
 
   async handlePageContentUpdated(
     entityId: string,
-    workspaceId?: string
+    _workspaceId?: string
   ): Promise<void> {
     const entity = await this.userRepository.identifyEntity(entityId);
     if (!entity || entity.type !== 'chunk') {
@@ -303,7 +303,7 @@ export class WebhookService {
 
   async handlePageDeleted(
     entityId: string,
-    workspaceId?: string
+    _workspaceId?: string
   ): Promise<void> {
     const entity = await this.userRepository.identifyEntity(entityId);
     if (!entity) {

@@ -1,5 +1,10 @@
 import { CalendarEvent } from '../calendar-types';
-import { getAllRecallItems, type RecallItemDue } from './recall-items';
+import {
+  getAllRecallItems,
+  getReviewLogs,
+  type RecallItemDue,
+  type ReviewLogEntry,
+} from './recall-items';
 
 /**
  * Map a RecallItemDue into a CalendarEvent so the existing
@@ -19,14 +24,47 @@ function toCalendarEvent(item: RecallItemDue): CalendarEvent {
     id: item.id,
     start: due,
     end,
-    title: item.chunkName,
+    title: item.questionTitle || item.chunkName,
     progress,
+    color: 'blue',
+  };
+}
+
+const RATING_LABELS: Record<number, string> = {
+  1: 'Again',
+  2: 'Hard',
+  3: 'Good',
+  4: 'Easy',
+};
+
+function reviewLogToCalendarEvent(log: ReviewLogEntry): CalendarEvent {
+  const start = new Date(log.reviewedAt);
+  const end = new Date(start);
+  end.setMinutes(end.getMinutes() + Math.max(5, (log.durationMs ?? 0) / 60000));
+
+  return {
+    id: `log-${log.id}`,
+    start,
+    end,
+    title: `Reviewed (${RATING_LABELS[log.rating] ?? log.rating})`,
+    color: 'green',
   };
 }
 
 export async function getAllCalendarEvents(): Promise<CalendarEvent[]> {
-  const result = await getAllRecallItems({ limit: 200 });
-  return result.items.map(toCalendarEvent);
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const [recallResult, reviewLogs] = await Promise.all([
+    getAllRecallItems({ limit: 200 }),
+    getReviewLogs(thirtyDaysAgo, now),
+  ]);
+
+  const dueEvents = recallResult.items.map(toCalendarEvent);
+  const logEvents = reviewLogs.map(reviewLogToCalendarEvent);
+
+  return [...dueEvents, ...logEvents];
 }
 
 export async function getCalendarEventById(

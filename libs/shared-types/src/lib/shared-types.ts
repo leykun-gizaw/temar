@@ -1,4 +1,5 @@
 import { PageObjectResponse } from '@notionhq/client/';
+import { z } from 'zod';
 
 type NotionProperties = PageObjectResponse['properties'];
 type NotionParent = PageObjectResponse['parent'];
@@ -18,3 +19,23 @@ export interface NotionPage extends PageObjectResponse {
   };
   parent: DataSourceParent | DatabaseParent | PageParent;
 }
+
+export const questionSchema = z.object({
+  questions: z.array(
+    z.object({
+      question: z.string().describe('A self-contained recall question'),
+      rubric: z.object({
+        criteria: z
+          .array(z.string())
+          .describe('Evaluation criteria for grading the answer'),
+        keyPoints: z
+          .array(z.string())
+          .describe('Key points the answer must cover'),
+      }),
+    })
+  ),
+});
+
+export type GeneratedQuestion = z.infer<
+  typeof questionSchema
+>['questions'][number];

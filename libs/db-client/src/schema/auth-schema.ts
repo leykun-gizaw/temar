@@ -27,6 +27,9 @@ export const user = pgTable('user', {
   notionBotId: text('notion_bot_id'),
   notionWorkspaceId: text('notion_workspace_id'),
   notionTokenExpiresAt: timestamp('notion_token_expires_at'),
+  aiProvider: text('ai_provider'),
+  aiModel: text('ai_model'),
+  aiApiKeyEncrypted: text('ai_api_key_encrypted'),
 });
 
 export const session = pgTable(

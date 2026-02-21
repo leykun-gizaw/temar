@@ -11,7 +11,8 @@ import {
 export async function submitReview(
   recallItemId: string,
   rating: number,
-  durationMs?: number
+  durationMs?: number,
+  answerJson?: unknown
 ) {
   const result = await fsrsServiceFetch<{
     recallItemId: string;
@@ -24,7 +25,7 @@ export async function submitReview(
     lapses: number;
   }>(`recall-items/${recallItemId}/review`, {
     method: 'POST',
-    body: { rating, durationMs },
+    body: { rating, durationMs, answerJson },
   });
 
   revalidatePath('/dashboard');
