@@ -23,9 +23,6 @@
   "references": [
     {
       "path": "../../libs/db-client/tsconfig.lib.json"
-    },
-    {
-      "path": "../../libs/shared-types/tsconfig.lib.json"
     }
   ]
 }
