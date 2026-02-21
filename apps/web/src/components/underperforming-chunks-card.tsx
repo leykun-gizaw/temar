@@ -28,6 +28,7 @@ import { AlertTriangle, Loader2, Play, Info } from 'lucide-react';
 import Link from 'next/link';
 import type { UnderperformingChunk } from '@/lib/actions/tracking';
 import { getUnderperformingChunks } from '@/lib/actions/tracking';
+import clsx from 'clsx';
 
 function severityColor(totalLapses: number, avgStability: number): string {
   if (totalLapses >= 5 || avgStability < 0.3) return 'text-red-500';
@@ -37,8 +38,10 @@ function severityColor(totalLapses: number, avgStability: number): string {
 
 export default function UnderperformingChunksCard({
   initialChunks,
+  className,
 }: {
   initialChunks: UnderperformingChunk[];
+  className?: string;
 }) {
   const [chunks, setChunks] = useState(initialChunks);
   const [minLapses, setMinLapses] = useState(2);
@@ -61,7 +64,12 @@ export default function UnderperformingChunksCard({
   }, [minLapses, maxStability, fetchChunks]);
 
   return (
-    <Card className="shadow-none">
+    <Card
+      className={clsx(
+        'shadow-none h-full min-h-0 overflow-hidden flex-1 col-span-2',
+        className
+      )}
+    >
       <CardHeader className="border-b">
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4" />

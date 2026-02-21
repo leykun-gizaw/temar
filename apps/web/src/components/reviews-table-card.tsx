@@ -42,6 +42,7 @@ import {
   searchRecallItemsAction,
   getAllRecallItemsAction,
 } from '@/lib/actions/review';
+import clsx from 'clsx';
 
 const STATE_LABELS: Record<number, string> = {
   0: 'New',
@@ -60,9 +61,11 @@ function retrievabilityPercent(stability: number): number {
 export default function ReviewsTableCard({
   items: initialItems,
   total: initialTotal,
+  className,
 }: {
   items: RecallItemDue[];
   total: number;
+  className?: string;
 }) {
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<RecallItemDue[] | null>(
@@ -155,7 +158,9 @@ export default function ReviewsTableCard({
   }, [page, displayTotalPages]);
 
   return (
-    <Card className="min-h-0 shadow-none">
+    <Card
+      className={clsx('min-h-0 h-full shadow-none overflow-hidden', className)}
+    >
       <CardHeader className="border-b">
         <CardTitle>Recall Items</CardTitle>
         <CardAction>
@@ -186,7 +191,7 @@ export default function ReviewsTableCard({
           )}
         </div>
       </CardHeader>
-      <CardContent className="overflow-auto min-h-0">
+      <CardContent className="overflow-y-auto min-h-0 flex-1">
         <Table>
           <TableHeader>
             <TableRow>

@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { generateText, Output } from 'ai';
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 
 const questionSchema = z.object({
@@ -28,17 +30,61 @@ const questionSchema = z.object({
 
 type GeneratedQuestion = z.infer<typeof questionSchema>['questions'][number];
 
+export type AiConfig = {
+  provider?: string;
+  model?: string;
+  apiKey?: string;
+};
+
+const DEFAULT_MODELS: Record<string, string> = {
+  google: 'gemini-2.0-flash',
+  openai: 'gpt-4o-mini',
+  anthropic: 'claude-sonnet-4-20250514',
+};
+
 @Injectable()
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
+
+  private resolveModel(config?: AiConfig) {
+    const provider = config?.provider || process.env.AI_PROVIDER || 'google';
+    const modelId =
+      config?.model ||
+      process.env.AI_MODEL ||
+      DEFAULT_MODELS[provider] ||
+      'gemini-2.0-flash';
+
+    switch (provider) {
+      case 'openai': {
+        const openai = createOpenAI(
+          config?.apiKey ? { apiKey: config.apiKey } : {}
+        );
+        return openai(modelId);
+      }
+      case 'anthropic': {
+        const anthropic = createAnthropic(
+          config?.apiKey ? { apiKey: config.apiKey } : {}
+        );
+        return anthropic(modelId);
+      }
+      case 'google':
+      default: {
+        const google = createGoogleGenerativeAI(
+          config?.apiKey ? { apiKey: config.apiKey } : {}
+        );
+        return google(modelId);
+      }
+    }
+  }
 
   async generateQuestions(
     chunkContent: string,
     chunkName: string,
     noteName: string,
-    topicName: string
+    topicName: string,
+    aiConfig?: AiConfig
   ): Promise<GeneratedQuestion[]> {
-    const model = process.env.AI_MODEL || 'gemini-2.0-flash';
+    const llmModel = this.resolveModel(aiConfig);
 
     const systemPrompt = `You are an expert educator creating recall questions from study material.
 Given a chunk of content, generate 2-5 recall questions with answer rubrics.
@@ -62,7 +108,7 @@ ${chunkContent}`;
 
     try {
       const { output } = await generateText({
-        model: google(model),
+        model: llmModel as Parameters<typeof generateText>[0]['model'],
         maxRetries: 0,
         output: Output.object({
           schema: questionSchema,

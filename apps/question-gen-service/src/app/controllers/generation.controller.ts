@@ -17,6 +17,7 @@ import {
   ApiSecurity,
 } from '@nestjs/swagger';
 import { QuestionGenerationService } from '../services/question-generation.service';
+import type { AiConfig } from '../services/llm.service';
 
 const USER_ID_HEADER = {
   name: 'x-user-id',
@@ -29,6 +30,19 @@ const USER_ID_HEADER = {
 export class GenerationController {
   constructor(private readonly generationService: QuestionGenerationService) {}
 
+  private extractAiConfig(
+    provider?: string,
+    model?: string,
+    apiKey?: string
+  ): AiConfig | undefined {
+    if (!provider && !model && !apiKey) return undefined;
+    return {
+      ...(provider && { provider }),
+      ...(model && { model }),
+      ...(apiKey && { apiKey }),
+    };
+  }
+
   @ApiOperation({ summary: 'Generate questions for a single chunk' })
   @ApiParam({ name: 'chunkId', description: 'Chunk UUID' })
   @ApiHeader(USER_ID_HEADER)
@@ -36,10 +50,14 @@ export class GenerationController {
   @Post(':chunkId')
   async generateForChunk(
     @Param('chunkId') chunkId: string,
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-id') userId: string,
+    @Headers('x-ai-provider') aiProvider?: string,
+    @Headers('x-ai-model') aiModel?: string,
+    @Headers('x-ai-api-key') aiApiKey?: string
   ) {
     this.requireUserId(userId);
-    return this.generationService.generateForChunk(chunkId, userId);
+    const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey);
+    return this.generationService.generateForChunk(chunkId, userId, aiConfig);
   }
 
   @ApiOperation({ summary: 'Generate questions for multiple chunks' })
@@ -80,19 +98,29 @@ export class GenerationController {
   @Post('retry/:chunkId')
   async retryChunk(
     @Param('chunkId') chunkId: string,
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-id') userId: string,
+    @Headers('x-ai-provider') aiProvider?: string,
+    @Headers('x-ai-model') aiModel?: string,
+    @Headers('x-ai-api-key') aiApiKey?: string
   ) {
     this.requireUserId(userId);
-    return this.generationService.retryChunk(chunkId, userId);
+    const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey);
+    return this.generationService.retryChunk(chunkId, userId, aiConfig);
   }
 
   @ApiOperation({ summary: 'Retry all failed generations for a user' })
   @ApiHeader(USER_ID_HEADER)
   @ApiSecurity('api-key')
   @Post('retry-failed')
-  async retryAllFailed(@Headers('x-user-id') userId: string) {
+  async retryAllFailed(
+    @Headers('x-user-id') userId: string,
+    @Headers('x-ai-provider') aiProvider?: string,
+    @Headers('x-ai-model') aiModel?: string,
+    @Headers('x-ai-api-key') aiApiKey?: string
+  ) {
     this.requireUserId(userId);
-    return this.generationService.retryAllFailed(userId);
+    const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey);
+    return this.generationService.retryAllFailed(userId, aiConfig);
   }
 
   @ApiOperation({ summary: 'Check generation status for a chunk' })

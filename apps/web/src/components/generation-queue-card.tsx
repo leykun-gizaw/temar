@@ -39,6 +39,7 @@ import {
   retryFailedGeneration,
   retryAllFailedGenerations,
 } from '@/lib/actions/tracking';
+import clsx from 'clsx';
 
 const STATUS_CONFIG: Record<
   TrackingItem['status'],
@@ -72,8 +73,10 @@ const STATUS_CONFIG: Record<
 
 export default function GenerationQueueCard({
   initialItems,
+  className,
 }: {
   initialItems: TrackingItem[];
+  className?: string;
 }) {
   const [items, setItems] = useState(initialItems);
   const [isPending, startTransition] = useTransition();
@@ -133,7 +136,12 @@ export default function GenerationQueueCard({
   if (items.length === 0) return null;
 
   return (
-    <Card className="shadow-none flex-1">
+    <Card
+      className={clsx(
+        'shadow-none flex-1 h-full min-h-0 overflow-hidden col-span-2',
+        className
+      )}
+    >
       <CardHeader className="border-b">
         <CardTitle className="flex items-center gap-2">
           <Zap className="h-4 w-4" />

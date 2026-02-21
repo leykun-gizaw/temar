@@ -16,7 +16,11 @@ export class RecallItemService {
 
   constructor(private readonly fsrsEngine: FsrsEngineService) {}
 
-  async trackChunk(chunkId: string, userId: string) {
+  async trackChunk(
+    chunkId: string,
+    userId: string,
+    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+  ) {
     try {
       const [row] = await dbClient
         .insert(chunkTracking)
@@ -44,6 +48,9 @@ export class RecallItemService {
               'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
             }),
             'x-user-id': userId,
+            ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
+            ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
+            ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
           },
         }).catch((err) =>
           this.logger.error(
@@ -353,7 +360,11 @@ export class RecallItemService {
     return items;
   }
 
-  async retryChunk(chunkId: string, userId: string) {
+  async retryChunk(
+    chunkId: string,
+    userId: string,
+    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+  ) {
     const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
     if (!qgenEndpoint) {
       throw new Error('QUESTION_GEN_SERVICE_API_ENDPOINT not configured');
@@ -367,6 +378,9 @@ export class RecallItemService {
           'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
         }),
         'x-user-id': userId,
+        ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
+        ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
+        ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
       },
     }).catch((err) =>
       this.logger.error(
@@ -376,7 +390,10 @@ export class RecallItemService {
     return { chunkId, status: 'retry_triggered' };
   }
 
-  async retryAllFailed(userId: string) {
+  async retryAllFailed(
+    userId: string,
+    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+  ) {
     const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
     if (!qgenEndpoint) {
       throw new Error('QUESTION_GEN_SERVICE_API_ENDPOINT not configured');
@@ -389,6 +406,9 @@ export class RecallItemService {
           'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
         }),
         'x-user-id': userId,
+        ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
+        ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
+        ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
       },
     }).catch((err) =>
       this.logger.error(`Fire-and-forget retry-all-failed failed: ${err}`)

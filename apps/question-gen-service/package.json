@@ -5,6 +5,8 @@
   "dependencies": {
     "ai": "^6.0.0",
     "@ai-sdk/google": "^1.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "@ai-sdk/anthropic": "^1.0.0",
     "ts-fsrs": "^5.0.0",
     "tslib": "^2.8.1",
     "uuid": "^13.0.0",

@@ -62,10 +62,17 @@ export class TrackingController {
   @Post('chunk/:chunkId')
   async trackChunk(
     @Param('chunkId') chunkId: string,
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-id') userId: string,
+    @Headers('x-ai-provider') aiProvider?: string,
+    @Headers('x-ai-model') aiModel?: string,
+    @Headers('x-ai-api-key') aiApiKey?: string
   ) {
     this.requireUserId(userId);
-    return this.recallItemService.trackChunk(chunkId, userId);
+    const aiConfig =
+      aiProvider || aiModel || aiApiKey
+        ? { provider: aiProvider, model: aiModel, apiKey: aiApiKey }
+        : undefined;
+    return this.recallItemService.trackChunk(chunkId, userId, aiConfig);
   }
 
   @ApiOperation({ summary: 'Untrack all chunks under a topic' })
@@ -123,19 +130,35 @@ export class TrackingController {
   @Post('retry/:chunkId')
   async retryChunk(
     @Param('chunkId') chunkId: string,
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-id') userId: string,
+    @Headers('x-ai-provider') aiProvider?: string,
+    @Headers('x-ai-model') aiModel?: string,
+    @Headers('x-ai-api-key') aiApiKey?: string
   ) {
     this.requireUserId(userId);
-    return this.recallItemService.retryChunk(chunkId, userId);
+    const aiConfig =
+      aiProvider || aiModel || aiApiKey
+        ? { provider: aiProvider, model: aiModel, apiKey: aiApiKey }
+        : undefined;
+    return this.recallItemService.retryChunk(chunkId, userId, aiConfig);
   }
 
   @ApiOperation({ summary: 'Retry all failed generations for a user' })
   @ApiHeader(USER_ID_HEADER)
   @ApiSecurity('api-key')
   @Post('retry-all-failed')
-  async retryAllFailed(@Headers('x-user-id') userId: string) {
+  async retryAllFailed(
+    @Headers('x-user-id') userId: string,
+    @Headers('x-ai-provider') aiProvider?: string,
+    @Headers('x-ai-model') aiModel?: string,
+    @Headers('x-ai-api-key') aiApiKey?: string
+  ) {
     this.requireUserId(userId);
-    return this.recallItemService.retryAllFailed(userId);
+    const aiConfig =
+      aiProvider || aiModel || aiApiKey
+        ? { provider: aiProvider, model: aiModel, apiKey: aiApiKey }
+        : undefined;
+    return this.recallItemService.retryAllFailed(userId, aiConfig);
   }
 
   @ApiOperation({ summary: 'Get underperforming chunks for a user' })

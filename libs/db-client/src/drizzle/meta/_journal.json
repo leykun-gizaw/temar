@@ -85,6 +85,13 @@
       "when": 1771628478546,
       "tag": "0011_cynical_blackheart",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1771668981457,
+      "tag": "0012_fearless_midnight",
+      "breakpoints": true
     }
   ]
 }
