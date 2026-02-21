@@ -7,7 +7,7 @@ import {
   topic,
   chunkTracking,
 } from '@temar/db-client';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { LlmService } from './llm.service';
 import { createEmptyCard } from 'ts-fsrs';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,7 +22,10 @@ export class QuestionGenerationService {
     // Update tracking status to 'generating'
     await dbClient
       .update(chunkTracking)
-      .set({ status: 'generating' })
+      .set({
+        status: 'generating',
+        lastAttemptAt: new Date(),
+      })
       .where(
         and(
           eq(chunkTracking.chunkId, chunkId),
@@ -64,7 +67,12 @@ export class QuestionGenerationService {
         );
         await dbClient
           .update(chunkTracking)
-          .set({ status: 'failed' })
+          .set({
+            status: 'failed',
+            errorMessage: 'No content available',
+            retryCount: sql`${chunkTracking.retryCount} + 1`,
+            lastAttemptAt: new Date(),
+          })
           .where(
             and(
               eq(chunkTracking.chunkId, chunkId),
@@ -74,8 +82,8 @@ export class QuestionGenerationService {
         return { chunkId, questions: [], error: 'No content available' };
       }
 
-      // Generate questions via LLM with exponential backoff on rate-limit errors
-      const MAX_RETRIES = 3;
+      // Generate questions via LLM with exponential backoff + jitter
+      const MAX_RETRIES = 5;
       const BASE_DELAY_MS = 5_000;
       let questions: Awaited<
         ReturnType<typeof this.llmService.generateQuestions>
@@ -91,18 +99,25 @@ export class QuestionGenerationService {
           );
           break;
         } catch (err: unknown) {
+          const errMsg = err instanceof Error ? err.message : String(err);
           const isRetryable =
-            err instanceof Error &&
-            (err.message.includes('429') ||
-              err.message.includes('RESOURCE_EXHAUSTED') ||
-              err.message.includes('quota') ||
-              err.message.includes('rate limit'));
+            errMsg.includes('429') ||
+            errMsg.includes('RESOURCE_EXHAUSTED') ||
+            errMsg.includes('quota') ||
+            errMsg.includes('rate limit') ||
+            errMsg.includes('500') ||
+            errMsg.includes('502') ||
+            errMsg.includes('503') ||
+            errMsg.includes('ECONNREFUSED') ||
+            errMsg.includes('ETIMEDOUT') ||
+            errMsg.includes('fetch failed');
 
           if (isRetryable && attempt < MAX_RETRIES) {
-            const delayMs = BASE_DELAY_MS * Math.pow(3, attempt - 1);
+            const jitter = Math.random() * 1000;
+            const delayMs = BASE_DELAY_MS * Math.pow(2, attempt - 1) + jitter;
             this.logger.warn(
-              `Rate limited on attempt ${attempt}/${MAX_RETRIES} for chunk ${chunkId}. Retrying in ${
-                delayMs / 1000
+              `Retryable error on attempt ${attempt}/${MAX_RETRIES} for chunk ${chunkId}. Retrying in ${
+                Math.round(delayMs / 100) / 10
               }s...`
             );
             await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -115,7 +130,12 @@ export class QuestionGenerationService {
       if (questions.length === 0) {
         await dbClient
           .update(chunkTracking)
-          .set({ status: 'failed' })
+          .set({
+            status: 'failed',
+            errorMessage: 'LLM returned no questions',
+            retryCount: sql`${chunkTracking.retryCount} + 1`,
+            lastAttemptAt: new Date(),
+          })
           .where(
             and(
               eq(chunkTracking.chunkId, chunkId),
@@ -154,10 +174,14 @@ export class QuestionGenerationService {
         .returning({ id: recallItem.id })
         .onConflictDoNothing();
 
-      // Update tracking status to 'ready'
+      // Update tracking status to 'ready' and clear error fields
       await dbClient
         .update(chunkTracking)
-        .set({ status: 'ready' })
+        .set({
+          status: 'ready',
+          errorMessage: null,
+          lastAttemptAt: new Date(),
+        })
         .where(
           and(
             eq(chunkTracking.chunkId, chunkId),
@@ -176,10 +200,16 @@ export class QuestionGenerationService {
         recallItemIds: inserted.map((r) => r.id),
       };
     } catch (err) {
-      this.logger.error(`Generation failed for chunk ${chunkId}: ${err}`);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Generation failed for chunk ${chunkId}: ${errMsg}`);
       await dbClient
         .update(chunkTracking)
-        .set({ status: 'failed' })
+        .set({
+          status: 'failed',
+          errorMessage: errMsg.slice(0, 500),
+          retryCount: sql`${chunkTracking.retryCount} + 1`,
+          lastAttemptAt: new Date(),
+        })
         .where(
           and(
             eq(chunkTracking.chunkId, chunkId),
@@ -188,6 +218,48 @@ export class QuestionGenerationService {
         );
       throw err;
     }
+  }
+
+  async retryChunk(chunkId: string, userId: string) {
+    // Reset status to pending and re-run generation
+    await dbClient
+      .update(chunkTracking)
+      .set({ status: 'pending', errorMessage: null })
+      .where(
+        and(
+          eq(chunkTracking.chunkId, chunkId),
+          eq(chunkTracking.userId, userId)
+        )
+      );
+    return this.generateForChunk(chunkId, userId);
+  }
+
+  async retryAllFailed(userId: string) {
+    const failedItems = await dbClient
+      .select({
+        chunkId: chunkTracking.chunkId,
+      })
+      .from(chunkTracking)
+      .where(
+        and(
+          eq(chunkTracking.userId, userId),
+          eq(chunkTracking.status, 'failed')
+        )
+      );
+
+    const results = [];
+    for (const item of failedItems) {
+      try {
+        const result = await this.retryChunk(item.chunkId, userId);
+        results.push(result);
+      } catch (err) {
+        this.logger.error(`Retry failed for chunk ${item.chunkId}: ${err}`);
+        results.push({ chunkId: item.chunkId, error: String(err) });
+      }
+      // Small delay between retries to avoid hammering the LLM
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+    return { results, total: failedItems.length };
   }
 
   async generateBatch(chunkIds: string[], userId: string) {

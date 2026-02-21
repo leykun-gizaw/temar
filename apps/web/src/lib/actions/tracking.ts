@@ -96,18 +96,83 @@ export async function untrackChunk(
   return result;
 }
 
-export async function getTrackingStatus() {
+export interface TrackingItem {
+  id: string;
+  chunkId: string;
+  status: 'pending' | 'generating' | 'ready' | 'failed';
+  errorMessage: string | null;
+  retryCount: number;
+  lastAttemptAt: string | null;
+  createdAt: string;
+  chunkName: string;
+}
+
+export async function getTrackingStatus(): Promise<TrackingItem[]> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) return [];
 
-  const result = await fsrsServiceFetch<
-    Array<{
-      id: string;
-      chunkId: string;
-      status: 'pending' | 'generating' | 'ready' | 'failed';
-      createdAt: string;
-    }>
-  >('track/status', { userId: loggedInUser.id });
+  const result = await fsrsServiceFetch<TrackingItem[]>('track/status', {
+    userId: loggedInUser.id,
+  });
+
+  return result ?? [];
+}
+
+export async function retryFailedGeneration(chunkId: string) {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) throw new Error('User not logged in');
+
+  const result = await fsrsServiceFetch(`track/retry/${chunkId}`, {
+    method: 'POST',
+    userId: loggedInUser.id,
+  });
+
+  revalidatePath('/dashboard');
+  return result;
+}
+
+export async function retryAllFailedGenerations() {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) throw new Error('User not logged in');
+
+  const result = await fsrsServiceFetch('track/retry-all-failed', {
+    method: 'POST',
+    userId: loggedInUser.id,
+  });
+
+  revalidatePath('/dashboard');
+  return result;
+}
+
+export interface UnderperformingChunk {
+  chunkId: string;
+  chunkName: string;
+  noteName: string;
+  noteId: string;
+  topicName: string;
+  topicId: string;
+  itemCount: number;
+  totalLapses: number;
+  avgStability: number;
+}
+
+export async function getUnderperformingChunks(
+  minLapses?: number,
+  maxStability?: number
+): Promise<UnderperformingChunk[]> {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) return [];
+
+  const params = new URLSearchParams();
+  if (minLapses !== undefined) params.set('minLapses', String(minLapses));
+  if (maxStability !== undefined)
+    params.set('maxStability', String(maxStability));
+
+  const qs = params.toString();
+  const result = await fsrsServiceFetch<UnderperformingChunk[]>(
+    `track/underperforming${qs ? `?${qs}` : ''}`,
+    { userId: loggedInUser.id }
+  );
 
   return result ?? [];
 }

@@ -10,14 +10,17 @@ import type { Value } from 'platejs';
 interface AnswerEditorProps {
   onChange?: (value: Value) => void;
   placeholder?: string;
+  initialValue?: Value;
 }
 
 export default function AnswerEditor({
   onChange,
   placeholder = 'Write your answer here...',
+  initialValue,
 }: AnswerEditorProps) {
   const editor = usePlateEditor({
     plugins: AnswerEditorKit,
+    ...(initialValue ? { value: initialValue } : {}),
   });
 
   return (
@@ -26,6 +29,7 @@ export default function AnswerEditor({
       onChange={({ value }) => {
         onChange?.(value);
       }}
+      {...(initialValue ? { value: initialValue } : {})}
     >
       <FixedToolbar>
         <AnswerToolbarButtons />

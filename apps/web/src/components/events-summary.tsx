@@ -1,40 +1,38 @@
 'use client';
 
 import type { RecallItemDue } from '@/lib/fetchers/recall-items';
-import DashboardCountdown from '@/components/dashboard-countdown';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { BellRing } from 'lucide-react';
 
-type Props = { items: RecallItemDue[] };
+type Props = { dueItems: RecallItemDue[] };
 
-export function EventsSummary({ items }: Props) {
+export function EventsSummary({ dueItems }: Props) {
   const now = Date.now();
 
   // Items whose due date is in the past or right now
-  const dueNow = items.filter((i) => new Date(i.due).getTime() <= now);
+  const dueNow = dueItems.filter((i) => new Date(i.due).getTime() <= now);
   const currentItem = dueNow[0] ?? null;
 
-  // Items whose due date is in the future
-  const upcoming = items
-    .filter((i) => new Date(i.due).getTime() > now)
-    .sort((a, b) => new Date(a.due).getTime() - new Date(b.due).getTime());
-  const nextItem = upcoming[0] ?? null;
-
   return (
-    <div className="border p-4 rounded-xl flex gap-4 items-center justify-between flex-wrap">
-      <div className="flex flex-col h-full justify-between">
-        <span className="text-xl">Due Now</span>
+    <div className="p-2 rounded-xl flex items-center justify-between flex-wrap">
+      <div className="flex flex-col gap-2 h-full justify-between">
+        <div className="flex flex-col">
+          <span className="text-xl">Due Items</span>
+          <span className="text-xs text-muted-foreground">
+            Recall items for you to review now
+          </span>
+        </div>
         <span className="text-muted-foreground text-sm">
           {currentItem ? (
-            <Button>
+            <Button variant={'outline'}>
               <Link
                 className="flex gap-2 items-center"
                 href="/dashboard/reviews"
               >
                 <span className="relative flex size-4">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-85" />
-                  <span className="relative inline-flex size-4 rounded-full bg-primary">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary" />
+                  <span className="relative inline-flex size-4 rounded-full bg-white">
                     <BellRing />
                   </span>
                 </span>
@@ -46,21 +44,6 @@ export function EventsSummary({ items }: Props) {
             </Button>
           ) : (
             'No items due right now'
-          )}
-        </span>
-      </div>
-      <div className="flex flex-col items-end h-full">
-        <span className="text-xl">Next</span>
-        <span className="text-sm text-muted-foreground">
-          {nextItem ? (
-            <div className="flex flex-col text-muted-foreground text-sm items-end">
-              <span>{nextItem.chunkName}</span>
-              <span className="tabular-nums">
-                Due in <DashboardCountdown target={nextItem.due} />
-              </span>
-            </div>
-          ) : (
-            'No upcoming reviews'
           )}
         </span>
       </div>

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Query,
   Headers,
   HttpException,
   HttpStatus,
@@ -113,6 +114,45 @@ export class TrackingController {
   async getTrackingStatus(@Headers('x-user-id') userId: string) {
     this.requireUserId(userId);
     return this.recallItemService.getTrackedStatus(userId);
+  }
+
+  @ApiOperation({ summary: 'Retry generation for a single failed chunk' })
+  @ApiParam({ name: 'chunkId', description: 'Chunk UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('api-key')
+  @Post('retry/:chunkId')
+  async retryChunk(
+    @Param('chunkId') chunkId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    this.requireUserId(userId);
+    return this.recallItemService.retryChunk(chunkId, userId);
+  }
+
+  @ApiOperation({ summary: 'Retry all failed generations for a user' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('api-key')
+  @Post('retry-all-failed')
+  async retryAllFailed(@Headers('x-user-id') userId: string) {
+    this.requireUserId(userId);
+    return this.recallItemService.retryAllFailed(userId);
+  }
+
+  @ApiOperation({ summary: 'Get underperforming chunks for a user' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('api-key')
+  @Get('underperforming')
+  async getUnderperformingChunks(
+    @Headers('x-user-id') userId: string,
+    @Query('minLapses') minLapses?: string,
+    @Query('maxStability') maxStability?: string
+  ) {
+    this.requireUserId(userId);
+    return this.recallItemService.getUnderperformingChunks(
+      userId,
+      minLapses ? parseInt(minLapses, 10) : undefined,
+      maxStability ? parseFloat(maxStability) : undefined
+    );
   }
 
   private requireUserId(userId: string | undefined): asserts userId is string {

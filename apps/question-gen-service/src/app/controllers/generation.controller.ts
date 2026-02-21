@@ -73,6 +73,28 @@ export class GenerationController {
     return this.generationService.generateBatch(body.chunkIds, userId);
   }
 
+  @ApiOperation({ summary: 'Retry generation for a single failed chunk' })
+  @ApiParam({ name: 'chunkId', description: 'Chunk UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('api-key')
+  @Post('retry/:chunkId')
+  async retryChunk(
+    @Param('chunkId') chunkId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    this.requireUserId(userId);
+    return this.generationService.retryChunk(chunkId, userId);
+  }
+
+  @ApiOperation({ summary: 'Retry all failed generations for a user' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('api-key')
+  @Post('retry-failed')
+  async retryAllFailed(@Headers('x-user-id') userId: string) {
+    this.requireUserId(userId);
+    return this.generationService.retryAllFailed(userId);
+  }
+
   @ApiOperation({ summary: 'Check generation status for a chunk' })
   @ApiParam({ name: 'chunkId', description: 'Chunk UUID' })
   @ApiHeader(USER_ID_HEADER)

@@ -341,11 +341,101 @@ export class RecallItemService {
         id: chunkTracking.id,
         chunkId: chunkTracking.chunkId,
         status: chunkTracking.status,
+        errorMessage: chunkTracking.errorMessage,
+        retryCount: chunkTracking.retryCount,
+        lastAttemptAt: chunkTracking.lastAttemptAt,
         createdAt: chunkTracking.createdAt,
+        chunkName: chunk.name,
       })
       .from(chunkTracking)
+      .innerJoin(chunk, eq(chunkTracking.chunkId, chunk.id))
       .where(eq(chunkTracking.userId, userId));
     return items;
+  }
+
+  async retryChunk(chunkId: string, userId: string) {
+    const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
+    if (!qgenEndpoint) {
+      throw new Error('QUESTION_GEN_SERVICE_API_ENDPOINT not configured');
+    }
+    // Fire-and-forget: trigger retry in question-gen-service
+    fetch(`${qgenEndpoint}/generate/retry/${chunkId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
+          'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
+        }),
+        'x-user-id': userId,
+      },
+    }).catch((err) =>
+      this.logger.error(
+        `Fire-and-forget retry failed for chunk ${chunkId}: ${err}`
+      )
+    );
+    return { chunkId, status: 'retry_triggered' };
+  }
+
+  async retryAllFailed(userId: string) {
+    const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
+    if (!qgenEndpoint) {
+      throw new Error('QUESTION_GEN_SERVICE_API_ENDPOINT not configured');
+    }
+    fetch(`${qgenEndpoint}/generate/retry-failed`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
+          'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
+        }),
+        'x-user-id': userId,
+      },
+    }).catch((err) =>
+      this.logger.error(`Fire-and-forget retry-all-failed failed: ${err}`)
+    );
+    return { status: 'retry_all_triggered' };
+  }
+
+  async getUnderperformingChunks(
+    userId: string,
+    minLapses = 2,
+    maxStability = 1.0
+  ) {
+    const rows = await dbClient
+      .select({
+        chunkId: recallItem.chunkId,
+        chunkName: chunk.name,
+        noteName: note.name,
+        noteId: note.id,
+        topicName: topic.name,
+        topicId: topic.id,
+        itemCount: sql<number>`count(*)::int`,
+        totalLapses: sql<number>`sum(${recallItem.lapses})::int`,
+        avgStability: sql<number>`round(avg(${recallItem.stability})::numeric, 2)::float`,
+      })
+      .from(recallItem)
+      .innerJoin(chunk, eq(recallItem.chunkId, chunk.id))
+      .innerJoin(note, eq(chunk.noteId, note.id))
+      .innerJoin(topic, eq(note.topicId, topic.id))
+      .where(
+        and(
+          eq(recallItem.userId, userId),
+          sql`(${recallItem.lapses} >= ${minLapses} OR (${recallItem.stability} < ${maxStability} AND ${recallItem.reps} >= 1))`
+        )
+      )
+      .groupBy(
+        recallItem.chunkId,
+        chunk.name,
+        note.name,
+        note.id,
+        topic.name,
+        topic.id
+      )
+      .orderBy(
+        sql`sum(${recallItem.lapses}) desc`,
+        sql`avg(${recallItem.stability}) asc`
+      );
+    return rows;
   }
 
   async getDueCount(userId: string) {

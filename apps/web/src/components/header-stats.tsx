@@ -22,7 +22,7 @@ export function HeaderStats({
   dueCount?: number;
 }) {
   return (
-    <div className="flex flex-col md:flex-row gap-4">
+    <div className="rounded-xl flex-1 flex flex-col md:flex-row gap-4">
       <div className="flex flex-col gap-2 p-4 h-fit items-center justify-between w-full rounded-xl border">
         <div className="flex justify-between w-full items-center">
           <div className="flex gap-2 items-center pr-2 h-full border-r">

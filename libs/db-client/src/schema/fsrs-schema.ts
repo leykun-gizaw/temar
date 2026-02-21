@@ -93,6 +93,9 @@ export const chunkTracking = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     status: chunkTrackingStatusEnum('status').notNull().default('pending'),
+    errorMessage: text('error_message'),
+    retryCount: integer('retry_count').notNull().default(0),
+    lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .default(sql`now()`),

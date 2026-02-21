@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useTransition, useCallback } from 'react';
+import { useState, useRef, useTransition, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -101,7 +101,52 @@ export default function ReviewSession({
   const [isPending, startTransition] = useTransition();
   const [completedCount, setCompletedCount] = useState(0);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
+  const STORAGE_KEY = 'temar:review-answers';
   const answersRef = useRef<Map<string, Value>>(new Map());
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Hydrate answersRef from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, Value>;
+        for (const [id, value] of Object.entries(parsed)) {
+          answersRef.current.set(id, value);
+        }
+      }
+    } catch {
+      // Ignore corrupted localStorage data
+    }
+  }, []);
+
+  const persistToLocalStorage = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      try {
+        const obj: Record<string, Value> = {};
+        answersRef.current.forEach((v, k) => {
+          obj[k] = v;
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+      } catch {
+        // localStorage full or unavailable — silently ignore
+      }
+    }, 500);
+  }, []);
+
+  const removeFromLocalStorage = useCallback((itemId: string) => {
+    answersRef.current.delete(itemId);
+    try {
+      const obj: Record<string, Value> = {};
+      answersRef.current.forEach((v, k) => {
+        obj[k] = v;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    } catch {
+      // silently ignore
+    }
+  }, []);
 
   const currentItem = items[currentIndex];
   const isSessionComplete = !currentItem;
@@ -163,6 +208,7 @@ export default function ReviewSession({
           durationMs,
           answer ?? undefined
         );
+        removeFromLocalStorage(currentItem.id);
         setCompletedCount((c) => c + 1);
         setReviewedIds((prev) => new Set(prev).add(currentItem.id));
         advanceAfterReview();
@@ -347,8 +393,10 @@ export default function ReviewSession({
             <div className="flex-1 min-h-0 overflow-hidden">
               <AnswerEditor
                 key={currentItem.id}
+                initialValue={answersRef.current.get(currentItem.id)}
                 onChange={(value) => {
                   answersRef.current.set(currentItem.id, value);
+                  persistToLocalStorage();
                 }}
                 placeholder="Write your answer here... Type / for commands"
               />
