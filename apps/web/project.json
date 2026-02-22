@@ -9,14 +9,14 @@
     "serve": {
       "executor": "@nx/next:server",
       "options": {
-        "buildTarget": "@temar/web:build",
+        "buildTarget": "@temar/web:build --verbose",
         "dev": true,
         "port": 5173,
         "hostname": "0.0.0.0"
       }
     },
     "build": {
-      "executor": "@nx/next:build",
+      "executor": "@nx/next:build --verbose",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/web",
