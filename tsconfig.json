@@ -7,9 +7,6 @@
       "path": "./apps/web-e2e"
     },
     {
-      "path": "./apps/web"
-    },
-    {
       "path": "./apps/api-e2e"
     },
     {
@@ -26,6 +23,12 @@
     },
     {
       "path": "./libs/shared-types"
+    },
+    {
+      "path": "./apps/question-gen-service"
+    },
+    {
+      "path": "./apps/fsrs-service"
     }
   ],
   "compilerOptions": {

@@ -1,8 +1,8 @@
 name: CI
 
 on:
-  pull_request:
-    branches: [dev, staging, main]
+  push:
+    branches: [dev]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -42,3 +42,5 @@ jobs:
 
       - name: Build (affected)
         run: pnpm nx affected -t build --parallel=3
+        env:
+          NODE_OPTIONS: "--stack-trace-limit=100"

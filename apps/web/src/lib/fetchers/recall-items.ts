@@ -13,7 +13,11 @@ export interface RecallItemDue {
   reps: number;
   lapses: number;
   lastReview: string | null;
+  questionTitle: string | null;
+  questionText: string | null;
+  answerRubric: { criteria: string[]; keyPoints: string[] } | null;
   chunkName: string;
+  chunkContentMd: string | null;
   noteName: string;
   noteId: string;
   topicName: string;
@@ -152,5 +156,25 @@ export async function getReviewHistory(
   const result = await fsrsServiceFetch<ReviewLogEntry[]>(
     `recall-items/${recallItemId}/history`
   );
+  return result ?? [];
+}
+
+export async function getReviewLogs(
+  from: Date,
+  to: Date
+): Promise<ReviewLogEntry[]> {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) return [];
+
+  const params = new URLSearchParams({
+    from: from.toISOString(),
+    to: to.toISOString(),
+  });
+
+  const result = await fsrsServiceFetch<ReviewLogEntry[]>(
+    `review-logs?${params.toString()}`,
+    { userId: loggedInUser.id }
+  );
+
   return result ?? [];
 }

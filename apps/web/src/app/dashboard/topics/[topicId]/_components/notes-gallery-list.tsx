@@ -1,6 +1,9 @@
 import AddNoteDialog from '@/components/add-note-dialog';
 import { getFilteredNotes } from '@/lib/fetchers/notes';
 import NoteCardWrapper from './note-card-wrapper';
+import { getTrackingStatus } from '@/lib/actions/tracking';
+import { dbClient, chunk } from '@temar/db-client';
+import { eq } from 'drizzle-orm';
 
 export default async function NotesGalleryList({
   query,
@@ -11,11 +14,35 @@ export default async function NotesGalleryList({
   type: string;
   topicId: string;
 }) {
-  const filteredNotes = await getFilteredNotes(query, topicId);
+  const [filteredNotes, trackedItems] = await Promise.all([
+    getFilteredNotes(query, topicId),
+    getTrackingStatus(),
+  ]);
+
+  const trackedChunkIds = new Set(trackedItems.map((t) => t.chunkId));
+
+  // Compute per-note tracking: a note is tracked if all its chunks are tracked
+  const noteTrackedMap = new Map<string, boolean>();
+  for (const n of filteredNotes) {
+    const chunks = await dbClient
+      .select({ id: chunk.id })
+      .from(chunk)
+      .where(eq(chunk.noteId, n.id));
+    noteTrackedMap.set(
+      n.id,
+      chunks.length > 0 && chunks.every((c) => trackedChunkIds.has(c.id))
+    );
+  }
+
   return (
     <>
       {filteredNotes.map((n) => (
-        <NoteCardWrapper key={n.id} note={n} topicId={topicId} />
+        <NoteCardWrapper
+          key={n.id}
+          note={n}
+          topicId={topicId}
+          isTracked={noteTrackedMap.get(n.id) ?? false}
+        />
       ))}
 
       <div className="border border-dashed rounded-xl flex flex-col h-[180px]">

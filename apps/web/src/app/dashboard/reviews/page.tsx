@@ -20,20 +20,13 @@ export default async function ReviewsPage({
   ]);
 
   return (
-    <div className="h-full p-6 space-y-6">
-      <div className="space-y-1">
-        <span className="text-5xl">🧠</span>
-        <h1 className="text-2xl font-semibold">Reviews</h1>
-        <p className="text-sm text-muted-foreground">
-          {dueCount} item{dueCount !== 1 ? 's' : ''} due for review
-        </p>
-      </div>
-      <hr />
+    <div className="h-full space-y-6">
       <ReviewSession
         initialItems={dueItems}
         topics={topics.map((t) => ({ id: t.id, name: t.name }))}
         currentTopicId={topicId}
         currentNoteId={noteId}
+        dueCount={dueCount}
       />
     </div>
   );

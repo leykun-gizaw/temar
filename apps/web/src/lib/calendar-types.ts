@@ -24,6 +24,7 @@ export type CalendarEvent = {
   end: Date;
   title: string;
   progress?: number;
+  color?: 'blue' | 'green';
 };
 
 export type CalendarProps = {

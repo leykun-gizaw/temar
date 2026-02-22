@@ -65,6 +65,17 @@ services:
     networks:
       - temar-network
 
+  question-gen-service:
+    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-question-gen:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - temar-network
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped

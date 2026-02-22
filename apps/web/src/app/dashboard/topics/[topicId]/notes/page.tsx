@@ -5,10 +5,6 @@ import { getTopicById } from '@/lib/fetchers/topics';
 import NotesGalleryList from '@/app/dashboard/topics/[topicId]/_components/notes-gallery-list';
 import Search from '@/app/dashboard/topics/_components/search';
 import AddNoteDialog from '@/components/add-note-dialog';
-import TrackingButton from '@/components/tracking-button';
-import { getTrackingStatus } from '@/lib/actions/tracking';
-import { dbClient, chunk, note } from '@temar/db-client';
-import { eq } from 'drizzle-orm';
 
 export default async function TopicNotesPage({
   params,
@@ -25,35 +21,11 @@ export default async function TopicNotesPage({
   const topic = await getTopicById(topicId);
   const TopicTitle = topic?.name;
 
-  const trackedItems = await getTrackingStatus();
-  const trackedChunkIds = new Set(trackedItems.map((t) => t.chunkId));
-
-  const topicNotes = await dbClient
-    .select({ id: note.id })
-    .from(note)
-    .where(eq(note.topicId, topicId));
-  const topicChunks = [];
-  for (const n of topicNotes) {
-    const chunks = await dbClient
-      .select({ id: chunk.id })
-      .from(chunk)
-      .where(eq(chunk.noteId, n.id));
-    topicChunks.push(...chunks);
-  }
-  const isTopicTracked =
-    topicChunks.length > 0 &&
-    topicChunks.every((c) => trackedChunkIds.has(c.id));
-
   return (
     <div className="h-full p-6 space-y-6">
       <div className="space-y-1">
         <div className="flex items-center justify-between">
           <span className="text-6xl">📗</span>
-          <TrackingButton
-            entityType="topic"
-            entityId={topicId}
-            isTracked={isTopicTracked}
-          />
         </div>
         <h1 className="text-2xl font-semibold mb-4">{TopicTitle} Notes</h1>
         {topic?.description ? (
