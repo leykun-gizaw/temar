@@ -30,6 +30,8 @@ jobs:
             image_name: notion-sync
           - target: fsrs-service
             image_name: fsrs
+          - target: question-gen-service
+            image_name: question-gen
           - target: source
             image_name: migrate
 
@@ -100,12 +102,11 @@ jobs:
             # Log in to GHCR
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-            # Pull latest images
-            docker compose -f docker-compose.prod.yml pull
+            # Pull latest images (--ignore-pull-failures so one missing image doesn't block others)
+            docker compose -f docker-compose.prod.yml pull --ignore-pull-failures
 
             # Run migrations then restart services
             docker compose -f docker-compose.prod.yml up migrate --abort-on-container-exit
-            docker compose -f docker-compose.prod.yml up -d web notion_sync-service fsrs-service caddy appsmith
             docker compose -f docker-compose.prod.yml up -d web notion_sync-service fsrs-service question-gen-service caddy appsmith
 
             # Clean up old images
@@ -131,12 +132,11 @@ jobs:
             # Log in to GHCR
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-            # Pull staging images
-            docker compose -f docker-compose.prod.yml pull
+            # Pull staging images (--ignore-pull-failures so one missing image doesn't block others)
+            docker compose -f docker-compose.prod.yml pull --ignore-pull-failures
 
             # Run migrations then restart services
             docker compose -f docker-compose.prod.yml up migrate --abort-on-container-exit
-            docker compose -f docker-compose.prod.yml up -d web notion_sync-service fsrs-service caddy
             docker compose -f docker-compose.prod.yml up -d web notion_sync-service fsrs-service question-gen-service caddy
 
             # Clean up old images
