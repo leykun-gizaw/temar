@@ -164,11 +164,22 @@ export default function ReviewsTableCard({
       <CardHeader className="border-b">
         <CardTitle>Recall Items</CardTitle>
         <CardAction>
-          <Button asChild variant={'outline'}>
-            <Link href="/dashboard/reviews">
-              <BinocularsIcon />
-            </Link>
-          </Button>
+          <div className="mt-2 relative flex gap-2">
+            <Input
+              placeholder="Search all recall items..."
+              aria-label="Search recall items"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {isPending && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+            <Button asChild variant={'default'}>
+              <Link href="/dashboard/reviews">
+                <BinocularsIcon />
+              </Link>
+            </Button>
+          </div>
         </CardAction>
         <CardDescription>
           {displayTotal > 0
@@ -179,17 +190,6 @@ export default function ReviewsTableCard({
             ? 'No items match your search'
             : 'No tracked items'}
         </CardDescription>
-        <div className="mt-2 relative">
-          <Input
-            placeholder="Search all recall items..."
-            aria-label="Search recall items"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {isPending && (
-            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-          )}
-        </div>
       </CardHeader>
       <CardContent className="overflow-y-auto min-h-0 flex-1">
         <Table>
