@@ -6,6 +6,7 @@ export async function fsrsServiceFetch<T = unknown>(
     method?: string;
     body?: Record<string, unknown>;
     userId?: string;
+    headers?: Record<string, string>;
   }
 ): Promise<T> {
   const baseUrl = process.env.FSRS_SERVICE_API_ENDPOINT;
@@ -19,6 +20,7 @@ export async function fsrsServiceFetch<T = unknown>(
       'Content-Type': 'application/json',
       ...(apiKey && { 'x-api-key': apiKey }),
       ...(options?.userId && { 'x-user-id': options.userId }),
+      ...options?.headers,
     },
     ...(options?.body && { body: JSON.stringify(options.body) }),
   });
