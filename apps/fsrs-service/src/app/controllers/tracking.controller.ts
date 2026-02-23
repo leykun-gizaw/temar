@@ -36,10 +36,17 @@ export class TrackingController {
   @Post('topic/:topicId')
   async trackTopic(
     @Param('topicId') topicId: string,
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-id') userId: string,
+    @Headers('x-ai-provider') aiProvider?: string,
+    @Headers('x-ai-model') aiModel?: string,
+    @Headers('x-ai-api-key') aiApiKey?: string
   ) {
     this.requireUserId(userId);
-    return this.recallItemService.trackTopic(topicId, userId);
+    const aiConfig =
+      aiProvider || aiModel || aiApiKey
+        ? { provider: aiProvider, model: aiModel, apiKey: aiApiKey }
+        : undefined;
+    return this.recallItemService.trackTopic(topicId, userId, aiConfig);
   }
 
   @ApiOperation({ summary: 'Track all chunks under a note (cascade)' })
@@ -49,10 +56,17 @@ export class TrackingController {
   @Post('note/:noteId')
   async trackNote(
     @Param('noteId') noteId: string,
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-id') userId: string,
+    @Headers('x-ai-provider') aiProvider?: string,
+    @Headers('x-ai-model') aiModel?: string,
+    @Headers('x-ai-api-key') aiApiKey?: string
   ) {
     this.requireUserId(userId);
-    return this.recallItemService.trackNote(noteId, userId);
+    const aiConfig =
+      aiProvider || aiModel || aiApiKey
+        ? { provider: aiProvider, model: aiModel, apiKey: aiApiKey }
+        : undefined;
+    return this.recallItemService.trackNote(noteId, userId, aiConfig);
   }
 
   @ApiOperation({ summary: 'Track a single chunk' })

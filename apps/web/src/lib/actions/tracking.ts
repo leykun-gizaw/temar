@@ -3,14 +3,27 @@
 import { revalidatePath } from 'next/cache';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { fsrsServiceFetch } from '../fsrs-service';
+import { getUserAiConfig } from './ai-settings';
+
+async function getAiHeaders(): Promise<Record<string, string>> {
+  const config = await getUserAiConfig();
+  if (!config) return {};
+  return {
+    ...(config.provider && { 'x-ai-provider': config.provider }),
+    ...(config.model && { 'x-ai-model': config.model }),
+    ...(config.apiKey && { 'x-ai-api-key': config.apiKey }),
+  };
+}
 
 export async function trackTopic(topicId: string) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
+  const aiHeaders = await getAiHeaders();
   const result = await fsrsServiceFetch(`track/topic/${topicId}`, {
     method: 'POST',
     userId: loggedInUser.id,
+    headers: aiHeaders,
   });
 
   revalidatePath('/dashboard');
@@ -22,9 +35,11 @@ export async function trackNote(noteId: string, topicId: string) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
+  const aiHeaders = await getAiHeaders();
   const result = await fsrsServiceFetch(`track/note/${noteId}`, {
     method: 'POST',
     userId: loggedInUser.id,
+    headers: aiHeaders,
   });
 
   revalidatePath('/dashboard');
@@ -40,9 +55,11 @@ export async function trackChunk(
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
+  const aiHeaders = await getAiHeaders();
   const result = await fsrsServiceFetch(`track/chunk/${chunkId}`, {
     method: 'POST',
     userId: loggedInUser.id,
+    headers: aiHeaders,
   });
 
   revalidatePath('/dashboard');
@@ -122,9 +139,11 @@ export async function retryFailedGeneration(chunkId: string) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
+  const aiHeaders = await getAiHeaders();
   const result = await fsrsServiceFetch(`track/retry/${chunkId}`, {
     method: 'POST',
     userId: loggedInUser.id,
+    headers: aiHeaders,
   });
 
   revalidatePath('/dashboard');
@@ -135,9 +154,11 @@ export async function retryAllFailedGenerations() {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
+  const aiHeaders = await getAiHeaders();
   const result = await fsrsServiceFetch('track/retry-all-failed', {
     method: 'POST',
     userId: loggedInUser.id,
+    headers: aiHeaders,
   });
 
   revalidatePath('/dashboard');

@@ -72,7 +72,11 @@ export class RecallItemService {
     }
   }
 
-  async trackNote(noteId: string, userId: string) {
+  async trackNote(
+    noteId: string,
+    userId: string,
+    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+  ) {
     const chunks = await dbClient
       .select({ id: chunk.id })
       .from(chunk)
@@ -80,7 +84,7 @@ export class RecallItemService {
 
     const results = [];
     for (const c of chunks) {
-      results.push(await this.trackChunk(c.id, userId));
+      results.push(await this.trackChunk(c.id, userId, aiConfig));
     }
 
     this.logger.log(
@@ -91,7 +95,11 @@ export class RecallItemService {
     return { noteId, results };
   }
 
-  async trackTopic(topicId: string, userId: string) {
+  async trackTopic(
+    topicId: string,
+    userId: string,
+    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+  ) {
     const notes = await dbClient
       .select({ id: note.id })
       .from(note)
@@ -99,7 +107,7 @@ export class RecallItemService {
 
     const results = [];
     for (const n of notes) {
-      results.push(await this.trackNote(n.id, userId));
+      results.push(await this.trackNote(n.id, userId, aiConfig));
     }
 
     this.logger.log(`Tracked topic ${topicId}: ${notes.length} notes`);
