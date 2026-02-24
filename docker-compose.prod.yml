@@ -33,7 +33,7 @@ services:
       - temar-network
 
   web:
-    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-web:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-web-app:${IMAGE_TAG:-latest}
     restart: unless-stopped
     env_file:
       - .env
