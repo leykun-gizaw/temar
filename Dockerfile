@@ -14,7 +14,6 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml nx.json ./
 COPY apps/web/package.json apps/web/
-COPY apps/api/package.json apps/api/
 COPY apps/notion_sync-service/package.json apps/notion_sync-service/
 COPY apps/fsrs-service/package.json apps/fsrs-service/
 COPY apps/question-gen-service/package.json apps/question-gen-service/
@@ -33,13 +32,19 @@ COPY . .
 
 # STAGE 4: Builder
 # Build the 'web' application for production
-FROM source AS builder
+FROM source AS web-app-builder
 # Build the 'web' application
 RUN NX_DAEMON=false pnpm nx build web --prod --verbose
+
+FROM source AS notion-sync-builder
 # Build 'notion_sync-service'
 RUN NX_DAEMON=false pnpm nx build notion_sync-service --prod
+
+FROM source AS fsrs-service-builder
 # Build 'fsrs-service'
 RUN NX_DAEMON=false pnpm nx build fsrs-service --prod
+
+FROM source AS question-gen-service-builder
 # Build 'question-gen-service'
 RUN NX_DAEMON=false pnpm nx build question-gen-service --prod
 
@@ -48,29 +53,29 @@ RUN NX_DAEMON=false pnpm nx build question-gen-service --prod
 # STAGE 4.5a: Notion Sync Service Production Dependencies
 FROM base AS notion-prod-deps
 WORKDIR /app
-COPY --from=builder /app/dist/apps/notion_sync-service/package.json ./
-COPY --from=source /app/pnpm-lock.yaml ./
+COPY --from=notion-sync-builder /app/dist/apps/notion_sync-service/package.json ./
+COPY --from=notion-sync-builder /app/pnpm-lock.yaml ./
 RUN pnpm install --prod
 
 # STAGE 4.5b: FSRS Service Production Dependencies
 FROM base AS fsrs-prod-deps
 WORKDIR /app
-COPY --from=builder /app/dist/apps/fsrs-service/package.json ./
-COPY --from=source /app/pnpm-lock.yaml ./
+COPY --from=fsrs-service-builder /app/dist/apps/fsrs-service/package.json ./
+COPY --from=fsrs-service-builder /app/pnpm-lock.yaml ./
 RUN pnpm install --prod
 
 # STAGE 4.5c: Question Gen Service Production Dependencies
 FROM base AS questiongen-prod-deps
 WORKDIR /app
-COPY --from=builder /app/dist/apps/question-gen-service/package.json ./
-COPY --from=source /app/pnpm-lock.yaml ./
+COPY --from=question-gen-service-builder /app/dist/apps/question-gen-service/package.json ./
+COPY --from=question-gen-service-builder /app/pnpm-lock.yaml ./
 RUN pnpm install --prod
 
 # ----------------------------------------------
 
-# STAGE 5: Production Runner
+# STAGE 5: Web App Production Runner
 # Create the final, minimal production image
-FROM base AS production
+FROM base AS web-app-service
 WORKDIR /app
 ENV NODE_ENV=production
 
@@ -79,11 +84,11 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy the standalone output from the builder stage
-COPY --from=builder --chown=nextjs:nodejs /app/dist/apps/web/.next/standalone ./
+COPY --from=web-app-builder --chown=nextjs:nodejs /app/dist/apps/web/.next/standalone ./
 
 # Copy the public and static assets to where distDir resolves
-COPY --from=builder --chown=nextjs:nodejs /app/dist/apps/web/public ./apps/web/public
-COPY --from=builder --chown=nextjs:nodejs /app/dist/apps/web/.next/static ./dist/apps/web/.next/static
+COPY --from=web-app-builder --chown=nextjs:nodejs /app/dist/apps/web/public ./apps/web/public
+COPY --from=web-app-builder --chown=nextjs:nodejs /app/dist/apps/web/.next/static ./dist/apps/web/.next/static
 
 USER nextjs
 

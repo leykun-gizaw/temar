@@ -24,8 +24,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - target: production
-            image_name: web
+          - target: web-app-service
+            image_name: web-app
           - target: notion_sync-service
             image_name: notion-sync
           - target: fsrs-service
