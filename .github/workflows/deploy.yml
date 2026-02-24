@@ -32,7 +32,7 @@ jobs:
             image_name: fsrs
           - target: question-gen-service
             image_name: question-gen
-          - target: source
+          - target: migration
             image_name: migrate
 
     steps:
