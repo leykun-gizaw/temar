@@ -110,7 +110,7 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1002 nestjs
 RUN adduser --system --uid 1002 nestuser
 
-COPY --from=builder --chown=nestuser:nestjs /app/dist/apps/notion_sync-service ./
+COPY --from=notion-sync-builder --chown=nestuser:nestjs /app/dist/apps/notion_sync-service ./
 COPY --from=notion-prod-deps --chown=nestuser:nestjs /app/node_modules ./node_modules
 
 USER nestuser
@@ -127,7 +127,7 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1003 nestjs
 RUN adduser --system --uid 1003 fsrsuser
 
-COPY --from=builder --chown=fsrsuser:nestjs /app/dist/apps/fsrs-service ./
+COPY --from=fsrs-service-builder --chown=fsrsuser:nestjs /app/dist/apps/fsrs-service ./
 COPY --from=fsrs-prod-deps --chown=fsrsuser:nestjs /app/node_modules ./node_modules
 
 USER fsrsuser
@@ -144,7 +144,7 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1004 nestjs
 RUN adduser --system --uid 1004 qgenuser
 
-COPY --from=builder --chown=qgenuser:nestjs /app/dist/apps/question-gen-service ./
+COPY --from=question-gen-service-builder --chown=qgenuser:nestjs /app/dist/apps/question-gen-service ./
 COPY --from=questiongen-prod-deps --chown=qgenuser:nestjs /app/node_modules ./node_modules
 
 USER qgenuser
