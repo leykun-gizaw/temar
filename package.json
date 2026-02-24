@@ -117,7 +117,7 @@
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.1.0",
     "@types/jest": "^30.0.0",
-    "@types/lodash": "^4.17.24",
+    "@types/lodash": "^4.17.23",
     "@types/node": "20.19.9",
     "@types/pg": "^8.16.0",
     "@types/react": "19.0.0",
