@@ -146,7 +146,7 @@ CMD [ "node", "main.js" ]
 # STAGE 9: Migration Service Runner
 FROM base AS migration
 COPY libs/db-client/package.json ./
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install
 COPY libs/db-client/src/drizzle ./src/drizzle
 COPY libs/db-client/drizzle.docker.config.ts ./drizzle.config.ts
 CMD [ "pnpm", "drizzle-kit", "migrate", "--config=drizzle.config.ts" ]
