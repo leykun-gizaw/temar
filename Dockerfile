@@ -46,6 +46,8 @@ RUN NX_DAEMON=false pnpm nx build fsrs-service --prod
 FROM deps AS question-gen-service-builder
 # Copy relevant source code
 COPY apps/question-gen-service ./apps/question-gen-service
+COPY /tsconfig.base.json ./
+COPY libs/db-client ./libs/db-client
 # Build 'question-gen-service'
 RUN NX_DAEMON=false pnpm nx build question-gen-service --prod
 
