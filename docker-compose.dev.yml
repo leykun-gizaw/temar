@@ -1,21 +1,111 @@
-# Docker Compose configuration for development environment
 services:
   db:
     image: postgres:16-alpine
+    restart: always
     environment:
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: ${DATABASE_NAME:-temar}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE_USER:-postgres} -d ${DATABASE_NAME:-temar}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     ports:
-      - "${DATABASE_PORT}:5432"
+      - "${DATABASE_PORT:-5432}:5432"
     volumes:
       - dev_data:/var/lib/postgresql/data
+    networks:
+      - temar-network
 
-  adminer:
-    image: adminer:latest
-    container_name: "adminer-ui"
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migration
+    restart: "no"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - temar-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web-app-service
+    restart: unless-stopped
+    env_file:
+      - .env
     ports:
-      - "8080:8080"
+      - "5173:5173"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - temar-network
+
+  notion_sync-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: notion_sync-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - temar-network
+
+  fsrs-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: fsrs-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - temar-network
+
+  question-gen-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: question-gen-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - temar-network
 
 volumes:
   dev_data:
+
+networks:
+  temar-network:
+    driver: bridge
