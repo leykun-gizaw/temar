@@ -49,14 +49,10 @@
     ".next",
     "eslint.config.js",
     "eslint.config.cjs",
-    "eslint.config.mjs"
-  ],
-  "references": [
-    {
-      "path": "../../libs/shared-types"
-    },
-    {
-      "path": "../../libs/db-client"
-    }
+    "eslint.config.mjs",
+    "../../libs/db-client/src/**/*.spec.ts",
+    "../../libs/db-client/src/**/*.test.ts",
+    "../../libs/shared-types/src/**/*.spec.ts",
+    "../../libs/shared-types/src/**/*.test.ts"
   ]
 }

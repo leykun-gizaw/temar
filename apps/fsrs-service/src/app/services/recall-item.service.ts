@@ -8,13 +8,10 @@ import {
   chunkTracking,
 } from '@temar/db-client';
 import { eq, and, lte, sql } from 'drizzle-orm';
-import { FsrsEngineService } from './fsrs-engine.service';
 
 @Injectable()
 export class RecallItemService {
   private readonly logger = new Logger(RecallItemService.name);
-
-  constructor(private readonly fsrsEngine: FsrsEngineService) {}
 
   async trackChunk(
     chunkId: string,

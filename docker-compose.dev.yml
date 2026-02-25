@@ -102,6 +102,13 @@ services:
         condition: service_completed_successfully
     networks:
       - temar-network
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - temar-network
 
 volumes:
   dev_data:
