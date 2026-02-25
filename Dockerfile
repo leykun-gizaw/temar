@@ -28,17 +28,25 @@ RUN pnpm install --frozen-lockfile
 FROM deps AS web-app-builder
 # Copy relevant source code
 COPY apps/web ./apps/web
+COPY tsconfig.base.json ./
+COPY eslint.config.mjs ./
+COPY libs/db-client ./libs/db-client
+COPY libs/shared-types ./libs/shared-types
 # Build the 'web' application
 RUN NX_DAEMON=false pnpm nx build web --prod --verbose
 
 FROM deps AS notion-sync-builder
 # Copy relevant source code
+COPY /tsconfig.base.json ./
+COPY libs/db-client ./libs/db-client
 COPY apps/notion_sync-service ./apps/notion_sync-service
 # Build 'notion_sync-service'
 RUN NX_DAEMON=false pnpm nx build notion_sync-service --prod
 
 FROM deps AS fsrs-service-builder
 # Copy relevant source code
+COPY /tsconfig.base.json ./
+COPY libs/db-client ./libs/db-client
 COPY apps/fsrs-service ./apps/fsrs-service
 # Build 'fsrs-service'
 RUN NX_DAEMON=false pnpm nx build fsrs-service --prod
@@ -55,21 +63,25 @@ RUN NX_DAEMON=false pnpm nx build question-gen-service --prod
 
 # STAGE 4.5a: Notion Sync Service Production Dependencies
 FROM base AS notion-prod-deps
-COPY --from=notion-sync-builder /app/dist/apps/notion_sync-service/package.json ./
-COPY --from=notion-sync-builder /app/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --filter notion_sync-service --prod
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/notion_sync-service/package.json apps/notion_sync-service/
+COPY libs/db-client/package.json libs/db-client/
+COPY libs/shared-types/package.json libs/shared-types
+RUN pnpm install --filter notion_sync-service --prod
 
 # STAGE 4.5b: FSRS Service Production Dependencies
 FROM base AS fsrs-prod-deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --from=fsrs-service-builder /app/dist/apps/fsrs-service/package.json ./
 COPY --from=fsrs-service-builder /app/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --filter fsrs-service --prod
+RUN pnpm install --filter fsrs-service --prod
 
 # STAGE 4.5c: Question Gen Service Production Dependencies
 FROM base AS questiongen-prod-deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --from=question-gen-service-builder /app/dist/apps/question-gen-service/package.json ./
 COPY --from=question-gen-service-builder /app/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --filter question-gen-service --prod
+RUN pnpm install --filter question-gen-service --prod
 
 # ----------------------------------------------
 
@@ -151,4 +163,5 @@ COPY libs/db-client/package.json ./
 RUN pnpm install
 COPY libs/db-client/src/drizzle ./src/drizzle
 COPY libs/db-client/drizzle.docker.config.ts ./drizzle.config.ts
+# CMD [ "ls", "-l", "/app/src/drizzle/meta" ]
 CMD [ "pnpm", "drizzle-kit", "migrate", "--config=drizzle.config.ts" ]

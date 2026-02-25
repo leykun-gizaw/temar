@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Client, CreatePageResponse } from '@notionhq/client';
 import { NotionApiService } from './notion-api.service';
 import {
@@ -37,8 +37,6 @@ interface CreatedEntityInfo {
 
 @Injectable()
 export class NotionContentService {
-  private readonly logger = new Logger(NotionContentService.name);
-
   constructor(private readonly notionApi: NotionApiService) {}
 
   async scaffoldMasterPage(
