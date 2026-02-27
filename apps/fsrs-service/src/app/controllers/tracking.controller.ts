@@ -175,6 +175,35 @@ export class TrackingController {
     return this.recallItemService.retryAllFailed(userId, aiConfig);
   }
 
+  @ApiOperation({ summary: 'Get chunks with outdated questions' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('api-key')
+  @Get('outdated')
+  async getOutdatedChunks(@Headers('x-user-id') userId: string) {
+    this.requireUserId(userId);
+    return this.recallItemService.getOutdatedChunks(userId);
+  }
+
+  @ApiOperation({ summary: 'Regenerate questions for a chunk' })
+  @ApiParam({ name: 'chunkId', description: 'Chunk UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('api-key')
+  @Post('regenerate/:chunkId')
+  async regenerateChunk(
+    @Param('chunkId') chunkId: string,
+    @Headers('x-user-id') userId: string,
+    @Headers('x-ai-provider') aiProvider?: string,
+    @Headers('x-ai-model') aiModel?: string,
+    @Headers('x-ai-api-key') aiApiKey?: string
+  ) {
+    this.requireUserId(userId);
+    const aiConfig =
+      aiProvider || aiModel || aiApiKey
+        ? { provider: aiProvider, model: aiModel, apiKey: aiApiKey }
+        : undefined;
+    return this.recallItemService.regenerateChunk(chunkId, userId, aiConfig);
+  }
+
   @ApiOperation({ summary: 'Get underperforming chunks for a user' })
   @ApiHeader(USER_ID_HEADER)
   @ApiSecurity('api-key')

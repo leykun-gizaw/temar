@@ -7,7 +7,7 @@ import {
   topic,
   chunkTracking,
 } from '@temar/db-client';
-import { eq, and, lte, sql } from 'drizzle-orm';
+import { eq, ne, and, lte, isNull, sql } from 'drizzle-orm';
 
 @Injectable()
 export class RecallItemService {
@@ -19,6 +19,37 @@ export class RecallItemService {
     aiConfig?: { provider?: string; model?: string; apiKey?: string }
   ) {
     try {
+      // Check if there's an existing untracked row to reactivate
+      const [existing] = await dbClient
+        .select({
+          id: chunkTracking.id,
+          status: chunkTracking.status,
+        })
+        .from(chunkTracking)
+        .where(
+          and(
+            eq(chunkTracking.chunkId, chunkId),
+            eq(chunkTracking.userId, userId)
+          )
+        )
+        .limit(1);
+
+      if (existing) {
+        if (existing.status === 'untracked') {
+          // Reactivate: flip back to 'ready' since recall items are still intact
+          await dbClient
+            .update(chunkTracking)
+            .set({ status: 'ready' })
+            .where(eq(chunkTracking.id, existing.id));
+          this.logger.log(
+            `Reactivated chunk ${chunkId} for user ${userId} (preserved FSRS state)`
+          );
+          return { tracked: true, chunkId, reactivated: true, status: 'ready' };
+        }
+        this.logger.log(`Chunk ${chunkId} already tracked for user ${userId}`);
+        return { tracked: false, chunkId, reason: 'already_tracked' };
+      }
+
       const [row] = await dbClient
         .insert(chunkTracking)
         .values({ chunkId, userId, status: 'pending' })
@@ -112,16 +143,11 @@ export class RecallItemService {
   }
 
   async untrackChunk(chunkId: string, userId: string) {
-    // Delete associated recall items first
-    await dbClient
-      .delete(recallItem)
-      .where(
-        and(eq(recallItem.chunkId, chunkId), eq(recallItem.userId, userId))
-      );
-
-    // Delete chunk_tracking row
-    const deleted = await dbClient
-      .delete(chunkTracking)
+    // Soft-delete: mark as untracked instead of deleting rows
+    // This preserves recall_item FSRS state and review_log history
+    const updated = await dbClient
+      .update(chunkTracking)
+      .set({ status: 'untracked' })
       .where(
         and(
           eq(chunkTracking.chunkId, chunkId),
@@ -129,7 +155,7 @@ export class RecallItemService {
         )
       )
       .returning({ id: chunkTracking.id });
-    return { untracked: deleted.length > 0, chunkId };
+    return { untracked: updated.length > 0, chunkId };
   }
 
   async untrackNote(noteId: string, userId: string) {
@@ -175,7 +201,6 @@ export class RecallItemService {
         due: recallItem.due,
         stability: recallItem.stability,
         difficulty: recallItem.difficulty,
-        elapsedDays: recallItem.elapsedDays,
         scheduledDays: recallItem.scheduledDays,
         reps: recallItem.reps,
         lapses: recallItem.lapses,
@@ -195,7 +220,20 @@ export class RecallItemService {
       .innerJoin(chunk, eq(recallItem.chunkId, chunk.id))
       .innerJoin(note, eq(chunk.noteId, note.id))
       .innerJoin(topic, eq(note.topicId, topic.id))
-      .where(eq(recallItem.userId, userId))
+      .innerJoin(
+        chunkTracking,
+        and(
+          eq(recallItem.chunkId, chunkTracking.chunkId),
+          eq(recallItem.userId, chunkTracking.userId)
+        )
+      )
+      .where(
+        and(
+          eq(recallItem.userId, userId),
+          isNull(recallItem.retiredAt),
+          ne(chunkTracking.status, 'untracked')
+        )
+      )
       .orderBy(recallItem.due)
       .limit(limit)
       .offset(offset);
@@ -203,7 +241,20 @@ export class RecallItemService {
     const [countResult] = await dbClient
       .select({ count: sql<number>`count(*)::int` })
       .from(recallItem)
-      .where(eq(recallItem.userId, userId));
+      .innerJoin(
+        chunkTracking,
+        and(
+          eq(recallItem.chunkId, chunkTracking.chunkId),
+          eq(recallItem.userId, chunkTracking.userId)
+        )
+      )
+      .where(
+        and(
+          eq(recallItem.userId, userId),
+          isNull(recallItem.retiredAt),
+          ne(chunkTracking.status, 'untracked')
+        )
+      );
 
     return { items: rows, total: countResult?.count ?? 0 };
   }
@@ -217,7 +268,6 @@ export class RecallItemService {
         due: recallItem.due,
         stability: recallItem.stability,
         difficulty: recallItem.difficulty,
-        elapsedDays: recallItem.elapsedDays,
         scheduledDays: recallItem.scheduledDays,
         reps: recallItem.reps,
         lapses: recallItem.lapses,
@@ -237,7 +287,20 @@ export class RecallItemService {
       .innerJoin(chunk, eq(recallItem.chunkId, chunk.id))
       .innerJoin(note, eq(chunk.noteId, note.id))
       .innerJoin(topic, eq(note.topicId, topic.id))
-      .where(eq(recallItem.userId, userId))
+      .innerJoin(
+        chunkTracking,
+        and(
+          eq(recallItem.chunkId, chunkTracking.chunkId),
+          eq(recallItem.userId, chunkTracking.userId)
+        )
+      )
+      .where(
+        and(
+          eq(recallItem.userId, userId),
+          isNull(recallItem.retiredAt),
+          ne(chunkTracking.status, 'untracked')
+        )
+      )
       .orderBy(recallItem.due);
 
     const lowerSearch = search.toLowerCase();
@@ -264,7 +327,6 @@ export class RecallItemService {
         due: recallItem.due,
         stability: recallItem.stability,
         difficulty: recallItem.difficulty,
-        elapsedDays: recallItem.elapsedDays,
         scheduledDays: recallItem.scheduledDays,
         reps: recallItem.reps,
         lapses: recallItem.lapses,
@@ -284,7 +346,21 @@ export class RecallItemService {
       .innerJoin(chunk, eq(recallItem.chunkId, chunk.id))
       .innerJoin(note, eq(chunk.noteId, note.id))
       .innerJoin(topic, eq(note.topicId, topic.id))
-      .where(and(eq(recallItem.userId, userId), lte(recallItem.due, now)))
+      .innerJoin(
+        chunkTracking,
+        and(
+          eq(recallItem.chunkId, chunkTracking.chunkId),
+          eq(recallItem.userId, chunkTracking.userId)
+        )
+      )
+      .where(
+        and(
+          eq(recallItem.userId, userId),
+          lte(recallItem.due, now),
+          isNull(recallItem.retiredAt),
+          ne(chunkTracking.status, 'untracked')
+        )
+      )
       .orderBy(recallItem.due)
       .limit(limit)
       .$dynamic();
@@ -294,6 +370,8 @@ export class RecallItemService {
         and(
           eq(recallItem.userId, userId),
           lte(recallItem.due, now),
+          isNull(recallItem.retiredAt),
+          ne(chunkTracking.status, 'untracked'),
           eq(topic.id, options.topicId)
         )
       );
@@ -304,6 +382,8 @@ export class RecallItemService {
         and(
           eq(recallItem.userId, userId),
           lte(recallItem.due, now),
+          isNull(recallItem.retiredAt),
+          ne(chunkTracking.status, 'untracked'),
           eq(note.id, options.noteId)
         )
       );
@@ -325,7 +405,6 @@ export class RecallItemService {
         due: recallItem.due,
         stability: recallItem.stability,
         difficulty: recallItem.difficulty,
-        elapsedDays: recallItem.elapsedDays,
         scheduledDays: recallItem.scheduledDays,
         reps: recallItem.reps,
         lapses: recallItem.lapses,
@@ -361,7 +440,12 @@ export class RecallItemService {
       })
       .from(chunkTracking)
       .innerJoin(chunk, eq(chunkTracking.chunkId, chunk.id))
-      .where(eq(chunkTracking.userId, userId));
+      .where(
+        and(
+          eq(chunkTracking.userId, userId),
+          ne(chunkTracking.status, 'untracked')
+        )
+      );
     return items;
   }
 
@@ -442,9 +526,18 @@ export class RecallItemService {
       .innerJoin(chunk, eq(recallItem.chunkId, chunk.id))
       .innerJoin(note, eq(chunk.noteId, note.id))
       .innerJoin(topic, eq(note.topicId, topic.id))
+      .innerJoin(
+        chunkTracking,
+        and(
+          eq(recallItem.chunkId, chunkTracking.chunkId),
+          eq(recallItem.userId, chunkTracking.userId)
+        )
+      )
       .where(
         and(
           eq(recallItem.userId, userId),
+          isNull(recallItem.retiredAt),
+          ne(chunkTracking.status, 'untracked'),
           sql`(${recallItem.lapses} >= ${minLapses} OR (${recallItem.stability} < ${maxStability} AND ${recallItem.reps} >= 1))`
         )
       )
@@ -463,12 +556,186 @@ export class RecallItemService {
     return rows;
   }
 
+  async getOutdatedChunks(userId: string) {
+    // Find tracked chunks where either:
+    // 1. All recall items are retired (all questions exhausted)
+    // 2. Chunk content changed since questions were generated
+    const trackedChunks = await dbClient
+      .select({
+        chunkId: chunkTracking.chunkId,
+        chunkName: chunk.name,
+        noteName: note.name,
+        noteId: note.id,
+        topicName: topic.name,
+        topicId: topic.id,
+        trackingStatus: chunkTracking.status,
+        lastAttemptAt: chunkTracking.lastAttemptAt,
+        contentUpdatedAt: chunk.contentUpdatedAt,
+      })
+      .from(chunkTracking)
+      .innerJoin(chunk, eq(chunkTracking.chunkId, chunk.id))
+      .innerJoin(note, eq(chunk.noteId, note.id))
+      .innerJoin(topic, eq(note.topicId, topic.id))
+      .where(
+        and(
+          eq(chunkTracking.userId, userId),
+          ne(chunkTracking.status, 'untracked'),
+          ne(chunkTracking.status, 'pending'),
+          ne(chunkTracking.status, 'generating')
+        )
+      );
+
+    const results: Array<{
+      chunkId: string;
+      chunkName: string;
+      noteName: string;
+      noteId: string;
+      topicName: string;
+      topicId: string;
+      reason: 'retired' | 'content_changed';
+      activeCount: number;
+      retiredCount: number;
+    }> = [];
+
+    for (const tc of trackedChunks) {
+      // Check content changed
+      if (
+        tc.contentUpdatedAt &&
+        tc.lastAttemptAt &&
+        tc.contentUpdatedAt > tc.lastAttemptAt
+      ) {
+        const [counts] = await dbClient
+          .select({
+            total: sql<number>`count(*)::int`,
+            retired: sql<number>`count(${recallItem.retiredAt})::int`,
+          })
+          .from(recallItem)
+          .where(
+            and(
+              eq(recallItem.chunkId, tc.chunkId),
+              eq(recallItem.userId, userId)
+            )
+          );
+        results.push({
+          chunkId: tc.chunkId,
+          chunkName: tc.chunkName,
+          noteName: tc.noteName,
+          noteId: tc.noteId,
+          topicName: tc.topicName,
+          topicId: tc.topicId,
+          reason: 'content_changed',
+          activeCount: (counts?.total ?? 0) - (counts?.retired ?? 0),
+          retiredCount: counts?.retired ?? 0,
+        });
+        continue;
+      }
+
+      // Check all questions retired
+      const [counts] = await dbClient
+        .select({
+          total: sql<number>`count(*)::int`,
+          retired: sql<number>`count(${recallItem.retiredAt})::int`,
+        })
+        .from(recallItem)
+        .where(
+          and(eq(recallItem.chunkId, tc.chunkId), eq(recallItem.userId, userId))
+        );
+
+      const total = counts?.total ?? 0;
+      const retired = counts?.retired ?? 0;
+      if (total > 0 && retired === total) {
+        results.push({
+          chunkId: tc.chunkId,
+          chunkName: tc.chunkName,
+          noteName: tc.noteName,
+          noteId: tc.noteId,
+          topicName: tc.topicName,
+          topicId: tc.topicId,
+          reason: 'retired',
+          activeCount: 0,
+          retiredCount: retired,
+        });
+      }
+    }
+    console.log(results);
+
+    return results;
+  }
+
+  async regenerateChunk(
+    chunkId: string,
+    userId: string,
+    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+  ) {
+    // Retire ALL existing non-retired recall items for this chunk
+    await dbClient
+      .update(recallItem)
+      .set({ retiredAt: new Date() })
+      .where(
+        and(
+          eq(recallItem.chunkId, chunkId),
+          eq(recallItem.userId, userId),
+          isNull(recallItem.retiredAt)
+        )
+      );
+
+    // Reset chunkTracking status to 'pending'
+    await dbClient
+      .update(chunkTracking)
+      .set({ status: 'pending', errorMessage: null })
+      .where(
+        and(
+          eq(chunkTracking.chunkId, chunkId),
+          eq(chunkTracking.userId, userId)
+        )
+      );
+
+    // Fire-and-forget: trigger question generation
+    const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
+    if (qgenEndpoint) {
+      fetch(`${qgenEndpoint}/generate/${chunkId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
+            'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
+          }),
+          'x-user-id': userId,
+          ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
+          ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
+          ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
+        },
+      }).catch((err) =>
+        this.logger.error(
+          `Fire-and-forget regeneration failed for chunk ${chunkId}: ${err}`
+        )
+      );
+    }
+
+    this.logger.log(`Regeneration triggered for chunk ${chunkId}`);
+    return { chunkId, status: 'regeneration_triggered' };
+  }
+
   async getDueCount(userId: string) {
     const now = new Date();
     const [result] = await dbClient
       .select({ count: sql<number>`count(*)::int` })
       .from(recallItem)
-      .where(and(eq(recallItem.userId, userId), lte(recallItem.due, now)));
+      .innerJoin(
+        chunkTracking,
+        and(
+          eq(recallItem.chunkId, chunkTracking.chunkId),
+          eq(recallItem.userId, chunkTracking.userId)
+        )
+      )
+      .where(
+        and(
+          eq(recallItem.userId, userId),
+          lte(recallItem.due, now),
+          isNull(recallItem.retiredAt),
+          ne(chunkTracking.status, 'untracked')
+        )
+      );
     return result?.count ?? 0;
   }
 }

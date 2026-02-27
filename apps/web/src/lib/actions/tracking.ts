@@ -116,7 +116,7 @@ export async function untrackChunk(
 export interface TrackingItem {
   id: string;
   chunkId: string;
-  status: 'pending' | 'generating' | 'ready' | 'failed';
+  status: 'pending' | 'generating' | 'ready' | 'failed' | 'untracked';
   errorMessage: string | null;
   retryCount: number;
   lastAttemptAt: string | null;
@@ -156,6 +156,44 @@ export async function retryAllFailedGenerations() {
 
   const aiHeaders = await getAiHeaders();
   const result = await fsrsServiceFetch('track/retry-all-failed', {
+    method: 'POST',
+    userId: loggedInUser.id,
+    headers: aiHeaders,
+  });
+
+  revalidatePath('/dashboard');
+  return result;
+}
+
+export interface OutdatedChunk {
+  chunkId: string;
+  chunkName: string;
+  noteName: string;
+  noteId: string;
+  topicName: string;
+  topicId: string;
+  reason: 'retired' | 'content_changed';
+  activeCount: number;
+  retiredCount: number;
+}
+
+export async function getOutdatedChunks(): Promise<OutdatedChunk[]> {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) return [];
+
+  const result = await fsrsServiceFetch<OutdatedChunk[]>('track/outdated', {
+    userId: loggedInUser.id,
+  });
+
+  return result ?? [];
+}
+
+export async function regenerateChunkQuestions(chunkId: string) {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) throw new Error('User not logged in');
+
+  const aiHeaders = await getAiHeaders();
+  const result = await fsrsServiceFetch(`track/regenerate/${chunkId}`, {
     method: 'POST',
     userId: loggedInUser.id,
     headers: aiHeaders,

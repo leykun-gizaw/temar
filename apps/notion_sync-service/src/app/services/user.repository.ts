@@ -143,7 +143,7 @@ export class UserRepository {
   ) {
     return dbClient
       .update(chunk)
-      .set({ contentJson, contentMd })
+      .set({ contentJson, contentMd, contentUpdatedAt: new Date() })
       .where(eq(chunk.id, entityId));
   }
 

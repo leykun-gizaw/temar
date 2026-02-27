@@ -136,11 +136,20 @@ export class ScheduleController {
       throw new NotFoundException(`Recall item ${id} not found`);
     }
 
+    const elapsed_days = item.lastReview
+      ? Math.max(
+          0,
+          Math.floor(
+            (Date.now() - new Date(item.lastReview).getTime()) / 86_400_000
+          )
+        )
+      : 0;
+
     const cardInput = {
       due: item.due,
       stability: item.stability,
       difficulty: item.difficulty,
-      elapsed_days: item.elapsedDays,
+      elapsed_days,
       scheduled_days: item.scheduledDays,
       reps: item.reps,
       lapses: item.lapses,

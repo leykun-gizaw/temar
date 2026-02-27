@@ -33,7 +33,6 @@ export const recallItem = pgTable('recall_item', {
     .default(sql`now()`),
   stability: real('stability').notNull().default(0),
   difficulty: real('difficulty').notNull().default(0),
-  elapsedDays: integer('elapsed_days').notNull().default(0),
   scheduledDays: integer('scheduled_days').notNull().default(0),
   reps: integer('reps').notNull().default(0),
   lapses: integer('lapses').notNull().default(0),
@@ -43,10 +42,31 @@ export const recallItem = pgTable('recall_item', {
     .notNull()
     .default(sql`now()`),
   generationBatchId: uuid('generation_batch_id'),
+  retiredAt: timestamp('retired_at', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .default(sql`now()`)
     .$onUpdate(() => new Date()),
+});
+
+export const question = pgTable('question', {
+  id: uuid('id')
+    .default(sql`gen_random_uuid()`)
+    .primaryKey(),
+  chunkId: uuid('chunk_id')
+    .notNull()
+    .references(() => chunk.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  title: text('title'),
+  body: text('body').notNull(),
+  rubric: jsonb('rubric'),
+  generationBatchId: uuid('generation_batch_id'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .notNull()
+    .default(sql`now()`),
+  retiredAt: timestamp('retired_at', { withTimezone: true }),
 });
 
 export const reviewLog = pgTable('review_log', {
@@ -78,6 +98,7 @@ export const chunkTrackingStatusEnum = pgEnum('chunk_tracking_status', [
   'generating',
   'ready',
   'failed',
+  'untracked',
 ]);
 
 export const chunkTracking = pgTable(

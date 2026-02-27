@@ -1,4 +1,4 @@
-import { jsonb } from 'drizzle-orm/pg-core';
+import { jsonb, timestamp } from 'drizzle-orm/pg-core';
 import { text, uuid } from 'drizzle-orm/pg-core';
 import { pgTable } from 'drizzle-orm/pg-core';
 import { user } from './auth-schema';
@@ -33,4 +33,5 @@ export const chunk = pgTable('chunk', {
   description: text('description').notNull(),
   contentJson: jsonb('content_json'),
   contentMd: text('content_markdown'),
+  contentUpdatedAt: timestamp('content_updated_at', { withTimezone: true }),
 });

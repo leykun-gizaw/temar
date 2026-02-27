@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { dbClient, recallItem, reviewLog } from '@temar/db-client';
+import { dbClient, recallItem, reviewLog, user } from '@temar/db-client';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { FsrsEngineService } from './fsrs-engine.service';
 import type { Grade } from 'ts-fsrs';
@@ -17,7 +17,20 @@ export class ReviewService {
     answerJson?: unknown
   ) {
     const [item] = await dbClient
-      .select()
+      .select({
+        id: recallItem.id,
+        chunkId: recallItem.chunkId,
+        userId: recallItem.userId,
+        state: recallItem.state,
+        due: recallItem.due,
+        stability: recallItem.stability,
+        difficulty: recallItem.difficulty,
+        scheduledDays: recallItem.scheduledDays,
+        reps: recallItem.reps,
+        lapses: recallItem.lapses,
+        learningSteps: recallItem.learningSteps,
+        lastReview: recallItem.lastReview,
+      })
       .from(recallItem)
       .where(eq(recallItem.id, recallItemId))
       .limit(1);
@@ -26,11 +39,20 @@ export class ReviewService {
       throw new NotFoundException(`Recall item ${recallItemId} not found`);
     }
 
+    const elapsed_days = item.lastReview
+      ? Math.max(
+          0,
+          Math.floor(
+            (Date.now() - new Date(item.lastReview).getTime()) / 86_400_000
+          )
+        )
+      : 0;
+
     const cardInput = {
       due: item.due,
       stability: item.stability,
       difficulty: item.difficulty,
-      elapsed_days: item.elapsedDays,
+      elapsed_days,
       scheduled_days: item.scheduledDays,
       reps: item.reps,
       lapses: item.lapses,
@@ -51,7 +73,6 @@ export class ReviewService {
           due: nextCard.due,
           stability: nextCard.stability,
           difficulty: nextCard.difficulty,
-          elapsedDays: nextCard.elapsed_days,
           scheduledDays: nextCard.scheduled_days,
           reps: nextCard.reps,
           lapses: nextCard.lapses,
@@ -79,6 +100,27 @@ export class ReviewService {
       `Review submitted for ${recallItemId}: rating=${rating}, next due=${nextCard.due}`
     );
 
+    // Check if the question should be retired after N reviews
+    let retired = false;
+    if (nextCard.reps > 0) {
+      const [userRow] = await dbClient
+        .select({ maxQuestionReviews: user.maxQuestionReviews })
+        .from(user)
+        .where(eq(user.id, item.userId))
+        .limit(1);
+      const limit = userRow?.maxQuestionReviews ?? 5;
+      if (nextCard.reps >= limit) {
+        await dbClient
+          .update(recallItem)
+          .set({ retiredAt: new Date() })
+          .where(eq(recallItem.id, recallItemId));
+        retired = true;
+        this.logger.log(
+          `Retired recall item ${recallItemId} after ${nextCard.reps} reviews (limit: ${limit})`
+        );
+      }
+    }
+
     return {
       recallItemId,
       rating,
@@ -88,6 +130,7 @@ export class ReviewService {
       difficulty: nextCard.difficulty,
       reps: nextCard.reps,
       lapses: nextCard.lapses,
+      retired,
     };
   }
 

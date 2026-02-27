@@ -14,6 +14,7 @@ export async function fsrsServiceFetch<T = unknown>(
 
   if (!baseUrl) throw new Error('FSRS_SERVICE_API_ENDPOINT not configured');
 
+  console.log(`${baseUrl}/${path}`);
   const res = await fetch(`${baseUrl}/${path}`, {
     method: options?.method ?? 'GET',
     headers: {
