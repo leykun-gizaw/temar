@@ -139,6 +139,7 @@ export async function createTopic(
         description:
           topicPage.properties.Description.rich_text[0]?.plain_text ??
           description,
+        createdAt: new Date(topicPage.created_time),
         userId: loggedInUser.id,
       });
 
@@ -150,6 +151,7 @@ export async function createTopic(
         name: notePage.properties.Name.title[0]?.plain_text ?? '',
         description:
           notePage.properties.Description.rich_text[0]?.plain_text ?? '',
+        createdAt: new Date(topicPage.created_time),
         userId: loggedInUser.id,
       });
 
@@ -163,6 +165,7 @@ export async function createTopic(
           chunkPage.properties.Description.rich_text[0]?.plain_text ?? '',
         contentJson: chunkContent.results,
         contentMd: chunkContent.contentMd,
+        createdAt: new Date(topicPage.created_time),
         userId: loggedInUser.id,
       });
     });

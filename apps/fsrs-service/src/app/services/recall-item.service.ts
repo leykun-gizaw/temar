@@ -325,6 +325,8 @@ export class RecallItemService {
         chunkId: recallItem.chunkId,
         state: recallItem.state,
         due: recallItem.due,
+        chunkContentUpdatedAt: chunk.contentUpdatedAt,
+        chunkContentCreatedAt: chunk.createdAt,
         stability: recallItem.stability,
         difficulty: recallItem.difficulty,
         scheduledDays: recallItem.scheduledDays,
@@ -357,13 +359,14 @@ export class RecallItemService {
         and(
           eq(recallItem.userId, userId),
           lte(recallItem.due, now),
-          isNull(recallItem.retiredAt),
+          // isNull(recallItem.retiredAt),
           ne(chunkTracking.status, 'untracked')
         )
       )
       .orderBy(recallItem.due)
       .limit(limit)
       .$dynamic();
+    console.log((await query).length);
 
     if (options?.topicId) {
       query = query.where(
@@ -657,7 +660,6 @@ export class RecallItemService {
         });
       }
     }
-    console.log(results);
 
     return results;
   }
