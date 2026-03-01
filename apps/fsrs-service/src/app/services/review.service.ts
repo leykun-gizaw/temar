@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { dbClient, recallItem, reviewLog, user } from '@temar/db-client';
+import { dbClient, recallItem, reviewLog } from '@temar/db-client';
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { FsrsEngineService } from './fsrs-engine.service';
 import type { Grade } from 'ts-fsrs';
@@ -99,39 +99,6 @@ export class ReviewService {
     this.logger.log(
       `Review submitted for ${recallItemId}: rating=${rating}, next due=${nextCard.due}`
     );
-
-    // Check if the question should be retired after N reviews
-    let retired = false;
-    if (nextCard.reps > 0) {
-      const [userRow] = await dbClient
-        .select({ maxQuestionReviews: user.maxQuestionReviews })
-        .from(user)
-        .where(eq(user.id, item.userId))
-        .limit(1);
-      const limit = userRow?.maxQuestionReviews ?? 5;
-      if (nextCard.reps >= limit) {
-        await dbClient
-          .update(recallItem)
-          .set({ retiredAt: new Date() })
-          .where(eq(recallItem.id, recallItemId));
-        retired = true;
-        this.logger.log(
-          `Retired recall item ${recallItemId} after ${nextCard.reps} reviews (limit: ${limit})`
-        );
-      }
-    }
-
-    return {
-      recallItemId,
-      rating,
-      nextState: nextCard.state,
-      nextDue: nextCard.due,
-      stability: nextCard.stability,
-      difficulty: nextCard.difficulty,
-      reps: nextCard.reps,
-      lapses: nextCard.lapses,
-      retired,
-    };
   }
 
   async getReviewHistory(recallItemId: string) {

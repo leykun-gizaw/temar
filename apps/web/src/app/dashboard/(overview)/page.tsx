@@ -57,7 +57,7 @@ export default async function Page() {
         dueItems={dueItems}
         className="col-start-1 col-end-2 row-start-1 row-end-2"
       />
-      <div className="flex gap-4 justify-between col-start-2 col-end-6 row-start-1 row-end-2">
+      <div className="flex gap-4 justify-between col-start-2 col-end-5 row-start-1 row-end-2">
         <TopicStats
           topicsCount={topicsCount}
           trackedCount={trackedItems.length}
@@ -87,10 +87,13 @@ export default async function Page() {
         className="col-start-1 col-end-5 row-start-4 row-end-5"
       />
       <div className="col-start-5 col-end-6 row-start-4 row-end-5">
-        <OutdatedQuestionsCard initialChunks={outdatedChunks} />
+        <OutdatedQuestionsCard
+          initialChunks={outdatedChunks}
+          className="h-full"
+        />
       </div>
 
-      <div className="flex-1 min-h-0 lg:row-span-2">
+      <div className="flex-1 min-h-0 lg:row-span-3">
         <ScheduleCard dueCount={dueCount}>
           <Calendar events={calendarEvents}>
             <div className="p-4 h-full min-h-0">

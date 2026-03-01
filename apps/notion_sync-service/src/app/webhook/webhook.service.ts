@@ -162,6 +162,7 @@ export class WebhookService {
       client,
       chunkPage.page.id
     );
+    const now = new Date();
 
     await this.userRepository.insertTopicWithCascade(
       {
@@ -172,6 +173,7 @@ export class WebhookService {
         name: context.name,
         description: context.description,
         userId: context.userId,
+        createdAt: now,
       },
       {
         id: notePage.page.id,
@@ -181,6 +183,7 @@ export class WebhookService {
         name: notePage.name,
         description: notePage.description,
         userId: context.userId,
+        createdAt: now,
       },
       {
         id: chunkPage.page.id,
@@ -191,6 +194,7 @@ export class WebhookService {
         description: chunkPage.description,
         contentJson: chunkContent.results,
         userId: context.userId,
+        createdAt: now,
       }
     );
 
@@ -213,6 +217,7 @@ export class WebhookService {
       client,
       chunkPage.page.id
     );
+    const now = new Date();
 
     await this.userRepository.insertNoteWithChunk(
       {
@@ -223,6 +228,7 @@ export class WebhookService {
         name: context.name,
         description: context.description,
         userId: context.userId,
+        createdAt: now,
       },
       {
         id: chunkPage.page.id,
@@ -233,6 +239,7 @@ export class WebhookService {
         description: chunkPage.description,
         contentJson: chunkContent.results,
         userId: context.userId,
+        createdAt: now,
       }
     );
 
@@ -417,6 +424,7 @@ export class WebhookService {
       description: context.description,
       contentJson: chunkContent.results,
       userId: context.userId,
+      createdAt: new Date(),
     });
 
     this.logger.log(`Chunk inserted: ${context.pageId}`);

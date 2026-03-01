@@ -17,14 +17,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { RefreshCw, AlertTriangle, FileEdit, Loader2 } from 'lucide-react';
+import {
+  RefreshCw,
+  AlertTriangle,
+  FileEdit,
+  Loader2,
+  SquareArrowOutUpRight,
+} from 'lucide-react';
 import type { OutdatedChunk } from '@/lib/actions/tracking';
 import { regenerateChunkQuestions } from '@/lib/actions/tracking';
+import clsx from 'clsx';
+import Link from 'next/link';
 
 export default function OutdatedQuestionsCard({
   initialChunks,
+  className,
 }: {
   initialChunks: OutdatedChunk[];
+  className?: string;
 }) {
   const [chunks, setChunks] = useState(initialChunks);
   const [regeneratingIds, setRegeneratingIds] = useState<Set<string>>(
@@ -34,19 +44,34 @@ export default function OutdatedQuestionsCard({
 
   if (chunks.length === 0) {
     return (
-      <Card className="shadow-none">
+      <Card className={clsx('shadow-none', className)}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
             <AlertTriangle className="h-4 w-4 text-green-500" />
-            Outdated Questions
+            Outdated Chunks
           </CardTitle>
           <CardDescription className="text-xs">
-            No outdated questions found
+            No outdated chunks found
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8 text-muted-foreground">
-            <p>No outdated questions found</p>
+        <CardContent className="flex-1">
+          <div className="text-xs border border-dashed h-full flex flex-col gap-2 items-center justify-center p-8 text-center text-muted-foreground">
+            <p>No chunks outdated or associated recall items outdated</p>
+            <span className="text-center">
+              To learn more about outdated chunks and retired recall items,{' '}
+              <Link
+                href="https://temar.leyk14.com/docs/tracking#outdated-chunks"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline text-primary"
+              >
+                click here
+                <SquareArrowOutUpRight
+                  className="inline align-middle"
+                  size={12}
+                />
+              </Link>
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -78,15 +103,15 @@ export default function OutdatedQuestionsCard({
   };
 
   return (
-    <Card className="shadow-none flex flex-col h-full">
+    <Card className={clsx('shadow-none flex flex-col', className)}>
       <CardHeader className="pb-2 border-b">
         <CardTitle className="flex items-center gap-2 text-sm">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
-          Outdated Questions
+          Outdated Chunks
         </CardTitle>
         <CardDescription className="text-xs">
           {chunks.length} chunk{chunks.length !== 1 ? 's' : ''} need
-          {chunks.length === 1 ? 's' : ''} new questions
+          {chunks.length === 1 ? 's' : ''} user attention
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto flex flex-col gap-2">

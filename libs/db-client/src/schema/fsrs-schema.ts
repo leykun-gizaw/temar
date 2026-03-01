@@ -42,31 +42,39 @@ export const recallItem = pgTable('recall_item', {
     .notNull()
     .default(sql`now()`),
   generationBatchId: uuid('generation_batch_id'),
-  retiredAt: timestamp('retired_at', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .default(sql`now()`)
     .$onUpdate(() => new Date()),
 });
 
-export const question = pgTable('question', {
-  id: uuid('id')
-    .default(sql`gen_random_uuid()`)
-    .primaryKey(),
+export const recallItemArchive = pgTable('recall_item_archive', {
+  id: uuid('id').primaryKey(),
   chunkId: uuid('chunk_id')
     .notNull()
     .references(() => chunk.id, { onDelete: 'cascade' }),
   userId: uuid('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  title: text('title'),
-  body: text('body').notNull(),
-  rubric: jsonb('rubric'),
-  generationBatchId: uuid('generation_batch_id'),
-  createdAt: timestamp('created_at', { withTimezone: true })
+  questionTitle: text('question_title'),
+  questionText: text('question_text'),
+  answerRubric: jsonb('answer_rubric'),
+  state: smallint('state').notNull(),
+  due: timestamp('due', { withTimezone: true }).notNull(),
+  stability: real('stability').notNull(),
+  difficulty: real('difficulty').notNull(),
+  scheduledDays: integer('scheduled_days').notNull(),
+  reps: integer('reps').notNull(),
+  lapses: integer('lapses').notNull(),
+  learningSteps: integer('learning_steps').notNull(),
+  lastReview: timestamp('last_review', { withTimezone: true }),
+  archivedAt: timestamp('archived_at', { withTimezone: true })
     .notNull()
     .default(sql`now()`),
+  generationBatchId: uuid('generation_batch_id'),
   retiredAt: timestamp('retired_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
 });
 
 export const reviewLog = pgTable('review_log', {

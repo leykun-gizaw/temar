@@ -42,7 +42,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       collapsible="none"
-      className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r bg-sidebar-accent"
+      className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
     >
       <SidebarHeader>
         <SidebarMenu>

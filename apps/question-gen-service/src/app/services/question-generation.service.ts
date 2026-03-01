@@ -6,7 +6,6 @@ import {
   note,
   topic,
   chunkTracking,
-  question,
 } from '@temar/db-client';
 import { eq, and, sql } from 'drizzle-orm';
 import { LlmService, AiConfig } from './llm.service';
@@ -150,6 +149,7 @@ export class QuestionGenerationService {
       // Create recall items for each question
       const batchId = uuidv4();
       const card = createEmptyCard();
+      const generatedAt = new Date();
 
       const recallItemValues = questions.map((q) => ({
         chunkId,
@@ -167,6 +167,7 @@ export class QuestionGenerationService {
         lapses: card.lapses,
         learningSteps: card.learning_steps,
         lastReview: card.last_review ?? null,
+        createdAt: generatedAt,
       }));
 
       const inserted = await dbClient
@@ -175,33 +176,13 @@ export class QuestionGenerationService {
         .returning({ id: recallItem.id })
         .onConflictDoNothing();
 
-      // Write to question bank for AI CRUD operations (non-blocking)
-      try {
-        const questionBankValues = questions.map((q) => ({
-          chunkId,
-          userId,
-          title: q.title,
-          body: q.question,
-          rubric: q.rubric,
-          generationBatchId: batchId,
-        }));
-        await dbClient
-          .insert(question)
-          .values(questionBankValues)
-          .onConflictDoNothing();
-      } catch (qErr) {
-        this.logger.warn(
-          `Question bank write failed for chunk ${chunkId} (non-fatal): ${qErr}`
-        );
-      }
-
       // Update tracking status to 'ready' and clear error fields
       await dbClient
         .update(chunkTracking)
         .set({
           status: 'ready',
           errorMessage: null,
-          lastAttemptAt: new Date(),
+          lastAttemptAt: generatedAt,
         })
         .where(
           and(

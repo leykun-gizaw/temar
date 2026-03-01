@@ -6,8 +6,10 @@ import {
   note,
   topic,
   chunkTracking,
+  user,
+  recallItemArchive,
 } from '@temar/db-client';
-import { eq, ne, and, lte, isNull, sql } from 'drizzle-orm';
+import { eq, ne, and, lte, sql, count } from 'drizzle-orm';
 
 @Injectable()
 export class RecallItemService {
@@ -230,7 +232,6 @@ export class RecallItemService {
       .where(
         and(
           eq(recallItem.userId, userId),
-          isNull(recallItem.retiredAt),
           ne(chunkTracking.status, 'untracked')
         )
       )
@@ -251,7 +252,6 @@ export class RecallItemService {
       .where(
         and(
           eq(recallItem.userId, userId),
-          isNull(recallItem.retiredAt),
           ne(chunkTracking.status, 'untracked')
         )
       );
@@ -297,7 +297,6 @@ export class RecallItemService {
       .where(
         and(
           eq(recallItem.userId, userId),
-          isNull(recallItem.retiredAt),
           ne(chunkTracking.status, 'untracked')
         )
       )
@@ -359,21 +358,18 @@ export class RecallItemService {
         and(
           eq(recallItem.userId, userId),
           lte(recallItem.due, now),
-          // isNull(recallItem.retiredAt),
           ne(chunkTracking.status, 'untracked')
         )
       )
       .orderBy(recallItem.due)
       .limit(limit)
       .$dynamic();
-    console.log((await query).length);
 
     if (options?.topicId) {
       query = query.where(
         and(
           eq(recallItem.userId, userId),
           lte(recallItem.due, now),
-          isNull(recallItem.retiredAt),
           ne(chunkTracking.status, 'untracked'),
           eq(topic.id, options.topicId)
         )
@@ -385,7 +381,6 @@ export class RecallItemService {
         and(
           eq(recallItem.userId, userId),
           lte(recallItem.due, now),
-          isNull(recallItem.retiredAt),
           ne(chunkTracking.status, 'untracked'),
           eq(note.id, options.noteId)
         )
@@ -539,7 +534,6 @@ export class RecallItemService {
       .where(
         and(
           eq(recallItem.userId, userId),
-          isNull(recallItem.retiredAt),
           ne(chunkTracking.status, 'untracked'),
           sql`(${recallItem.lapses} >= ${minLapses} OR (${recallItem.stability} < ${maxStability} AND ${recallItem.reps} >= 1))`
         )
@@ -602,6 +596,15 @@ export class RecallItemService {
 
     for (const tc of trackedChunks) {
       // Check content changed
+      const [loggedInUser] = await dbClient
+        .select({
+          max_question_reviews: user.maxQuestionReviews,
+          name: user.name,
+        })
+        .from(user)
+        .where(eq(user.id, userId))
+        .limit(1);
+
       if (
         tc.contentUpdatedAt &&
         tc.lastAttemptAt &&
@@ -609,8 +612,8 @@ export class RecallItemService {
       ) {
         const [counts] = await dbClient
           .select({
-            total: sql<number>`count(*)::int`,
-            retired: sql<number>`count(${recallItem.retiredAt})::int`,
+            total: count(),
+            retired: sql<number>`count(*) filter (where ${recallItem.reps} >= ${loggedInUser.max_question_reviews})::int`,
           })
           .from(recallItem)
           .where(
@@ -634,12 +637,16 @@ export class RecallItemService {
       }
 
       // Check all questions retired
+
       const [counts] = await dbClient
         .select({
-          total: sql<number>`count(*)::int`,
-          retired: sql<number>`count(${recallItem.retiredAt})::int`,
+          total: count(),
+          retired: sql<number>`count(*) filter (where ${recallItem.reps} >= ${loggedInUser.max_question_reviews})::int`,
+          name: chunk.name,
         })
         .from(recallItem)
+        .innerJoin(chunk, eq(chunk.id, recallItem.chunkId))
+        .groupBy(chunk.name)
         .where(
           and(eq(recallItem.chunkId, tc.chunkId), eq(recallItem.userId, userId))
         );
@@ -670,15 +677,26 @@ export class RecallItemService {
     aiConfig?: { provider?: string; model?: string; apiKey?: string }
   ) {
     // Retire ALL existing non-retired recall items for this chunk
-    await dbClient
-      .update(recallItem)
-      .set({ retiredAt: new Date() })
+    const now = new Date();
+    const oldRecallItems = await dbClient
+      .select()
+      .from(recallItem)
       .where(
-        and(
-          eq(recallItem.chunkId, chunkId),
-          eq(recallItem.userId, userId),
-          isNull(recallItem.retiredAt)
-        )
+        and(eq(recallItem.chunkId, chunkId), eq(recallItem.userId, userId))
+      );
+
+    // archive old recall items
+    await dbClient.insert(recallItemArchive).values(
+      oldRecallItems.map((oldRecallItem) => ({
+        ...oldRecallItem,
+        retiredAt: now,
+      }))
+    );
+
+    await dbClient
+      .delete(recallItem)
+      .where(
+        and(eq(recallItem.chunkId, chunkId), eq(recallItem.userId, userId))
       );
 
     // Reset chunkTracking status to 'pending'
@@ -734,7 +752,6 @@ export class RecallItemService {
         and(
           eq(recallItem.userId, userId),
           lte(recallItem.due, now),
-          isNull(recallItem.retiredAt),
           ne(chunkTracking.status, 'untracked')
         )
       );
