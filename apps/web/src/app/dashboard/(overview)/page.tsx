@@ -72,13 +72,16 @@ export default async function Page() {
         <ReviewItemStats dueCount={dueCount} className="flex-1" />
       </div>
 
+      <div className="col-start-1 col-span-2 row-start-2 row-span-2">
+        <OutdatedQuestionsCard
+          initialChunks={outdatedChunks}
+          className="h-full"
+        />
+      </div>
+
       <UnderperformingChunksCard
         initialChunks={underperformingChunks}
         className="col-start-3 col-end-5 row-start-2 row-end-4"
-      />
-      <GenerationQueueCard
-        initialItems={trackedItems}
-        className="col-start-1 col-end-3 row-start-2 row-end-4"
       />
 
       <ReviewsTableCard
@@ -86,12 +89,10 @@ export default async function Page() {
         total={allItemsResult.total}
         className="col-start-1 col-end-5 row-start-4 row-end-5"
       />
-      <div className="col-start-5 col-end-6 row-start-4 row-end-5">
-        <OutdatedQuestionsCard
-          initialChunks={outdatedChunks}
-          className="h-full"
-        />
-      </div>
+      <GenerationQueueCard
+        initialItems={trackedItems}
+        className="col-start-5 col-end-6 row-start-4 row-end-5"
+      />
 
       <div className="flex-1 min-h-0 lg:row-span-3">
         <ScheduleCard dueCount={dueCount}>
