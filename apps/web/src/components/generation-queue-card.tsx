@@ -69,6 +69,11 @@ const STATUS_CONFIG: Record<
     variant: 'destructive',
     icon: <AlertTriangle className="h-3 w-3" />,
   },
+  untracked: {
+    label: 'Untracked',
+    variant: 'outline',
+    icon: <Clock className="h-3 w-3" />,
+  },
 };
 
 export default function GenerationQueueCard({
@@ -133,7 +138,36 @@ export default function GenerationQueueCard({
     });
   };
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return (
+      <Card
+        className={clsx(
+          'shadow-none flex-1 h-full min-h-0 overflow-hidden col-span-2',
+          className
+        )}
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Zap className="h-4 w-4" />
+            Question Generation
+          </CardTitle>
+          <CardDescription>Getting Started</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              No chunks are being tracked yet.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Navigate to a topic, note, or chunk and click{' '}
+              <span className="font-medium">&ldquo;Track&rdquo;</span> to start
+              generating recall questions.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card

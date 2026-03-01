@@ -1,4 +1,4 @@
-import { jsonb } from 'drizzle-orm/pg-core';
+import { jsonb, timestamp } from 'drizzle-orm/pg-core';
 import { text, uuid } from 'drizzle-orm/pg-core';
 import { pgTable } from 'drizzle-orm/pg-core';
 import { user } from './auth-schema';
@@ -11,6 +11,7 @@ export const topic = pgTable('topic', {
   datasourceId: uuid('datasource_id').notNull(),
   name: text('name').notNull(),
   description: text('description').notNull(),
+  createdAt: timestamp('created_at'),
 });
 
 export const note = pgTable('note', {
@@ -21,6 +22,7 @@ export const note = pgTable('note', {
   datasourceId: uuid('datasource_id').notNull(),
   name: text('name').notNull(),
   description: text('description').notNull(),
+  createdAt: timestamp('created_at'),
 });
 
 export const chunk = pgTable('chunk', {
@@ -33,4 +35,6 @@ export const chunk = pgTable('chunk', {
   description: text('description').notNull(),
   contentJson: jsonb('content_json'),
   contentMd: text('content_markdown'),
+  contentUpdatedAt: timestamp('content_updated_at', { withTimezone: true }),
+  createdAt: timestamp('created_at'),
 });

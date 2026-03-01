@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import clsx from 'clsx';
 import { Notebook } from 'lucide-react';
 
@@ -9,7 +10,7 @@ export function NoteStats({
   className?: string;
 }) {
   return (
-    <div
+    <Card
       className={clsx('flex flex-col gap-1 p-3 rounded-xl border', className)}
     >
       <div className="flex justify-between items-center">
@@ -22,6 +23,6 @@ export function NoteStats({
       <span className="text-[11px] text-muted-foreground">
         {notesCount} total
       </span>
-    </div>
+    </Card>
   );
 }

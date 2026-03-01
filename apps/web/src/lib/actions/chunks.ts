@@ -118,6 +118,7 @@ export async function createChunk(
         description,
       contentJson: chunkContent.results,
       contentMd: chunkContent.contentMd,
+      createdAt: new Date(chunkPage.created_time),
       userId: loggedInUser.id,
     });
 

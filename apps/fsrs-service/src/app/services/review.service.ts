@@ -17,7 +17,20 @@ export class ReviewService {
     answerJson?: unknown
   ) {
     const [item] = await dbClient
-      .select()
+      .select({
+        id: recallItem.id,
+        chunkId: recallItem.chunkId,
+        userId: recallItem.userId,
+        state: recallItem.state,
+        due: recallItem.due,
+        stability: recallItem.stability,
+        difficulty: recallItem.difficulty,
+        scheduledDays: recallItem.scheduledDays,
+        reps: recallItem.reps,
+        lapses: recallItem.lapses,
+        learningSteps: recallItem.learningSteps,
+        lastReview: recallItem.lastReview,
+      })
       .from(recallItem)
       .where(eq(recallItem.id, recallItemId))
       .limit(1);
@@ -26,11 +39,20 @@ export class ReviewService {
       throw new NotFoundException(`Recall item ${recallItemId} not found`);
     }
 
+    const elapsed_days = item.lastReview
+      ? Math.max(
+          0,
+          Math.floor(
+            (Date.now() - new Date(item.lastReview).getTime()) / 86_400_000
+          )
+        )
+      : 0;
+
     const cardInput = {
       due: item.due,
       stability: item.stability,
       difficulty: item.difficulty,
-      elapsed_days: item.elapsedDays,
+      elapsed_days,
       scheduled_days: item.scheduledDays,
       reps: item.reps,
       lapses: item.lapses,
@@ -51,7 +73,6 @@ export class ReviewService {
           due: nextCard.due,
           stability: nextCard.stability,
           difficulty: nextCard.difficulty,
-          elapsedDays: nextCard.elapsed_days,
           scheduledDays: nextCard.scheduled_days,
           reps: nextCard.reps,
           lapses: nextCard.lapses,
@@ -78,17 +99,6 @@ export class ReviewService {
     this.logger.log(
       `Review submitted for ${recallItemId}: rating=${rating}, next due=${nextCard.due}`
     );
-
-    return {
-      recallItemId,
-      rating,
-      nextState: nextCard.state,
-      nextDue: nextCard.due,
-      stability: nextCard.stability,
-      difficulty: nextCard.difficulty,
-      reps: nextCard.reps,
-      lapses: nextCard.lapses,
-    };
   }
 
   async getReviewHistory(recallItemId: string) {

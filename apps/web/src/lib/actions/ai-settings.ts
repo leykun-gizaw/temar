@@ -11,12 +11,18 @@ export type AiSettings = {
   provider: AiProvider | null;
   model: string | null;
   hasApiKey: boolean;
+  maxQuestionReviews: number;
 };
 
 export async function getAiSettings(): Promise<AiSettings> {
   const sessionUser = await getLoggedInUser();
   if (!sessionUser) {
-    return { provider: null, model: null, hasApiKey: false };
+    return {
+      provider: null,
+      model: null,
+      hasApiKey: false,
+      maxQuestionReviews: 5,
+    };
   }
 
   const [row] = await dbClient
@@ -24,19 +30,26 @@ export async function getAiSettings(): Promise<AiSettings> {
       aiProvider: user.aiProvider,
       aiModel: user.aiModel,
       aiApiKeyEncrypted: user.aiApiKeyEncrypted,
+      maxQuestionReviews: user.maxQuestionReviews,
     })
     .from(user)
     .where(eq(user.id, sessionUser.id))
     .limit(1);
 
   if (!row) {
-    return { provider: null, model: null, hasApiKey: false };
+    return {
+      provider: null,
+      model: null,
+      hasApiKey: false,
+      maxQuestionReviews: 5,
+    };
   }
 
   return {
     provider: (row.aiProvider as AiProvider) ?? null,
     model: row.aiModel ?? null,
     hasApiKey: !!row.aiApiKeyEncrypted,
+    maxQuestionReviews: row.maxQuestionReviews ?? 5,
   };
 }
 
@@ -73,6 +86,28 @@ export async function saveAiSettings(
   }
 }
 
+export async function saveMaxQuestionReviews(
+  value: number
+): Promise<{ success: boolean; error?: string }> {
+  const sessionUser = await getLoggedInUser();
+  if (!sessionUser) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  try {
+    await dbClient
+      .update(user)
+      .set({ maxQuestionReviews: Math.max(1, Math.floor(value)) })
+      .where(eq(user.id, sessionUser.id));
+
+    revalidatePath('/dashboard/settings');
+    return { success: true };
+  } catch (err) {
+    console.error('Failed to save max question reviews:', err);
+    return { success: false, error: 'Failed to save setting' };
+  }
+}
+
 export async function clearAiApiKey(): Promise<{
   success: boolean;
   error?: string;
@@ -101,8 +136,7 @@ export async function clearAiApiKey(): Promise<{
  * NEVER expose this to the client — only use in other server actions.
  */
 export async function getUserAiConfig(): Promise<
-  | { provider: string; model: string; apiKey: string }
-  | undefined
+  { provider: string; model: string; apiKey: string } | undefined
 > {
   const sessionUser = await getLoggedInUser();
   if (!sessionUser) return undefined;

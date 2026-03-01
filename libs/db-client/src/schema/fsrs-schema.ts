@@ -33,7 +33,6 @@ export const recallItem = pgTable('recall_item', {
     .default(sql`now()`),
   stability: real('stability').notNull().default(0),
   difficulty: real('difficulty').notNull().default(0),
-  elapsedDays: integer('elapsed_days').notNull().default(0),
   scheduledDays: integer('scheduled_days').notNull().default(0),
   reps: integer('reps').notNull().default(0),
   lapses: integer('lapses').notNull().default(0),
@@ -47,6 +46,35 @@ export const recallItem = pgTable('recall_item', {
     .notNull()
     .default(sql`now()`)
     .$onUpdate(() => new Date()),
+});
+
+export const recallItemArchive = pgTable('recall_item_archive', {
+  id: uuid('id').primaryKey(),
+  chunkId: uuid('chunk_id')
+    .notNull()
+    .references(() => chunk.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  questionTitle: text('question_title'),
+  questionText: text('question_text'),
+  answerRubric: jsonb('answer_rubric'),
+  state: smallint('state').notNull(),
+  due: timestamp('due', { withTimezone: true }).notNull(),
+  stability: real('stability').notNull(),
+  difficulty: real('difficulty').notNull(),
+  scheduledDays: integer('scheduled_days').notNull(),
+  reps: integer('reps').notNull(),
+  lapses: integer('lapses').notNull(),
+  learningSteps: integer('learning_steps').notNull(),
+  lastReview: timestamp('last_review', { withTimezone: true }),
+  archivedAt: timestamp('archived_at', { withTimezone: true })
+    .notNull()
+    .default(sql`now()`),
+  generationBatchId: uuid('generation_batch_id'),
+  retiredAt: timestamp('retired_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
 });
 
 export const reviewLog = pgTable('review_log', {
@@ -78,6 +106,7 @@ export const chunkTrackingStatusEnum = pgEnum('chunk_tracking_status', [
   'generating',
   'ready',
   'failed',
+  'untracked',
 ]);
 
 export const chunkTracking = pgTable(

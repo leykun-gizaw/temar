@@ -8,7 +8,6 @@ export interface RecallItemDue {
   due: string;
   stability: number;
   difficulty: number;
-  elapsedDays: number;
   scheduledDays: number;
   reps: number;
   lapses: number;

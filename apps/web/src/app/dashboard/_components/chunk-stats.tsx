@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import clsx from 'clsx';
 import { Grid2X2 } from 'lucide-react';
 
@@ -11,7 +12,7 @@ export function ChunkStats({
   className?: string;
 }) {
   return (
-    <div
+    <Card
       className={clsx('flex flex-col gap-1 p-3 rounded-xl border', className)}
     >
       <div className="flex justify-between items-center">
@@ -24,6 +25,6 @@ export function ChunkStats({
       <span className="text-[11px] text-muted-foreground">
         {dueCount} due for review
       </span>
-    </div>
+    </Card>
   );
 }

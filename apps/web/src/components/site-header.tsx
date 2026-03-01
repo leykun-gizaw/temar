@@ -42,7 +42,7 @@ export function SiteHeader() {
   const router = useRouter();
 
   return (
-    <header className="bg-background/70 sticky top-0 z-50 h-12 flex shrink-0 items-center backdrop-blur-lg">
+    <header className="sticky top-0 z-50 h-12 flex shrink-0 items-center backdrop-blur-lg border-b">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <div className="flex items-center">
           <SidebarTrigger className="-ml-1" />

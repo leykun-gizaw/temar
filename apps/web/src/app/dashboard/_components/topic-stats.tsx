@@ -2,6 +2,7 @@
 
 import { Target, LibraryBigIcon } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Card } from '@/components/ui/card';
 
 export function TopicStats({
   topicsCount,
@@ -13,7 +14,7 @@ export function TopicStats({
   className?: string;
 }) {
   return (
-    <div
+    <Card
       className={clsx('flex flex-col gap-1 p-3 rounded-xl border', className)}
     >
       <div className="flex justify-between items-center">
@@ -27,6 +28,6 @@ export function TopicStats({
         <Target className="h-3 w-3" />
         {trackedCount} chunk{trackedCount !== 1 ? 's' : ''} tracked
       </span>
-    </div>
+    </Card>
   );
 }

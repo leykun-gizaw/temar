@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   uuid,
+  integer,
   index,
 } from 'drizzle-orm/pg-core';
 
@@ -30,6 +31,7 @@ export const user = pgTable('user', {
   aiProvider: text('ai_provider'),
   aiModel: text('ai_model'),
   aiApiKeyEncrypted: text('ai_api_key_encrypted'),
+  maxQuestionReviews: integer('max_question_reviews').notNull().default(5),
 });
 
 export const session = pgTable(

@@ -149,6 +149,7 @@ export class QuestionGenerationService {
       // Create recall items for each question
       const batchId = uuidv4();
       const card = createEmptyCard();
+      const generatedAt = new Date();
 
       const recallItemValues = questions.map((q) => ({
         chunkId,
@@ -161,12 +162,12 @@ export class QuestionGenerationService {
         due: card.due,
         stability: card.stability,
         difficulty: card.difficulty,
-        elapsedDays: card.elapsed_days,
         scheduledDays: card.scheduled_days,
         reps: card.reps,
         lapses: card.lapses,
         learningSteps: card.learning_steps,
         lastReview: card.last_review ?? null,
+        createdAt: generatedAt,
       }));
 
       const inserted = await dbClient
@@ -181,7 +182,7 @@ export class QuestionGenerationService {
         .set({
           status: 'ready',
           errorMessage: null,
-          lastAttemptAt: new Date(),
+          lastAttemptAt: generatedAt,
         })
         .where(
           and(

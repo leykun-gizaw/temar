@@ -126,6 +126,7 @@ export async function createNote(
         description:
           notePage.properties.Description.rich_text[0]?.plain_text ??
           description,
+        createdAt: new Date(notePage.created_time),
         userId: loggedInUser.id,
       });
 
@@ -139,6 +140,7 @@ export async function createNote(
           chunkPage.properties.Description.rich_text[0]?.plain_text ?? '',
         contentJson: chunkContent.results,
         contentMd: chunkContent.contentMd,
+        createdAt: new Date(notePage.created_time),
         userId: loggedInUser.id,
       });
     });

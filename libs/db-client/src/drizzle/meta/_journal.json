@@ -92,6 +92,27 @@
       "when": 1771668981457,
       "tag": "0012_fearless_midnight",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1772188380096,
+      "tag": "0013_greedy_madrox",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1772200793905,
+      "tag": "0014_wise_spiral",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1772403177274,
+      "tag": "0015_unknown_madripoor",
+      "breakpoints": true
     }
   ]
 }

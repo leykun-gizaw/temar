@@ -20,7 +20,11 @@ import {
 import { Loader2, Key, Sparkles, Trash2, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AiSettings, AiProvider } from '@/lib/actions/ai-settings';
-import { saveAiSettings, clearAiApiKey } from '@/lib/actions/ai-settings';
+import {
+  saveAiSettings,
+  clearAiApiKey,
+  saveMaxQuestionReviews,
+} from '@/lib/actions/ai-settings';
 
 const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
   {
@@ -58,6 +62,9 @@ export function AiSettingsForm({
   const [apiKey, setApiKey] = useState('');
   const [hasExistingKey, setHasExistingKey] = useState(
     initialSettings.hasApiKey
+  );
+  const [maxReviews, setMaxReviews] = useState(
+    initialSettings.maxQuestionReviews
   );
   const [isPending, startTransition] = useTransition();
 
@@ -120,129 +127,180 @@ export function AiSettingsForm({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5" />
-          AI Model Configuration
-        </CardTitle>
-        <CardDescription>
-          Choose your preferred AI provider and model for question generation.
-          If left as system default, the platform&apos;s built-in model will be
-          used.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Provider</label>
-          <Select
-            value={provider || 'system'}
-            onValueChange={handleProviderChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a provider" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="system">
-                System Default
-              </SelectItem>
-              {PROVIDERS.map((p) => (
-                <SelectItem key={p.value} value={p.value}>
-                  <div className="flex flex-col">
-                    <span>{p.label}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {p.description}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {provider && (
-          <>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Model</label>
-              <Select value={model} onValueChange={setModel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MODEL_OPTIONS[provider]?.map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                You can also type a custom model ID if it&apos;s not listed.
-              </p>
-              <Input
-                placeholder="Or enter a custom model ID..."
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-1.5">
-                <Key className="h-3.5 w-3.5" />
-                API Key
-              </label>
-              {hasExistingKey && !apiKey && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Shield className="h-3.5 w-3.5 text-green-500" />
-                  <span>API key is saved and encrypted</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearKey}
-                    disabled={isPending}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Remove
-                  </Button>
-                </div>
-              )}
-              <Input
-                type="password"
-                placeholder={
-                  hasExistingKey
-                    ? 'Enter new key to replace existing...'
-                    : 'Enter your API key...'
-                }
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                autoComplete="off"
-              />
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Shield className="h-3 w-3" />
-                Your API key is encrypted at rest using AES-256-GCM.
-              </p>
-            </div>
-          </>
-        )}
-
-        <div className="flex items-center gap-3 pt-2">
-          <Button onClick={handleSave} disabled={isPending}>
-            {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Save Settings
-          </Button>
-          {(provider || hasExistingKey) && (
-            <Button
-              variant="outline"
-              onClick={handleUseDefault}
-              disabled={isPending}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            AI Model Configuration
+          </CardTitle>
+          <CardDescription>
+            Choose your preferred AI provider and model for question generation.
+            If left as system default, the platform&apos;s built-in model will
+            be used.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Provider</label>
+            <Select
+              value={provider || 'system'}
+              onValueChange={handleProviderChange}
             >
-              Use System Default
-            </Button>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a provider" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="system">System Default</SelectItem>
+                {PROVIDERS.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    <div className="flex flex-col">
+                      <span>{p.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {p.description}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {provider && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Model</label>
+                <Select value={model} onValueChange={setModel}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MODEL_OPTIONS[provider]?.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  You can also type a custom model ID if it&apos;s not listed.
+                </p>
+                <Input
+                  placeholder="Or enter a custom model ID..."
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-1.5">
+                  <Key className="h-3.5 w-3.5" />
+                  API Key
+                </label>
+                {hasExistingKey && !apiKey && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Shield className="h-3.5 w-3.5 text-green-500" />
+                    <span>API key is saved and encrypted</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearKey}
+                      disabled={isPending}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Remove
+                    </Button>
+                  </div>
+                )}
+                <Input
+                  type="password"
+                  placeholder={
+                    hasExistingKey
+                      ? 'Enter new key to replace existing...'
+                      : 'Enter your API key...'
+                  }
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  autoComplete="off"
+                />
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  Your API key is encrypted at rest using AES-256-GCM.
+                </p>
+              </div>
+            </>
           )}
-        </div>
-      </CardContent>
-    </Card>
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button onClick={handleSave} disabled={isPending}>
+              {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Save Settings
+            </Button>
+            {(provider || hasExistingKey) && (
+              <Button
+                variant="outline"
+                onClick={handleUseDefault}
+                disabled={isPending}
+              >
+                Use System Default
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            Question Rotation
+          </CardTitle>
+          <CardDescription>
+            After a question has been reviewed this many times, it will be
+            retired and you&apos;ll be notified to regenerate fresh questions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Max reviews per question
+            </label>
+            <Input
+              type="number"
+              min={1}
+              max={100}
+              step={1}
+              value={maxReviews}
+              onChange={(e) =>
+                setMaxReviews(Math.max(1, parseInt(e.target.value) || 1))
+              }
+              className="w-32"
+            />
+            <p className="text-xs text-muted-foreground">
+              Questions will be retired after {maxReviews} review
+              {maxReviews !== 1 ? 's' : ''}. Default is 5.
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              startTransition(async () => {
+                const result = await saveMaxQuestionReviews(maxReviews);
+                if (result.success) {
+                  toast.success('Question rotation setting saved');
+                } else {
+                  toast.error(result.error ?? 'Failed to save');
+                }
+              });
+            }}
+            disabled={isPending}
+          >
+            {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            Save
+          </Button>
+        </CardContent>
+      </Card>
+    </>
   );
 }
