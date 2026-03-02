@@ -52,7 +52,7 @@ export default async function Page() {
   ]);
 
   return (
-    <div className="h-[calc(100svh-var(--header-height))] overflow-hidden flex flex-col lg:grid lg:grid-cols-[1fr_1fr_1fr_1fr_400px] lg:grid-rows-[auto_1fr_1fr_400px] gap-4 p-4">
+    <div className="h-[calc(100svh-var(--header-height))] overflow-hidden flex flex-col lg:grid lg:grid-cols-[1fr_1fr_1fr_1fr_400px] lg:grid-rows-[auto_1fr_1fr_1fr_300px] gap-4 p-4">
       <EventsSummary
         dueItems={dueItems}
         className="col-start-1 col-end-2 row-start-1 row-end-2"
@@ -87,14 +87,14 @@ export default async function Page() {
       <ReviewsTableCard
         items={allItemsResult.items}
         total={allItemsResult.total}
-        className="col-start-1 col-end-5 row-start-4 row-end-5"
+        className="col-start-1 col-end-5 row-start-4 row-end-6"
       />
       <GenerationQueueCard
         initialItems={trackedItems}
-        className="col-start-5 col-end-6 row-start-4 row-end-5"
+        className="col-start-5 col-end-6 row-start-5 row-end-6"
       />
 
-      <div className="flex-1 min-h-0 lg:row-span-3">
+      <div className="flex-1 min-h-0 lg:row-span-4">
         <ScheduleCard dueCount={dueCount}>
           <Calendar events={calendarEvents}>
             <div className="p-4 h-full min-h-0">

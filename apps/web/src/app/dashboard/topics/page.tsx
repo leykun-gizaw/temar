@@ -21,32 +21,26 @@ export default async function TopicsPage({
   if (!currentUser?.notionPageId) {
     const authUrl = process.env.NOTION_AUTHORIZATION_URL || '';
     return (
-      <div className="col-span-full flex flex-col p-6 h-full m-2">
-        <div className="flex items-end gap-2 space-y-1 border-b pb-4 mb-6">
-          <span className="text-5xl">📚</span>
-          <h1 className="text-2xl font-semibold mb-4">Topics</h1>
-        </div>
-        <div className="flex h-1/2 items-center justify-center">
-          <div className="shadow max-w-xl w-full h-fit bg-muted/5 rounded-lg p-6 text-center space-y-8">
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">
-                Connect your Notion workspace
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Connect to Notion to duplicate the Temar template and start
-                syncing topics and notes to your workspace.
-              </p>
-            </div>
-            <ConnectNotionButton
-              authUrl={authUrl}
-              trigger={
-                <Button size="sm">
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Connect to Notion
-                </Button>
-              }
-            />
+      <div className="col-span-full flex lg:mt-80 justify-center h-full">
+        <div className="shadow max-w-xl w-full h-fit border bg-muted/5 rounded-lg p-6 text-center space-y-8">
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold">
+              Connect your Notion workspace
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Connect to Notion to duplicate the Temar template and start
+              syncing topics and notes to your workspace.
+            </p>
           </div>
+          <ConnectNotionButton
+            authUrl={authUrl}
+            trigger={
+              <Button size="sm">
+                <Plus className="mr-1.5 h-4 w-4" />
+                Connect to Notion
+              </Button>
+            }
+          />
         </div>
       </div>
     );
