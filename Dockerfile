@@ -167,5 +167,4 @@ COPY libs/db-client/package.json ./
 RUN pnpm install
 COPY libs/db-client/src/drizzle ./src/drizzle
 COPY libs/db-client/drizzle.docker.config.ts ./drizzle.config.ts
-# CMD [ "ls", "-l", "/app/src/drizzle/meta" ]
 CMD [ "pnpm", "drizzle-kit", "migrate", "--config=drizzle.config.ts" ]
