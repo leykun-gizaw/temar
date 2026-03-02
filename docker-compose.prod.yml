@@ -24,8 +24,6 @@ services:
     restart: "no"
     env_file:
       - .env
-    command: >
-      sh -c "pnpm nx run db-client:generate && pnpm nx run db-client:migrate"
     depends_on:
       db:
         condition: service_healthy
