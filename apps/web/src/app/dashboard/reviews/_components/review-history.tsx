@@ -442,11 +442,11 @@ export default function ReviewHistory({
 
                 {/* Answer as markdown */}
                 <div>
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                     Your Answer
                   </h3>
                   {answerMarkdown ? (
-                    <div className="prose text-xs/6 text-muted-foreground dark:prose-invert max-w-none rounded-md border p-4 bg-muted/20">
+                    <div className="prose prose-sm dark:prose-invert max-w-none rounded-md border p-4 bg-muted/20">
                       <Markdown remarkPlugins={[remarkGfm]}>
                         {answerMarkdown}
                       </Markdown>
@@ -461,7 +461,7 @@ export default function ReviewHistory({
                 {/* Analysis results */}
                 {analysis && (
                   <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
                       <Sparkles className="h-3.5 w-3.5" />
                       Analysis Results
                     </h3>
@@ -487,14 +487,14 @@ export default function ReviewHistory({
                           </span>
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
                         {analysis.reasoning}
                       </p>
                       <div className="grid grid-cols-2 gap-3">
                         {analysis.strengths &&
                           analysis.strengths.length > 0 && (
                             <div>
-                              <h4 className="text-[12px] font-semibold text-green-600 dark:text-green-400 mb-1 uppercase tracking-wider">
+                              <h4 className="text-[10px] font-semibold text-green-600 dark:text-green-400 mb-1 uppercase tracking-wider">
                                 Strengths
                               </h4>
                               <ul className="text-xs text-muted-foreground space-y-0.5">
@@ -515,7 +515,7 @@ export default function ReviewHistory({
                         {analysis.weaknesses &&
                           analysis.weaknesses.length > 0 && (
                             <div>
-                              <h4 className="text-[12px] font-semibold text-red-600 dark:text-red-400 mb-1 uppercase tracking-wider">
+                              <h4 className="text-[10px] font-semibold text-red-600 dark:text-red-400 mb-1 uppercase tracking-wider">
                                 Weaknesses
                               </h4>
                               <ul className="text-xs text-muted-foreground space-y-0.5">
