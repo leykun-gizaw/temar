@@ -6,9 +6,11 @@ import {
   note,
   topic,
   chunkTracking,
+  eq,
+  and,
+  sql,
 } from '@temar/db-client';
-import { eq, and, sql } from 'drizzle-orm';
-import { LlmService, AiConfig } from './llm.service';
+import { LlmService, AiConfig, QuestionType } from './llm.service';
 import { createEmptyCard } from 'ts-fsrs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -18,7 +20,13 @@ export class QuestionGenerationService {
 
   constructor(private readonly llmService: LlmService) {}
 
-  async generateForChunk(chunkId: string, userId: string, aiConfig?: AiConfig) {
+  async generateForChunk(
+    chunkId: string,
+    userId: string,
+    aiConfig?: AiConfig,
+    questionTypes?: QuestionType[],
+    questionCount?: number
+  ) {
     // Update tracking status to 'generating'
     await dbClient
       .update(chunkTracking)
@@ -96,7 +104,9 @@ export class QuestionGenerationService {
             chunkRow.name,
             chunkRow.noteName,
             chunkRow.topicName,
-            aiConfig
+            aiConfig,
+            questionTypes,
+            questionCount
           );
           break;
         } catch (err: unknown) {
@@ -157,6 +167,7 @@ export class QuestionGenerationService {
         questionTitle: q.title,
         questionText: q.question,
         answerRubric: q.rubric,
+        questionType: q.questionType,
         generationBatchId: batchId,
         state: card.state,
         due: card.due,
@@ -222,7 +233,13 @@ export class QuestionGenerationService {
     }
   }
 
-  async retryChunk(chunkId: string, userId: string, aiConfig?: AiConfig) {
+  async retryChunk(
+    chunkId: string,
+    userId: string,
+    aiConfig?: AiConfig,
+    questionTypes?: QuestionType[],
+    questionCount?: number
+  ) {
     // Reset status to pending and re-run generation
     await dbClient
       .update(chunkTracking)
@@ -233,10 +250,21 @@ export class QuestionGenerationService {
           eq(chunkTracking.userId, userId)
         )
       );
-    return this.generateForChunk(chunkId, userId, aiConfig);
+    return this.generateForChunk(
+      chunkId,
+      userId,
+      aiConfig,
+      questionTypes,
+      questionCount
+    );
   }
 
-  async retryAllFailed(userId: string, aiConfig?: AiConfig) {
+  async retryAllFailed(
+    userId: string,
+    aiConfig?: AiConfig,
+    questionTypes?: QuestionType[],
+    questionCount?: number
+  ) {
     const failedItems = await dbClient
       .select({
         chunkId: chunkTracking.chunkId,
@@ -252,7 +280,13 @@ export class QuestionGenerationService {
     const results = [];
     for (const item of failedItems) {
       try {
-        const result = await this.retryChunk(item.chunkId, userId, aiConfig);
+        const result = await this.retryChunk(
+          item.chunkId,
+          userId,
+          aiConfig,
+          questionTypes,
+          questionCount
+        );
         results.push(result);
       } catch (err) {
         this.logger.error(`Retry failed for chunk ${item.chunkId}: ${err}`);
@@ -264,11 +298,23 @@ export class QuestionGenerationService {
     return { results, total: failedItems.length };
   }
 
-  async generateBatch(chunkIds: string[], userId: string, aiConfig?: AiConfig) {
+  async generateBatch(
+    chunkIds: string[],
+    userId: string,
+    aiConfig?: AiConfig,
+    questionTypes?: QuestionType[],
+    questionCount?: number
+  ) {
     const results = [];
     for (const chunkId of chunkIds) {
       try {
-        const result = await this.generateForChunk(chunkId, userId, aiConfig);
+        const result = await this.generateForChunk(
+          chunkId,
+          userId,
+          aiConfig,
+          questionTypes,
+          questionCount
+        );
         results.push(result);
       } catch (err) {
         this.logger.error(

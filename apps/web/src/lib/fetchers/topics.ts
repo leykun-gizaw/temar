@@ -1,8 +1,7 @@
 'use server';
 
-import { dbClient, topic } from '@temar/db-client';
+import { dbClient, topic, eq, and } from '@temar/db-client';
 import { getLoggedInUser } from './users';
-import { eq, and } from 'drizzle-orm';
 
 export async function getTopicsCount() {
   const loggedInUser = await getLoggedInUser();

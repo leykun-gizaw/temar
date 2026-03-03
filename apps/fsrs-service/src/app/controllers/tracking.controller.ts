@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Query,
+  Body,
   Headers,
   HttpException,
   HttpStatus,
@@ -39,14 +40,21 @@ export class TrackingController {
     @Headers('x-user-id') userId: string,
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
-    @Headers('x-ai-api-key') aiApiKey?: string
+    @Headers('x-ai-api-key') aiApiKey?: string,
+    @Body() body?: { questionTypes?: string[]; questionCount?: number },
   ) {
     this.requireUserId(userId);
     const aiConfig =
       aiProvider || aiModel || aiApiKey
         ? { provider: aiProvider, model: aiModel, apiKey: aiApiKey }
         : undefined;
-    return this.recallItemService.trackTopic(topicId, userId, aiConfig);
+    return this.recallItemService.trackTopic(
+      topicId,
+      userId,
+      aiConfig,
+      body?.questionTypes,
+      body?.questionCount,
+    );
   }
 
   @ApiOperation({ summary: 'Track all chunks under a note (cascade)' })
@@ -59,14 +67,21 @@ export class TrackingController {
     @Headers('x-user-id') userId: string,
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
-    @Headers('x-ai-api-key') aiApiKey?: string
+    @Headers('x-ai-api-key') aiApiKey?: string,
+    @Body() body?: { questionTypes?: string[]; questionCount?: number },
   ) {
     this.requireUserId(userId);
     const aiConfig =
       aiProvider || aiModel || aiApiKey
         ? { provider: aiProvider, model: aiModel, apiKey: aiApiKey }
         : undefined;
-    return this.recallItemService.trackNote(noteId, userId, aiConfig);
+    return this.recallItemService.trackNote(
+      noteId,
+      userId,
+      aiConfig,
+      body?.questionTypes,
+      body?.questionCount,
+    );
   }
 
   @ApiOperation({ summary: 'Track a single chunk' })
@@ -79,14 +94,21 @@ export class TrackingController {
     @Headers('x-user-id') userId: string,
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
-    @Headers('x-ai-api-key') aiApiKey?: string
+    @Headers('x-ai-api-key') aiApiKey?: string,
+    @Body() body?: { questionTypes?: string[]; questionCount?: number },
   ) {
     this.requireUserId(userId);
     const aiConfig =
       aiProvider || aiModel || aiApiKey
         ? { provider: aiProvider, model: aiModel, apiKey: aiApiKey }
         : undefined;
-    return this.recallItemService.trackChunk(chunkId, userId, aiConfig);
+    return this.recallItemService.trackChunk(
+      chunkId,
+      userId,
+      aiConfig,
+      body?.questionTypes,
+      body?.questionCount,
+    );
   }
 
   @ApiOperation({ summary: 'Untrack all chunks under a topic' })
@@ -96,7 +118,7 @@ export class TrackingController {
   @Delete('topic/:topicId')
   async untrackTopic(
     @Param('topicId') topicId: string,
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-id') userId: string,
   ) {
     this.requireUserId(userId);
     return this.recallItemService.untrackTopic(topicId, userId);
@@ -109,7 +131,7 @@ export class TrackingController {
   @Delete('note/:noteId')
   async untrackNote(
     @Param('noteId') noteId: string,
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-id') userId: string,
   ) {
     this.requireUserId(userId);
     return this.recallItemService.untrackNote(noteId, userId);
@@ -122,7 +144,7 @@ export class TrackingController {
   @Delete('chunk/:chunkId')
   async untrackChunk(
     @Param('chunkId') chunkId: string,
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-id') userId: string,
   ) {
     this.requireUserId(userId);
     return this.recallItemService.untrackChunk(chunkId, userId);
@@ -147,7 +169,7 @@ export class TrackingController {
     @Headers('x-user-id') userId: string,
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
-    @Headers('x-ai-api-key') aiApiKey?: string
+    @Headers('x-ai-api-key') aiApiKey?: string,
   ) {
     this.requireUserId(userId);
     const aiConfig =
@@ -165,7 +187,7 @@ export class TrackingController {
     @Headers('x-user-id') userId: string,
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
-    @Headers('x-ai-api-key') aiApiKey?: string
+    @Headers('x-ai-api-key') aiApiKey?: string,
   ) {
     this.requireUserId(userId);
     const aiConfig =
@@ -194,7 +216,7 @@ export class TrackingController {
     @Headers('x-user-id') userId: string,
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
-    @Headers('x-ai-api-key') aiApiKey?: string
+    @Headers('x-ai-api-key') aiApiKey?: string,
   ) {
     this.requireUserId(userId);
     const aiConfig =
@@ -211,13 +233,13 @@ export class TrackingController {
   async getUnderperformingChunks(
     @Headers('x-user-id') userId: string,
     @Query('minLapses') minLapses?: string,
-    @Query('maxStability') maxStability?: string
+    @Query('maxStability') maxStability?: string,
   ) {
     this.requireUserId(userId);
     return this.recallItemService.getUnderperformingChunks(
       userId,
       minLapses ? parseInt(minLapses, 10) : undefined,
-      maxStability ? parseFloat(maxStability) : undefined
+      maxStability ? parseFloat(maxStability) : undefined,
     );
   }
 
@@ -225,7 +247,7 @@ export class TrackingController {
     if (!userId) {
       throw new HttpException(
         'x-user-id header is required',
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
   }

@@ -1,7 +1,6 @@
 'use server';
 
-import { dbClient, user, encrypt, decrypt } from '@temar/db-client';
-import { eq } from 'drizzle-orm';
+import { dbClient, user, encrypt, decrypt, eq } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { revalidatePath } from 'next/cache';
 

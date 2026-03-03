@@ -12,7 +12,8 @@ export async function submitReview(
   recallItemId: string,
   rating: number,
   durationMs?: number,
-  answerJson?: unknown
+  answerJson?: unknown,
+  analysisJson?: unknown,
 ) {
   const result = await fsrsServiceFetch<{
     recallItemId: string;
@@ -25,7 +26,7 @@ export async function submitReview(
     lapses: number;
   }>(`recall-items/${recallItemId}/review`, {
     method: 'POST',
-    body: { rating, durationMs, answerJson },
+    body: { rating, durationMs, answerJson, analysisJson },
   });
 
   revalidatePath('/dashboard');
@@ -34,14 +35,14 @@ export async function submitReview(
 }
 
 export async function searchRecallItemsAction(
-  query: string
+  query: string,
 ): Promise<RecallItemDue[]> {
   return searchRecallItems(query);
 }
 
 export async function getAllRecallItemsAction(
   limit: number,
-  offset: number
+  offset: number,
 ): Promise<{ items: RecallItemDue[]; total: number }> {
   return getAllRecallItems({ limit, offset });
 }

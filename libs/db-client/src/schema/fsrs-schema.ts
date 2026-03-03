@@ -27,6 +27,7 @@ export const recallItem = pgTable('recall_item', {
   questionTitle: text('question_title'),
   questionText: text('question_text'),
   answerRubric: jsonb('answer_rubric'),
+  questionType: text('question_type'),
   state: smallint('state').notNull().default(0),
   due: timestamp('due', { withTimezone: true })
     .notNull()
@@ -96,6 +97,7 @@ export const reviewLog = pgTable('review_log', {
   scheduledDays: integer('scheduled_days').notNull(),
   durationMs: integer('duration_ms'),
   answerJson: jsonb('answer_json'),
+  analysisJson: jsonb('analysis_json'),
   reviewedAt: timestamp('reviewed_at', { withTimezone: true })
     .notNull()
     .default(sql`now()`),
@@ -131,5 +133,5 @@ export const chunkTracking = pgTable(
   },
   (table) => [
     unique('chunk_tracking_chunk_user_idx').on(table.chunkId, table.userId),
-  ]
+  ],
 );

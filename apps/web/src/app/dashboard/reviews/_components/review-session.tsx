@@ -17,6 +17,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { submitReview } from '@/lib/actions/review';
+import { analyzeAnswer, type AnalysisResult } from '@/lib/actions/analysis';
 import type { RecallItemDue } from '@/lib/fetchers/recall-items';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -28,6 +29,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ListChecks,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
 import AnswerEditor from '@/components/editor/answer-editor';
 import type { Value } from 'platejs';
@@ -104,6 +107,9 @@ export default function ReviewSession({
   const STORAGE_KEY = 'temar:review-answers';
   const answersRef = useRef<Map<string, Value>>(new Map());
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // Hydrate answersRef from localStorage on mount
   useEffect(() => {
@@ -167,7 +173,7 @@ export default function ReviewSession({
         setReviewStartTime(Date.now());
       }
     },
-    [items, reviewedIds]
+    [items, reviewedIds],
   );
 
   const handlePrev = () => navigateTo(currentIndex - 1);
@@ -195,6 +201,47 @@ export default function ReviewSession({
     setCurrentIndex(0);
   }, [currentIndex, items, reviewedIds]);
 
+  const handleAnalyze = async () => {
+    if (!currentItem) return;
+    const answer = answersRef.current.get(currentItem.id);
+    if (!answer) return;
+
+    const rubricData = currentItem.answerRubric as {
+      criteria: string[];
+      keyPoints: string[];
+    } | null;
+    if (!rubricData?.criteria?.length || !rubricData?.keyPoints?.length) return;
+
+    const plainText = answer
+      .map((node: any) =>
+        (node.children || []).map((child: any) => child.text || '').join(''),
+      )
+      .join('\n')
+      .trim();
+
+    if (!plainText) return;
+
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setAnalysis(null);
+
+    try {
+      const result = await analyzeAnswer(
+        plainText,
+        currentItem.questionTitle ?? '',
+        currentItem.questionText ?? '',
+        rubricData.criteria,
+        rubricData.keyPoints,
+      );
+      setAnalysis(result);
+    } catch (err) {
+      console.error('Analysis failed:', err);
+      setAnalysisError(err instanceof Error ? err.message : 'Analysis failed');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleRate = (rating: number) => {
     if (!currentItem) return;
     const durationMs = Date.now() - reviewStartTime;
@@ -206,11 +253,14 @@ export default function ReviewSession({
           currentItem.id,
           rating,
           durationMs,
-          answer ?? undefined
+          answer ?? undefined,
+          analysis ?? undefined,
         );
         removeFromLocalStorage(currentItem.id);
         setCompletedCount((c) => c + 1);
         setReviewedIds((prev) => new Set(prev).add(currentItem.id));
+        setAnalysis(null);
+        setAnalysisError(null);
         advanceAfterReview();
       } catch (err) {
         console.error('Review submission failed:', err);
@@ -401,6 +451,76 @@ export default function ReviewSession({
                 placeholder="Write your answer here... Type / for commands"
               />
             </div>
+
+            {/* Analysis results */}
+            {(analysis || isAnalyzing || analysisError) && (
+              <div className="border-t px-4 py-3 shrink-0 max-h-[40%] overflow-y-auto">
+                {isAnalyzing && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Analyzing your answer...
+                  </div>
+                )}
+                {analysisError && (
+                  <p className="text-sm text-destructive">{analysisError}</p>
+                )}
+                {analysis && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-amber-500" />
+                        <span className="text-sm font-semibold">Analysis</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold">
+                          {analysis.scorePercent}%
+                        </span>
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            analysis.suggestedRating === 1
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              : analysis.suggestedRating === 2
+                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                : analysis.suggestedRating === 3
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          }`}
+                        >
+                          Suggested: {analysis.suggestedLabel}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {analysis.reasoning}
+                    </p>
+                    {analysis.strengths.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">
+                          Strengths
+                        </h4>
+                        <ul className="text-xs text-muted-foreground space-y-0.5">
+                          {analysis.strengths.map((s, i) => (
+                            <li key={i}>+ {s}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {analysis.weaknesses.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">
+                          Weaknesses
+                        </h4>
+                        <ul className="text-xs text-muted-foreground space-y-0.5">
+                          {analysis.weaknesses.map((w, i) => (
+                            <li key={i}>- {w}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
@@ -438,6 +558,20 @@ export default function ReviewSession({
           >
             <SkipForward className="h-4 w-4" />
             Skip
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAnalyze}
+            disabled={isAnalyzing || isPending}
+            className="ml-2"
+          >
+            {isAnalyzing ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <Sparkles className="h-4 w-4 mr-1" />
+            )}
+            Analyze
           </Button>
         </div>
 
@@ -478,7 +612,7 @@ export default function ReviewSession({
                     <p>{tooltip}</p>
                   </TooltipContent>
                 </Tooltip>
-              )
+              ),
             )}
           </div>
         </TooltipProvider>

@@ -142,7 +142,8 @@
         "projects": [
           "notion_sync-service",
           "fsrs-service",
-          "question-gen-service"
+          "question-gen-service",
+          "answer-analysis-service"
         ],
         "version": {
           "conventionalCommits": true

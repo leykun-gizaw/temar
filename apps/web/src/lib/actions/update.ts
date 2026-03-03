@@ -1,9 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { dbClient, topic, note, chunk } from '@temar/db-client';
+import { dbClient, topic, note, chunk, eq, and } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
-import { eq, and } from 'drizzle-orm';
 import { syncServiceFetch } from '../sync-service';
 
 export async function updateTopic(

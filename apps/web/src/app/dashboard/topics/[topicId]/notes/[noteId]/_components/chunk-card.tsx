@@ -118,6 +118,7 @@ export default function ChunkCard({
               noteId={noteId}
               isTracked={isTracked}
               compact
+              contentLength={contentMd?.length ?? description?.length ?? 0}
             />
           </div>
         </div>

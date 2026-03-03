@@ -2,8 +2,7 @@ import AddTopicDialog from '@/app/dashboard/topics/_components/add-topic-dialog'
 import { getFilteredTopics } from '@/lib/fetchers/topics';
 import TopicCardWrapper from './topic-card-wrapper';
 import { getTrackingStatus } from '@/lib/actions/tracking';
-import { dbClient, chunk, note } from '@temar/db-client';
-import { eq } from 'drizzle-orm';
+import { dbClient, chunk, note, eq } from '@temar/db-client';
 
 export default async function GalleryList({
   query,

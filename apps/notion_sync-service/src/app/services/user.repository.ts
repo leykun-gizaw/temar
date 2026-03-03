@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { dbClient, user, topic, note, chunk } from '@temar/db-client';
-import { eq } from 'drizzle-orm';
+import { dbClient, user, topic, note, chunk, eq } from '@temar/db-client';
 
 export type EntityType = 'topic' | 'note' | 'chunk';
 

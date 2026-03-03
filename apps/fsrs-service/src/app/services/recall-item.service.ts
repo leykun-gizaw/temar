@@ -8,8 +8,13 @@ import {
   chunkTracking,
   user,
   recallItemArchive,
+  eq,
+  ne,
+  and,
+  lte,
+  sql,
+  count,
 } from '@temar/db-client';
-import { eq, ne, and, lte, sql, count } from 'drizzle-orm';
 
 @Injectable()
 export class RecallItemService {
@@ -18,7 +23,9 @@ export class RecallItemService {
   async trackChunk(
     chunkId: string,
     userId: string,
-    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+    aiConfig?: { provider?: string; model?: string; apiKey?: string },
+    questionTypes?: string[],
+    questionCount?: number
   ) {
     try {
       // Check if there's an existing untracked row to reactivate
@@ -70,6 +77,10 @@ export class RecallItemService {
       // Fire-and-forget: trigger question generation in question-gen-service
       const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
       if (qgenEndpoint) {
+        const body: Record<string, unknown> = {};
+        if (questionTypes?.length) body.questionTypes = questionTypes;
+        if (questionCount != null) body.questionCount = questionCount;
+
         fetch(`${qgenEndpoint}/generate/${chunkId}`, {
           method: 'POST',
           headers: {
@@ -82,6 +93,7 @@ export class RecallItemService {
             ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
             ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
           },
+          ...(Object.keys(body).length > 0 && { body: JSON.stringify(body) }),
         }).catch((err) =>
           this.logger.error(
             `Fire-and-forget question generation failed for chunk ${chunkId}: ${err}`
@@ -105,7 +117,9 @@ export class RecallItemService {
   async trackNote(
     noteId: string,
     userId: string,
-    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+    aiConfig?: { provider?: string; model?: string; apiKey?: string },
+    questionTypes?: string[],
+    questionCount?: number
   ) {
     const chunks = await dbClient
       .select({ id: chunk.id })
@@ -114,7 +128,15 @@ export class RecallItemService {
 
     const results = [];
     for (const c of chunks) {
-      results.push(await this.trackChunk(c.id, userId, aiConfig));
+      results.push(
+        await this.trackChunk(
+          c.id,
+          userId,
+          aiConfig,
+          questionTypes,
+          questionCount
+        )
+      );
     }
 
     this.logger.log(
@@ -128,7 +150,9 @@ export class RecallItemService {
   async trackTopic(
     topicId: string,
     userId: string,
-    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+    aiConfig?: { provider?: string; model?: string; apiKey?: string },
+    questionTypes?: string[],
+    questionCount?: number
   ) {
     const notes = await dbClient
       .select({ id: note.id })
@@ -137,7 +161,15 @@ export class RecallItemService {
 
     const results = [];
     for (const n of notes) {
-      results.push(await this.trackNote(n.id, userId, aiConfig));
+      results.push(
+        await this.trackNote(
+          n.id,
+          userId,
+          aiConfig,
+          questionTypes,
+          questionCount
+        )
+      );
     }
 
     this.logger.log(`Tracked topic ${topicId}: ${notes.length} notes`);

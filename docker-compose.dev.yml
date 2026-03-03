@@ -109,6 +109,19 @@ services:
     networks:
       - temar-network
 
+  answer-analysis-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: answer-analysis-service
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${ANSWER_ANALYSIS_SERVICE_PORT:-3336}:3336"
+    networks:
+      - temar-network
+
   adminer:
     image: adminer:latest
     restart: unless-stopped
