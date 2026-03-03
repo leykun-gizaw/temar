@@ -30,8 +30,6 @@ import {
   ListChecks,
   Sparkles,
   Loader2,
-  FileText,
-  Play,
 } from 'lucide-react';
 import AnswerEditor from '@/components/editor/answer-editor';
 import type { Value } from 'platejs';
@@ -102,10 +100,6 @@ export default function ReviewSession({
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [leftTab, setLeftTab] = useState<'description' | 'rubric'>(
-    'description'
-  );
-  const [rightTab, setRightTab] = useState<'analysis' | 'result'>('analysis');
 
   // Hydrate answersRef from localStorage on mount
   useEffect(() => {
@@ -206,8 +200,8 @@ export default function ReviewSession({
     if (!rubricData?.criteria?.length || !rubricData?.keyPoints?.length) return;
 
     const plainText = answer
-      .map((node: any) =>
-        (node.children || []).map((child: any) => child.text || '').join('')
+      .map((node) =>
+        (node.children || []).map((child) => child.text || '').join('')
       )
       .join('\n')
       .trim();
@@ -217,7 +211,6 @@ export default function ReviewSession({
     setIsAnalyzing(true);
     setAnalysisError(null);
     setAnalysis(null);
-    setRightTab('analysis');
 
     try {
       const result = await analyzeAnswer(

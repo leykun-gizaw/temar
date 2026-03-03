@@ -74,7 +74,7 @@ export default function ReviewHistory({
         items: [],
       });
     }
-    acc.get(item.chunkId)!.items.push(item);
+    acc.get(item.chunkId)?.items.push(item);
     return acc;
   }, new Map());
 
