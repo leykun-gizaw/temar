@@ -32,6 +32,8 @@ jobs:
             image_name: fsrs
           - target: question-gen-service
             image_name: question-gen
+          - target: answer-analysis-service
+            image_name: answer-analysis
           - target: migration
             image_name: migrate
 
@@ -107,7 +109,7 @@ jobs:
 
             # Run migrations then restart services
             docker compose -f docker-compose.prod.yml up migrate --abort-on-container-exit
-            docker compose -f docker-compose.prod.yml up -d web notion_sync-service fsrs-service question-gen-service caddy appsmith
+            docker compose -f docker-compose.prod.yml up -d web notion_sync-service fsrs-service question-gen-service answer-analysis-service caddy appsmith
 
             # Clean up old images
             docker image prune -f
