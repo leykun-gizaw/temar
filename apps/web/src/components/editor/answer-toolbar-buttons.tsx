@@ -8,14 +8,10 @@ import {
   FileCodeIcon,
   HighlighterIcon,
   ItalicIcon,
-  ListIcon,
-  ListOrderedIcon,
   MinusIcon,
   PenToolIcon,
   PlusIcon,
-  SquareIcon,
   StrikethroughIcon,
-  TableIcon,
   UnderlineIcon,
 } from 'lucide-react';
 import { KEYS } from 'platejs';
@@ -37,10 +33,6 @@ import {
   ToolbarGroup,
   ToolbarMenuGroup,
 } from '@/components/ui/toolbar';
-import {
-  IndentToolbarButton,
-  OutdentToolbarButton,
-} from '@/components/ui/indent-toolbar-button';
 import { insertBlock } from '@/components/editor/transforms';
 
 function AnswerInsertToolbarButton() {
@@ -54,11 +46,7 @@ function AnswerInsertToolbarButton() {
       label: 'Code Drawing',
       value: 'code_drawing' as string,
     },
-    { icon: <TableIcon />, label: 'Table', value: KEYS.table },
     { icon: <MinusIcon />, label: 'Divider', value: KEYS.hr },
-    { icon: <ListIcon />, label: 'Bulleted list', value: KEYS.ul },
-    { icon: <ListOrderedIcon />, label: 'Numbered list', value: KEYS.ol },
-    { icon: <SquareIcon />, label: 'To-do list', value: KEYS.listTodo },
   ];
 
   return (
@@ -134,22 +122,13 @@ export function AnswerToolbarButtons() {
             <MarkToolbarButton nodeType={KEYS.code} tooltip="Code (⌘+E)">
               <Code2Icon />
             </MarkToolbarButton>
-          </ToolbarGroup>
 
-          <ToolbarGroup>
-            <OutdentToolbarButton />
-            <IndentToolbarButton />
+            <MarkToolbarButton nodeType={KEYS.highlight} tooltip="Highlight">
+              <HighlighterIcon />
+            </MarkToolbarButton>
           </ToolbarGroup>
         </>
       )}
-
-      <div className="grow" />
-
-      <ToolbarGroup>
-        <MarkToolbarButton nodeType={KEYS.highlight} tooltip="Highlight">
-          <HighlighterIcon />
-        </MarkToolbarButton>
-      </ToolbarGroup>
     </div>
   );
 }
