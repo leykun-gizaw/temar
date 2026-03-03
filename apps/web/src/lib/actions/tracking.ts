@@ -15,15 +15,24 @@ async function getAiHeaders(): Promise<Record<string, string>> {
   };
 }
 
-export async function trackTopic(topicId: string) {
+export async function trackTopic(
+  topicId: string,
+  questionTypes?: string[],
+  questionCount?: number,
+) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
   const aiHeaders = await getAiHeaders();
+  const body: Record<string, unknown> = {};
+  if (questionTypes?.length) body.questionTypes = questionTypes;
+  if (questionCount != null) body.questionCount = questionCount;
+
   const result = await fsrsServiceFetch(`track/topic/${topicId}`, {
     method: 'POST',
     userId: loggedInUser.id,
     headers: aiHeaders,
+    ...(Object.keys(body).length > 0 && { body }),
   });
 
   revalidatePath('/dashboard');
@@ -31,15 +40,25 @@ export async function trackTopic(topicId: string) {
   return result;
 }
 
-export async function trackNote(noteId: string, topicId: string) {
+export async function trackNote(
+  noteId: string,
+  topicId: string,
+  questionTypes?: string[],
+  questionCount?: number,
+) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
   const aiHeaders = await getAiHeaders();
+  const body: Record<string, unknown> = {};
+  if (questionTypes?.length) body.questionTypes = questionTypes;
+  if (questionCount != null) body.questionCount = questionCount;
+
   const result = await fsrsServiceFetch(`track/note/${noteId}`, {
     method: 'POST',
     userId: loggedInUser.id,
     headers: aiHeaders,
+    ...(Object.keys(body).length > 0 && { body }),
   });
 
   revalidatePath('/dashboard');
@@ -50,16 +69,23 @@ export async function trackNote(noteId: string, topicId: string) {
 export async function trackChunk(
   chunkId: string,
   noteId: string,
-  topicId: string
+  topicId: string,
+  questionTypes?: string[],
+  questionCount?: number,
 ) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
   const aiHeaders = await getAiHeaders();
+  const body: Record<string, unknown> = {};
+  if (questionTypes?.length) body.questionTypes = questionTypes;
+  if (questionCount != null) body.questionCount = questionCount;
+
   const result = await fsrsServiceFetch(`track/chunk/${chunkId}`, {
     method: 'POST',
     userId: loggedInUser.id,
     headers: aiHeaders,
+    ...(Object.keys(body).length > 0 && { body }),
   });
 
   revalidatePath('/dashboard');
@@ -98,7 +124,7 @@ export async function untrackNote(noteId: string, topicId: string) {
 export async function untrackChunk(
   chunkId: string,
   noteId: string,
-  topicId: string
+  topicId: string,
 ) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
@@ -217,7 +243,7 @@ export interface UnderperformingChunk {
 
 export async function getUnderperformingChunks(
   minLapses?: number,
-  maxStability?: number
+  maxStability?: number,
 ): Promise<UnderperformingChunk[]> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) return [];
@@ -230,7 +256,7 @@ export async function getUnderperformingChunks(
   const qs = params.toString();
   const result = await fsrsServiceFetch<UnderperformingChunk[]>(
     `track/underperforming${qs ? `?${qs}` : ''}`,
-    { userId: loggedInUser.id }
+    { userId: loggedInUser.id },
   );
 
   return result ?? [];

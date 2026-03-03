@@ -17,6 +17,7 @@ COPY apps/web/package.json apps/web/
 COPY apps/notion_sync-service/package.json apps/notion_sync-service/
 COPY apps/fsrs-service/package.json apps/fsrs-service/
 COPY apps/question-gen-service/package.json apps/question-gen-service/
+COPY apps/answer-analysis-service/package.json apps/answer-analysis-service/
 COPY libs/db-client/package.json libs/db-client/
 COPY libs/shared-types/package.json libs/shared-types/
 RUN pnpm install --frozen-lockfile
@@ -67,6 +68,15 @@ RUN rm -rf node_modules/@temar
 # Build 'question-gen-service'
 RUN NX_DAEMON=false pnpm nx build question-gen-service --prod
 
+FROM deps AS answer-analysis-service-builder
+# Copy relevant source code
+COPY apps/answer-analysis-service ./apps/answer-analysis-service
+COPY /tsconfig.base.json ./
+# Remove workspace symlinks so webpack bundles @temar/* from source via tsconfig paths
+RUN rm -rf node_modules/@temar
+# Build 'answer-analysis-service'
+RUN NX_DAEMON=false pnpm nx build answer-analysis-service --prod
+
 # ----------------------------------------------
 
 # STAGE 4.5a: Notion Sync Service Production Dependencies
@@ -84,6 +94,12 @@ RUN pnpm install --prod --no-frozen-lockfile
 # STAGE 4.5c: Question Gen Service Production Dependencies
 FROM base AS questiongen-prod-deps
 COPY --from=question-gen-service-builder /app/dist/apps/question-gen-service/package.json ./
+COPY pnpm-lock.yaml ./
+RUN pnpm install --prod --no-frozen-lockfile
+
+# STAGE 4.5d: Answer Analysis Service Production Dependencies
+FROM base AS answer-analysis-prod-deps
+COPY --from=answer-analysis-service-builder /app/dist/apps/answer-analysis-service/package.json ./
 COPY pnpm-lock.yaml ./
 RUN pnpm install --prod --no-frozen-lockfile
 
@@ -161,7 +177,22 @@ USER qgenuser
 EXPOSE 3335
 CMD [ "node", "main.js" ]
 
-# STAGE 9: Migration Service Runner
+# ----------------------------------------------
+
+# STAGE 9: Answer Analysis Service Production Runner (NestJS)
+FROM base AS answer-analysis-service
+ENV NODE_ENV=production
+RUN addgroup --system --gid 1005 nestjs && adduser --system --uid 1005 analysisuser
+
+COPY --from=answer-analysis-service-builder --chown=analysisuser:nestjs /app/dist/apps/answer-analysis-service ./
+COPY --from=answer-analysis-prod-deps --chown=analysisuser:nestjs /app/node_modules ./node_modules
+
+USER analysisuser
+
+EXPOSE 3336
+CMD [ "node", "main.js" ]
+
+# STAGE 10: Migration Service Runner
 FROM base AS migration
 COPY libs/db-client/package.json ./
 RUN pnpm install

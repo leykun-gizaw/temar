@@ -1,8 +1,7 @@
 'use server';
 
-import { dbClient, chunk } from '@temar/db-client';
+import { dbClient, chunk, eq, and } from '@temar/db-client';
 import { getLoggedInUser } from './users';
-import { eq, and } from 'drizzle-orm';
 
 export async function getChunksCount() {
   const loggedInUser = await getLoggedInUser();

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { dbClient, user, encrypt } from '@temar/db-client';
-import { eq } from 'drizzle-orm';
+import { dbClient, user, encrypt, eq } from '@temar/db-client';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;

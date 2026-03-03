@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Client } from '@notionhq/client';
-import { dbClient, user, decrypt, encrypt } from '@temar/db-client';
-import { eq } from 'drizzle-orm';
+import { dbClient, user, decrypt, encrypt, eq } from '@temar/db-client';
 
 const TOKEN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 const DEFAULT_TOKEN_LIFETIME_MS = 2 * 60 * 60 * 1000;

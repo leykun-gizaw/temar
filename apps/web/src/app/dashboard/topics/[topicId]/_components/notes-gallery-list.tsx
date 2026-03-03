@@ -2,8 +2,7 @@ import AddNoteDialog from '@/components/add-note-dialog';
 import { getFilteredNotes } from '@/lib/fetchers/notes';
 import NoteCardWrapper from './note-card-wrapper';
 import { getTrackingStatus } from '@/lib/actions/tracking';
-import { dbClient, chunk } from '@temar/db-client';
-import { eq } from 'drizzle-orm';
+import { dbClient, chunk, eq } from '@temar/db-client';
 
 export default async function NotesGalleryList({
   query,

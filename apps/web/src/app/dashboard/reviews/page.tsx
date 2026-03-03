@@ -1,6 +1,11 @@
-import { getDueRecallItems, getDueCount } from '@/lib/fetchers/recall-items';
+import {
+  getDueRecallItems,
+  getDueCount,
+  getAllRecallItems,
+} from '@/lib/fetchers/recall-items';
 import { getFilteredTopics } from '@/lib/fetchers/topics';
 import ReviewSession from './_components/review-session';
+import ReviewHistory from './_components/review-history';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,15 +24,24 @@ export default async function ReviewsPage({
     getFilteredTopics(''),
   ]);
 
-  return (
-    <div className="h-full space-y-6">
-      <ReviewSession
-        initialItems={dueItems}
+  if (dueItems.length === 0) {
+    const { items: allItems } = await getAllRecallItems({ limit: 200 });
+    return (
+      <ReviewHistory
+        allItems={allItems}
         topics={topics.map((t) => ({ id: t.id, name: t.name }))}
         currentTopicId={topicId}
-        currentNoteId={noteId}
-        dueCount={dueCount}
       />
-    </div>
+    );
+  }
+
+  return (
+    <ReviewSession
+      initialItems={dueItems}
+      topics={topics.map((t) => ({ id: t.id, name: t.name }))}
+      currentTopicId={topicId}
+      currentNoteId={noteId}
+      dueCount={dueCount}
+    />
   );
 }

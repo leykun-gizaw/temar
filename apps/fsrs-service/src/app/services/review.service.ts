@@ -1,6 +1,14 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { dbClient, recallItem, reviewLog } from '@temar/db-client';
-import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import {
+  dbClient,
+  recallItem,
+  reviewLog,
+  eq,
+  and,
+  gte,
+  lte,
+  desc,
+} from '@temar/db-client';
 import { FsrsEngineService } from './fsrs-engine.service';
 import type { Grade } from 'ts-fsrs';
 
@@ -14,7 +22,8 @@ export class ReviewService {
     recallItemId: string,
     rating: Grade,
     durationMs?: number,
-    answerJson?: unknown
+    answerJson?: unknown,
+    analysisJson?: unknown
   ) {
     const [item] = await dbClient
       .select({
@@ -93,6 +102,7 @@ export class ReviewService {
         scheduledDays: log.scheduled_days,
         durationMs: durationMs ?? null,
         answerJson: answerJson ?? null,
+        analysisJson: analysisJson ?? null,
       });
     });
 

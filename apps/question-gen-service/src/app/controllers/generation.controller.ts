@@ -33,7 +33,7 @@ export class GenerationController {
   private extractAiConfig(
     provider?: string,
     model?: string,
-    apiKey?: string
+    apiKey?: string,
   ): AiConfig | undefined {
     if (!provider && !model && !apiKey) return undefined;
     return {
@@ -53,11 +53,18 @@ export class GenerationController {
     @Headers('x-user-id') userId: string,
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
-    @Headers('x-ai-api-key') aiApiKey?: string
+    @Headers('x-ai-api-key') aiApiKey?: string,
+    @Body() body?: { questionTypes?: string[]; questionCount?: number },
   ) {
     this.requireUserId(userId);
     const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey);
-    return this.generationService.generateForChunk(chunkId, userId, aiConfig);
+    return this.generationService.generateForChunk(
+      chunkId,
+      userId,
+      aiConfig,
+      body?.questionTypes as any,
+      body?.questionCount,
+    );
   }
 
   @ApiOperation({ summary: 'Generate questions for multiple chunks' })
@@ -79,16 +86,27 @@ export class GenerationController {
   @Post('batch')
   async generateBatch(
     @Headers('x-user-id') userId: string,
-    @Body() body: { chunkIds: string[] }
+    @Body()
+    body: {
+      chunkIds: string[];
+      questionTypes?: string[];
+      questionCount?: number;
+    },
   ) {
     this.requireUserId(userId);
     if (!Array.isArray(body.chunkIds) || body.chunkIds.length === 0) {
       throw new HttpException(
         'chunkIds must be a non-empty array',
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
-    return this.generationService.generateBatch(body.chunkIds, userId);
+    return this.generationService.generateBatch(
+      body.chunkIds,
+      userId,
+      undefined,
+      body.questionTypes as any,
+      body.questionCount,
+    );
   }
 
   @ApiOperation({ summary: 'Retry generation for a single failed chunk' })
@@ -101,11 +119,18 @@ export class GenerationController {
     @Headers('x-user-id') userId: string,
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
-    @Headers('x-ai-api-key') aiApiKey?: string
+    @Headers('x-ai-api-key') aiApiKey?: string,
+    @Body() body?: { questionTypes?: string[]; questionCount?: number },
   ) {
     this.requireUserId(userId);
     const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey);
-    return this.generationService.retryChunk(chunkId, userId, aiConfig);
+    return this.generationService.retryChunk(
+      chunkId,
+      userId,
+      aiConfig,
+      body?.questionTypes as any,
+      body?.questionCount,
+    );
   }
 
   @ApiOperation({ summary: 'Retry all failed generations for a user' })
@@ -116,11 +141,17 @@ export class GenerationController {
     @Headers('x-user-id') userId: string,
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
-    @Headers('x-ai-api-key') aiApiKey?: string
+    @Headers('x-ai-api-key') aiApiKey?: string,
+    @Body() body?: { questionTypes?: string[]; questionCount?: number },
   ) {
     this.requireUserId(userId);
     const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey);
-    return this.generationService.retryAllFailed(userId, aiConfig);
+    return this.generationService.retryAllFailed(
+      userId,
+      aiConfig,
+      body?.questionTypes as any,
+      body?.questionCount,
+    );
   }
 
   @ApiOperation({ summary: 'Check generation status for a chunk' })
@@ -130,7 +161,7 @@ export class GenerationController {
   @Get('status/:chunkId')
   async getStatus(
     @Param('chunkId') chunkId: string,
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-id') userId: string,
   ) {
     this.requireUserId(userId);
     return this.generationService.getStatus(chunkId, userId);
@@ -140,7 +171,7 @@ export class GenerationController {
     if (!userId) {
       throw new HttpException(
         'x-user-id header is required',
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
   }

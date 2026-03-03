@@ -74,6 +74,14 @@ services:
     networks:
       - temar-network
 
+  answer-analysis-service:
+    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-answer-analysis:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - temar-network
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped

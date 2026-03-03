@@ -5,6 +5,8 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 
+const questionTypeEnum = z.enum(['mcq', 'open_ended', 'leetcode']);
+
 const questionSchema = z.object({
   questions: z.array(
     z.object({
@@ -12,6 +14,9 @@ const questionSchema = z.object({
         .string()
         .describe('Short descriptive title for the question (3-8 words)'),
       question: z.string().describe('A self-contained recall question'),
+      questionType: questionTypeEnum.describe(
+        'The type of question: mcq, open_ended, or leetcode'
+      ),
       rubric: z.object({
         criteria: z
           .array(z.string())
@@ -29,6 +34,8 @@ const questionSchema = z.object({
 });
 
 type GeneratedQuestion = z.infer<typeof questionSchema>['questions'][number];
+
+export type QuestionType = z.infer<typeof questionTypeEnum>;
 
 export type AiConfig = {
   provider?: string;
@@ -82,22 +89,53 @@ export class LlmService {
     chunkName: string,
     noteName: string,
     topicName: string,
-    aiConfig?: AiConfig
+    aiConfig?: AiConfig,
+    questionTypes?: QuestionType[],
+    questionCount?: number
   ): Promise<GeneratedQuestion[]> {
     const llmModel = this.resolveModel(aiConfig);
+    const types = questionTypes?.length ? questionTypes : ['open_ended'];
+    const count =
+      questionCount ??
+      Math.min(Math.max(Math.ceil(chunkContent.length / 500), 2), 5);
 
-    const systemPrompt = `You are an expert educator creating recall questions from study material.
-Given a chunk of content, generate 2-5 recall questions with answer rubrics.
+    const typeDescriptions = types
+      .map((t) => {
+        switch (t) {
+          case 'mcq':
+            return 'Multiple-choice questions (MCQ) — provide the question with 4 answer options labeled A-D, with exactly one correct answer indicated in the keyPoints';
+          case 'open_ended':
+            return 'Open-ended explainer questions — require a written explanation demonstrating understanding';
+          case 'leetcode':
+            return 'Algorithm/coding-style questions (Leetcode-style) — present a problem that requires designing a solution approach, pseudocode, or code';
+          default:
+            return '';
+        }
+      })
+      .join('\n  ');
 
-Rules:
-- Each question must have a short descriptive title (3-8 words)
-- Questions should test understanding, not just memorization
-- Include a mix of: factual recall, conceptual understanding, and application questions
-- The rubric criteria should describe HOW to structure a good answer (e.g. "Address X aspect", "Compare Y with Z"), NOT reveal the actual answer content
-- Criteria should guide answer organization and completeness, not give away key facts
-- Key points are internal grading notes — they WILL be hidden from the student, so include specific facts/details expected in the answer there
-- Questions should be self-contained (answerable without seeing the original content)
-- Scale question count with content complexity: short/simple content = 2, long/complex = up to 5`;
+    const systemPrompt = `You are a rigorous but encouraging Socratic tutor. Your goal is to craft questions that test deep understanding — not trivia or surface-level memorization.
+
+## Your Process
+1. **Read the entire content carefully.** Understand the core concepts, relationships, and nuances.
+2. **Identify question-worthy sections.** Focus on conceptually dense, tricky, or foundational material. Skip boilerplate, trivial definitions, or purely decorative content.
+3. **Generate exactly ${count} question(s)** of the following type(s):
+  ${typeDescriptions}
+
+## Question Attributes
+- Each question MUST have a short descriptive title (3-8 words)
+- Each question MUST specify its questionType: ${types
+      .map((t) => `"${t}"`)
+      .join(', ')}
+- Questions must be self-contained (answerable without seeing the original content)
+- Test understanding, application, or synthesis — not just recall of isolated facts
+- The rubric criteria describe HOW to structure a good answer (e.g. "Address X aspect", "Compare Y with Z") — do NOT reveal the actual answer content in criteria
+- Key points are internal grading notes hidden from the student — include specific facts, details, and expected reasoning there
+
+## Constraints
+- Do NOT generate more or fewer than ${count} question(s)
+- Distribute question types as evenly as possible across the requested types
+- If the content is too thin for ${count} meaningful questions, generate fewer but note this`;
 
     const userPrompt = `Topic: ${topicName}
 Note: ${noteName}

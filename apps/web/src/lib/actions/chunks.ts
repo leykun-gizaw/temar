@@ -3,9 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { ChunkInputSchema } from '../zod/chunk-schema';
 import { ErrorState } from '../definitions';
-import { dbClient, chunk } from '@temar/db-client';
+import { dbClient, chunk, eq, and } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
-import { eq, and } from 'drizzle-orm';
 import { NotionPage } from '@temar/shared-types';
 import { syncServiceFetch } from '../sync-service';
 

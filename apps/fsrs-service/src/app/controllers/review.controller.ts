@@ -51,6 +51,11 @@ export class ReviewController {
           description:
             'Plate.js editor JSON value of the user answer (optional)',
         },
+        analysisJson: {
+          type: 'object',
+          description:
+            'AI analysis result from the answer-analysis-service (optional)',
+        },
       },
       required: ['rating'],
     },
@@ -59,19 +64,26 @@ export class ReviewController {
   @Post('recall-items/:id/review')
   async submitReview(
     @Param('id') id: string,
-    @Body() body: { rating: number; durationMs?: number; answerJson?: unknown }
+    @Body()
+    body: {
+      rating: number;
+      durationMs?: number;
+      answerJson?: unknown;
+      analysisJson?: unknown;
+    },
   ) {
     if (!body.rating || body.rating < 1 || body.rating > 4) {
       throw new HttpException(
         'Rating must be 1 (Again), 2 (Hard), 3 (Good), or 4 (Easy)',
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
     return this.reviewService.submitReview(
       id,
       body.rating as Grade,
       body.durationMs,
-      body.answerJson
+      body.answerJson,
+      body.analysisJson,
     );
   }
 
@@ -96,24 +108,24 @@ export class ReviewController {
   async getReviewLogs(
     @Headers('x-user-id') userId: string,
     @Query('from') from: string,
-    @Query('to') to: string
+    @Query('to') to: string,
   ) {
     if (!userId) {
       throw new HttpException(
         'x-user-id header is required',
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
     if (!from || !to) {
       throw new HttpException(
         'from and to query params are required',
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
     return this.reviewService.getReviewLogsByDateRange(
       userId,
       new Date(from),
-      new Date(to)
+      new Date(to),
     );
   }
 }

@@ -1,8 +1,7 @@
 'use server';
 
-import { dbClient, note } from '@temar/db-client';
+import { dbClient, note, eq, and } from '@temar/db-client';
 import { getLoggedInUser } from './users';
-import { eq, and } from 'drizzle-orm';
 
 export async function getNotesCount() {
   const loggedInUser = await getLoggedInUser();

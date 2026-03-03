@@ -65,6 +65,8 @@ export interface ReviewLogEntry {
   elapsedDays: number;
   scheduledDays: number;
   durationMs: number | null;
+  answerJson: unknown | null;
+  analysisJson: unknown | null;
   reviewedAt: string;
 }
 

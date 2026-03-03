@@ -10,7 +10,7 @@ import {
 import { useState } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import MermaidDiagram from '@/components/mermaid-diagram';
+// import MermaidDiagram from '@/components/mermaid-diagram';
 import { Pencil, Trash2 } from 'lucide-react';
 import { deleteChunk } from '@/lib/actions/delete';
 import { updateChunk } from '@/lib/actions/update';
@@ -118,6 +118,7 @@ export default function ChunkCard({
               noteId={noteId}
               isTracked={isTracked}
               compact
+              contentLength={contentMd?.length ?? description?.length ?? 0}
             />
           </div>
         </div>
@@ -140,11 +141,11 @@ export default function ChunkCard({
                     code({ className, children, ...props }) {
                       const match = /language-(\w+)/.exec(className || '');
                       const lang = match?.[1];
-                      const code = String(children).replace(/\n$/, '');
+                      // const code = String(children).replace(/\n$/, '');
 
-                      if (lang === 'mermaid') {
-                        return <MermaidDiagram chart={code} />;
-                      }
+                      // if (lang === 'mermaid') {
+                      //   return <MermaidDiagram chart={code} />;
+                      // }
 
                       return lang ? (
                         <pre className="bg-muted/50 rounded-md p-3 overflow-auto">

@@ -38,7 +38,7 @@ export default function AnswerEditor({
         <Editor
           variant="none"
           placeholder={placeholder}
-          className="min-h-[200px] px-6 py-4 pb-20"
+          className="min-h-[200px] px-4 py-3 pb-10"
         />
       </EditorContainer>
     </Plate>

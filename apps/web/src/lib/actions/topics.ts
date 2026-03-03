@@ -3,9 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { TopicInputSchema } from '../zod/topic-schema';
 import { ErrorState } from '../definitions';
-import { dbClient, topic, note, chunk } from '@temar/db-client';
+import { dbClient, topic, note, chunk, eq } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
-import { eq } from 'drizzle-orm';
 import { NotionPage } from '@temar/shared-types';
 import { syncServiceFetch } from '../sync-service';
 
