@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Client, isFullBlock, isFullDatabase } from '@notionhq/client';
 
 interface CreatePageOptions {
@@ -27,20 +27,38 @@ export class NotionApiService {
     return client.blocks.children.list({ block_id: blockId });
   }
 
-  async listBlockChildrenRecursive(client: Client, blockId: string) {
-    const response = await client.blocks.children.list({ block_id: blockId });
+  async fetchAllChildren(client: Client, blockId: string) {
+    const results = [];
+    let cursor: string | undefined;
 
-    for (const block of response.results) {
+    do {
+      const response = await client.blocks.children.list({
+        block_id: blockId,
+        start_cursor: cursor,
+        page_size: 100,
+      });
+      results.push(...response.results);
+      cursor = response.next_cursor ?? undefined;
+    } while (cursor);
+
+    Logger.log(`Fetched ${results.length} children for block ${blockId}`);
+    return results;
+  }
+
+  async listBlockChildrenRecursive(client: Client, blockId: string) {
+    const blocks = await this.fetchAllChildren(client, blockId);
+
+    for (const block of blocks) {
       if (isFullBlock(block) && block.has_children) {
-        const childResponse = await this.listBlockChildrenRecursive(
+        const children = await this.listBlockChildrenRecursive(
           client,
           block.id
         );
-        (block as Record<string, unknown>)['children'] = childResponse.results;
+        (block as Record<string, unknown>)['children'] = children;
       }
     }
 
-    return response;
+    return blocks;
   }
 
   async appendBlockChildren(client: Client, blockId: string) {

@@ -446,7 +446,7 @@ export default function ReviewHistory({
                     Your Answer
                   </h3>
                   {answerMarkdown ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none rounded-md border p-4 bg-muted/20">
+                    <div className="prose prose-sm text-sm/6 dark:prose-invert max-w-none rounded-md border p-4 bg-muted/20">
                       <Markdown remarkPlugins={[remarkGfm]}>
                         {answerMarkdown}
                       </Markdown>

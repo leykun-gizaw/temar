@@ -74,7 +74,7 @@ export default function TrackingButton({
 
   const suggestedCount = Math.min(
     Math.max(Math.ceil((contentLength ?? 1500) / 500), 2),
-    10,
+    10
   );
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['open_ended']);
   const [questionCount, setQuestionCount] = useState(suggestedCount);
@@ -83,7 +83,7 @@ export default function TrackingButton({
     setSelectedTypes((prev) =>
       prev.includes(typeId)
         ? prev.filter((t) => t !== typeId)
-        : [...prev, typeId],
+        : [...prev, typeId]
     );
   };
 
@@ -217,7 +217,7 @@ export default function TrackingButton({
                   value={questionCount}
                   onChange={(e) =>
                     setQuestionCount(
-                      Math.max(1, Math.min(20, parseInt(e.target.value) || 1)),
+                      Math.max(1, Math.min(20, parseInt(e.target.value) || 1))
                     )
                   }
                   className="w-20"
