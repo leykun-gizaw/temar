@@ -1,6 +1,44 @@
 import { getLoggedInUser } from './users';
 import { fsrsServiceFetch } from '../fsrs-service';
 
+// ── Per-type rubric structures ──
+
+export interface OpenEndedRubric {
+  type: 'open_ended';
+  sections: string[];
+  criteria: string[];
+  keyPoints: string[];
+}
+
+export interface McqRubric {
+  type: 'mcq';
+  choices: { label: string; text: string }[];
+  correctAnswer: string;
+  explanation: string;
+  keyPoints: string[];
+}
+
+export interface LeetcodeRubric {
+  type: 'leetcode';
+  functionPrototype: string;
+  examples: { input: string; output: string; explanation?: string }[];
+  constraints: string[];
+  keyPoints: string[];
+}
+
+/** Legacy rubric (pre-migration data without a type field) */
+export interface LegacyRubric {
+  type?: undefined;
+  criteria: string[];
+  keyPoints: string[];
+}
+
+export type AnswerRubric =
+  | OpenEndedRubric
+  | McqRubric
+  | LeetcodeRubric
+  | LegacyRubric;
+
 export interface RecallItemDue {
   id: string;
   chunkId: string;
@@ -14,7 +52,8 @@ export interface RecallItemDue {
   lastReview: string | null;
   questionTitle: string | null;
   questionText: string | null;
-  answerRubric: { criteria: string[]; keyPoints: string[] } | null;
+  questionType: string | null;
+  answerRubric: AnswerRubric | null;
   chunkName: string;
   chunkContentMd: string | null;
   noteName: string;

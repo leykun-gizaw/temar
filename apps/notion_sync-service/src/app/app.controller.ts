@@ -327,8 +327,26 @@ export class AppController {
       client,
       blockId
     );
-    const contentMd = this.blocksToMarkdown(children.results);
-    return { ...children, contentMd };
+    const contentMd = this.blocksToMarkdown(children);
+    return { children, contentMd };
+  }
+
+  @ApiOperation({ summary: 'Retrieve a Notion page as markdown' })
+  @ApiParam({ name: 'pageId', description: 'Notion page UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('/page/:pageId/markdown')
+  async retrievePageMarkdown(
+    @Param('pageId') pageId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    const children = await this.notionApi.listBlockChildrenRecursive(
+      client,
+      pageId
+    );
+    const markdown = this.blocksToMarkdown(children);
+    return { pageId, markdown };
   }
 
   @ApiOperation({ summary: 'Archive a page and all its descendants in Notion' })
@@ -384,6 +402,44 @@ export class AppController {
     return [];
   }
 
+  private richTextToMarkdown(
+    richText: Array<{
+      plain_text?: string;
+      annotations?: {
+        bold?: boolean;
+        italic?: boolean;
+        strikethrough?: boolean;
+        code?: boolean;
+      };
+      href?: string | null;
+    }>
+  ): string {
+    return richText
+      .map((rt) => {
+        let text = rt.plain_text ?? '';
+        if (!text) return '';
+
+        if (rt.annotations?.code) text = `\`${text}\``;
+        if (rt.annotations?.bold) text = `**${text}**`;
+        if (rt.annotations?.italic) text = `*${text}*`;
+        if (rt.annotations?.strikethrough) text = `~~${text}~~`;
+        if (rt.href) text = `[${text}](${rt.href})`;
+
+        return text;
+      })
+      .join('');
+  }
+  private normalizeLanguage(lang: string): string {
+    const map: Record<string, string> = {
+      'c++': 'cpp',
+      'c#': 'csharp',
+      'plain text': 'text',
+      plain_text: 'text',
+      shell: 'bash',
+    };
+    return map[lang.toLowerCase()] ?? lang;
+  }
+
   private blocksToMarkdown(blocks: unknown[], depth = 0): string {
     const indent = '  '.repeat(depth);
 
@@ -395,10 +451,23 @@ export class AppController {
 
         const children = b['children'] as unknown[] | undefined;
         const content = b[type] as
-          | { rich_text?: Array<{ plain_text?: string }> }
+          | {
+              rich_text?: Array<{
+                plain_text?: string;
+                annotations?: {
+                  bold?: boolean;
+                  italic?: boolean;
+                  strikethrough?: boolean;
+                  code?: boolean;
+                };
+                href?: string | null;
+              }>;
+            }
           | undefined;
-        const text =
-          content?.rich_text?.map((rt) => rt.plain_text ?? '').join('') ?? '';
+
+        const text = content?.rich_text
+          ? this.richTextToMarkdown(content.rich_text)
+          : '';
 
         if (type === 'column_list' || type === 'column') {
           return children?.length ? this.blocksToMarkdown(children, depth) : '';
@@ -415,6 +484,9 @@ export class AppController {
           case 'heading_3':
             line = `### ${text}`;
             break;
+          case 'paragraph':
+            line = text;
+            break;
           case 'bulleted_list_item':
             line = `${indent}- ${text}`;
             break;
@@ -426,16 +498,29 @@ export class AppController {
             line = `${indent}- [${checked ? 'x' : ' '}] ${text}`;
             break;
           }
-          case 'code':
-            line = `\`\`\`\n${text}\n\`\`\``;
+          case 'code': {
+            const rawLang = (b[type] as { language?: string })?.language ?? '';
+            const lang = this.normalizeLanguage(rawLang);
+            line = `\`\`\`${lang}\n${text}\n\`\`\``;
             break;
+          }
           case 'quote':
             line = `> ${text}`;
+            break;
+          case 'callout': {
+            const icon =
+              (b[type] as { icon?: { emoji?: string } })?.icon?.emoji ?? '';
+            line = `> ${icon} ${text}`;
+            break;
+          }
+          case 'toggle':
+            line = `**${text}**`;
             break;
           case 'divider':
             line = '---';
             break;
           case 'table_of_contents':
+            line = '';
             break;
           case 'image': {
             const img = b[type] as Record<string, unknown> | undefined;
@@ -451,11 +536,97 @@ export class AppController {
             line = url ? `![${caption ?? ''}](${url})` : '';
             break;
           }
+          case 'video':
+          case 'file':
+          case 'pdf': {
+            const asset = b[type] as Record<string, unknown> | undefined;
+            const assetType = asset?.['type'] as string | undefined;
+            const file = asset?.['file'] as { url?: string } | undefined;
+            const external = asset?.['external'] as
+              | { url?: string }
+              | undefined;
+            const url = assetType === 'file' ? file?.url : external?.url;
+            const caption =
+              (asset?.['caption'] as Array<{ plain_text?: string }> | undefined)
+                ?.map((c) => c.plain_text ?? '')
+                .join('') ?? type;
+            line = url ? `[${caption}](${url})` : '';
+            break;
+          }
+          case 'bookmark':
+          case 'link_preview': {
+            const bm = b[type] as
+              | { url?: string; caption?: Array<{ plain_text?: string }> }
+              | undefined;
+            const url = bm?.url ?? '';
+            const caption =
+              bm?.caption?.map((c) => c.plain_text ?? '').join('') || url;
+            line = url ? `[${caption}](${url})` : '';
+            break;
+          }
+          case 'equation': {
+            const expression =
+              (b[type] as { expression?: string })?.expression ?? '';
+            line = `$$\n${expression}\n$$`;
+            break;
+          }
+          case 'table': {
+            if (!children?.length) break;
+
+            const rows = children.map((row) => {
+              const r = row as Record<string, unknown>;
+              const cells =
+                (
+                  r['table_row'] as {
+                    cells?: Array<Array<{ plain_text?: string }>>;
+                  }
+                )?.cells ?? [];
+              return (
+                '| ' +
+                cells
+                  .map((cell) => cell.map((rt) => rt.plain_text ?? '').join(''))
+                  .join(' | ') +
+                ' |'
+              );
+            });
+
+            const colCount =
+              (
+                (children[0] as Record<string, unknown>)['table_row'] as {
+                  cells?: unknown[];
+                }
+              )?.cells?.length ?? 0;
+
+            if (rows.length > 0) {
+              rows.splice(
+                1,
+                0,
+                '| ' + Array(colCount).fill('---').join(' | ') + ' |'
+              );
+            }
+
+            line = rows.join('\n');
+            break;
+          }
+          case 'table_row':
+            // handled by parent table case
+            line = '';
+            break;
+          case 'child_page': {
+            const title = (b[type] as { title?: string })?.title ?? '';
+            line = `**📄 ${title}**`;
+            break;
+          }
+          case 'child_database': {
+            const title = (b[type] as { title?: string })?.title ?? '';
+            line = `**🗃️ ${title}**`;
+            break;
+          }
           default:
             line = text;
         }
 
-        if (children?.length) {
+        if (children?.length && type !== 'table') {
           const childMd = this.blocksToMarkdown(children, depth + 1);
           return childMd ? (line ? `${line}\n\n${childMd}` : childMd) : line;
         }

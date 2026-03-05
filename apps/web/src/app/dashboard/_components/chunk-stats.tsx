@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import clsx from 'clsx';
-import { Grid2X2 } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 export function ChunkStats({
   chunksCount,
@@ -17,7 +17,7 @@ export function ChunkStats({
     >
       <div className="flex justify-between items-center">
         <div className="flex gap-1.5 items-center pr-2 border-r text-sm">
-          <Grid2X2 className="h-4 w-4" />
+          <Layers className="h-4 w-4" />
           <span>Chunks</span>
         </div>
         <span className="text-2xl font-semibold">{chunksCount}</span>

@@ -192,7 +192,7 @@ export class WebhookService {
         datasourceId: chunkPage.datasourceId,
         name: chunkPage.name,
         description: chunkPage.description,
-        contentJson: chunkContent.results,
+        contentJson: chunkContent,
         userId: context.userId,
         createdAt: now,
       }
@@ -237,7 +237,7 @@ export class WebhookService {
         datasourceId: chunkPage.datasourceId,
         name: chunkPage.name,
         description: chunkPage.description,
-        contentJson: chunkContent.results,
+        contentJson: chunkContent,
         userId: context.userId,
         createdAt: now,
       }
@@ -297,13 +297,9 @@ export class WebhookService {
       client,
       entityId
     );
-    const contentMd = this.blocksToMarkdown(children.results);
+    const contentMd = this.blocksToMarkdown(children);
 
-    await this.userRepository.updateChunkContent(
-      entityId,
-      children.results,
-      contentMd
-    );
+    await this.userRepository.updateChunkContent(entityId, children, contentMd);
 
     this.logger.log(`Updated chunk ${entityId} content.`);
   }
@@ -422,7 +418,7 @@ export class WebhookService {
       datasourceId: context.datasourceId,
       name: context.name,
       description: context.description,
-      contentJson: chunkContent.results,
+      contentJson: chunkContent,
       userId: context.userId,
       createdAt: new Date(),
     });

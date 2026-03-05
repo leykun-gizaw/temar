@@ -90,6 +90,21 @@ const autoformatBlocks: AutoformatRule[] = [
     type: KEYS.h3,
   },
   {
+    match: '#### ',
+    mode: 'block',
+    type: KEYS.h4,
+  },
+  {
+    match: '##### ',
+    mode: 'block',
+    type: KEYS.h5,
+  },
+  {
+    match: '###### ',
+    mode: 'block',
+    type: KEYS.h6,
+  },
+  {
     match: '> ',
     mode: 'block',
     type: KEYS.blockquote,

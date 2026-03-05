@@ -52,6 +52,7 @@ test-output
 
 # Variables
 .env
+.env.docker
 
 # miscellaneous scripts
 sync-deps.js

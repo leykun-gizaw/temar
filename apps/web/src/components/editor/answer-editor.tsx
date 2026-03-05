@@ -31,16 +31,20 @@ export default function AnswerEditor({
       }}
       {...(initialValue ? { value: initialValue } : {})}
     >
-      <FixedToolbar>
-        <AnswerToolbarButtons />
-      </FixedToolbar>
-      <EditorContainer className="flex-1 min-h-0 overflow-y-auto">
-        <Editor
-          variant="none"
-          placeholder={placeholder}
-          className="min-h-[200px] px-4 py-3 pb-10"
-        />
-      </EditorContainer>
+      <div className="flex flex-col h-full min-h-0 bg-card">
+        <div className="shrink-0">
+          <FixedToolbar>
+            <AnswerToolbarButtons />
+          </FixedToolbar>
+        </div>
+        <EditorContainer className="flex-1 min-h-0 overflow-y-auto">
+          <Editor
+            variant="none"
+            placeholder={placeholder}
+            className="min-h-[200px] px-4 py-3 pb-10 h-full"
+          />
+        </EditorContainer>
+      </div>
     </Plate>
   );
 }

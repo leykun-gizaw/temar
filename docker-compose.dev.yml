@@ -30,7 +30,7 @@ services:
       target: migration
     restart: "no"
     env_file:
-      - .env
+      - .env.docker
     depends_on:
       db:
         condition: service_healthy
@@ -44,7 +44,7 @@ services:
       target: web-app-service
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.docker
     ports:
       - "5173:5173"
     depends_on:
@@ -62,7 +62,7 @@ services:
       target: notion_sync-service
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.docker
     depends_on:
       db:
         condition: service_healthy
@@ -80,7 +80,7 @@ services:
       target: fsrs-service
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.docker
     depends_on:
       db:
         condition: service_healthy
@@ -98,7 +98,7 @@ services:
       target: question-gen-service
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.docker
     depends_on:
       db:
         condition: service_healthy
@@ -116,7 +116,7 @@ services:
       target: answer-analysis-service
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.docker
     ports:
       - "${ANSWER_ANALYSIS_SERVICE_PORT:-3336}:3336"
     networks:
