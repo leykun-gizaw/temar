@@ -193,11 +193,33 @@ export default function ReviewSession({
     const answer = answersRef.current.get(currentItem.id);
     if (!answer) return;
 
-    const rubricData = currentItem.answerRubric as {
-      criteria: string[];
-      keyPoints: string[];
-    } | null;
-    if (!rubricData?.criteria?.length || !rubricData?.keyPoints?.length) return;
+    const rubric = currentItem.answerRubric as AnswerRubric | null;
+    if (!rubric) return;
+
+    // Extract criteria and keyPoints from any rubric type
+    let criteria: string[] = [];
+    let keyPoints: string[] = [];
+
+    if (rubric.type === 'open_ended') {
+      criteria = rubric.criteria ?? [];
+      keyPoints = rubric.keyPoints ?? [];
+    } else if (rubric.type === 'mcq') {
+      criteria = rubric.choices.map((c) => `${c.label}. ${c.text}`);
+      keyPoints = rubric.keyPoints ?? [];
+    } else if (rubric.type === 'leetcode') {
+      criteria = [
+        `Function: ${rubric.functionPrototype}`,
+        ...rubric.constraints.map((c) => `Constraint: ${c}`),
+      ];
+      keyPoints = rubric.keyPoints ?? [];
+    } else {
+      // Legacy rubric without type field
+      const legacy = rubric as { criteria?: string[]; keyPoints?: string[] };
+      criteria = legacy.criteria ?? [];
+      keyPoints = legacy.keyPoints ?? [];
+    }
+
+    if (!keyPoints.length) return;
 
     const plainText = answer
       .map((node) =>
@@ -217,8 +239,8 @@ export default function ReviewSession({
         plainText,
         currentItem.questionTitle ?? '',
         currentItem.questionText ?? '',
-        rubricData.criteria,
-        rubricData.keyPoints
+        criteria,
+        keyPoints
       );
       setAnalysis(result);
     } catch (err) {
