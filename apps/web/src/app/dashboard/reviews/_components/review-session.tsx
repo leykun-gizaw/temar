@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import AnswerEditor from '@/components/editor/answer-editor';
 import type { Value } from 'platejs';
+import clsx from 'clsx';
 
 const STATE_LABELS: Record<number, string> = {
   0: 'New',
@@ -48,28 +49,40 @@ const RATING_CONFIG = [
     tooltip:
       "You couldn't recall the answer — this card will be shown again soon",
     shortcut: '1',
-    color: 'text-red-500',
+    color: {
+      bg: 'bg-fsrs-again-bg',
+      text: 'text-fsrs-again',
+    },
   },
   {
     rating: 2,
     label: 'Hard',
     tooltip: 'You recalled with significant difficulty — shorter interval',
     shortcut: '2',
-    color: 'text-orange-500',
+    color: {
+      bg: 'bg-fsrs-hard-bg',
+      text: 'text-fsrs-hard',
+    },
   },
   {
     rating: 3,
     label: 'Good',
     tooltip: 'You recalled correctly after some thought — normal interval',
     shortcut: '3',
-    color: 'text-green-500',
+    color: {
+      bg: 'bg-fsrs-good-bg',
+      text: 'text-fsrs-good',
+    },
   },
   {
     rating: 4,
     label: 'Easy',
     tooltip: 'You recalled instantly and effortlessly — longer interval',
     shortcut: '4',
-    color: 'text-blue-500',
+    color: {
+      bg: 'bg-fsrs-easy-bg',
+      text: 'text-fsrs-easy',
+    },
   },
 ];
 
@@ -312,7 +325,7 @@ export default function ReviewSession({
   return (
     <div className="grid grid-rows-[auto_1fr_auto] h-[calc(100vh-var(--header-height))]">
       {/* ── Top bar ── */}
-      <div className="flex items-center justify-between px-4 py-1.5 border-b bg-card shrink-0">
+      <div className="flex items-center bg-primary/5 justify-between px-4 py-1.5 border-b shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
             <Button
@@ -609,7 +622,7 @@ export default function ReviewSession({
                 Your Answer
               </span>
             </div>
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <AnswerEditor
                 key={currentItem.id}
                 initialValue={answersRef.current.get(currentItem.id)}
@@ -623,7 +636,7 @@ export default function ReviewSession({
           </div>
 
           {/* Results section (like LeetCode's Testcase/Test Result) */}
-          <div className="flex flex-col shrink-0 h-[35%] min-h-[140px]">
+          <div className="flex flex-col shrink-0 h-[30%] min-h-[120px]">
             <div className="flex items-center gap-0 border-b shrink-0 px-3 bg-muted/30">
               <span className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-foreground">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -636,6 +649,20 @@ export default function ReviewSession({
                 <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
                   <Sparkles className="h-5 w-5 opacity-40" />
                   <p className="text-xs">Click Analyze to get AI feedback</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs bg-sky-400/20 hover:bg-sky-400/30"
+                    onClick={handleAnalyze}
+                    disabled={isAnalyzing || isPending}
+                  >
+                    {isAnalyzing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 mr-1" />
+                    )}
+                    Analyze
+                  </Button>
                 </div>
               )}
               {isAnalyzing && (
@@ -755,48 +782,31 @@ export default function ReviewSession({
       </div>
 
       {/* ── Bottom bar: Analyze + Rating buttons ── */}
-      <div className="flex items-center justify-between px-4 py-2 border-t bg-card shrink-0">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={handleAnalyze}
-          disabled={isAnalyzing || isPending}
-        >
-          {isAnalyzing ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-          ) : (
-            <Sparkles className="h-3.5 w-3.5 mr-1" />
-          )}
-          Analyze
-        </Button>
-
+      <div className="flex items-center justify-end gap-3 p-3 border-t h-full bg-card shrink-0">
         <TooltipProvider delayDuration={200}>
-          <div className="flex items-center gap-1.5">
-            {RATING_CONFIG.map(
-              ({ rating, label, tooltip, shortcut, color }) => (
-                <Tooltip key={rating}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleRate(rating)}
-                      disabled={isPending}
-                      size="sm"
-                      className="h-7 text-xs px-3"
-                    >
-                      <span className="text-[10px] opacity-50 mr-1">
-                        {shortcut}
-                      </span>
-                      <span className={color}>{label}</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p className="text-xs">{tooltip}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )
-            )}
-          </div>
+          {RATING_CONFIG.map(({ rating, label, tooltip, shortcut, color }) => (
+            <Tooltip key={rating}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => handleRate(rating)}
+                  disabled={isPending}
+                  className={clsx(
+                    'h-7 text-xs px-3 bg-sr-recalled-bg text-sr-recalled',
+                    color.bg
+                  )}
+                >
+                  <span className="text-[10px] opacity-50 mr-1">
+                    {shortcut}
+                  </span>
+                  <span className={color.text}>{label}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p className="text-xs">{tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
         </TooltipProvider>
       </div>
     </div>

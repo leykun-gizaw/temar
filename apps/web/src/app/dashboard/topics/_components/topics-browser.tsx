@@ -464,7 +464,7 @@ export default function TopicsBrowser({
   return (
     <div className="grid grid-rows-[auto_1fr] h-[calc(100vh-var(--header-height))]">
       {/* ── Sub-header: Topic selector ── */}
-      <div className="flex items-center justify-between px-4 py-1.5 border-b bg-card shrink-0">
+      <div className="flex items-center justify-between px-4 py-1.5 border-b bg-primary/5 shrink-0">
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium">📚 Topics</span>
           <Select value={selectedTopicId} onValueChange={handleTopicChange}>
