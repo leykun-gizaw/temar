@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, Children } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -20,8 +20,6 @@ import {
 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import AddTopicDialog from './add-topic-dialog';
 import AddNoteDialog from '@/components/add-note-dialog';
 import AddChunkDialog from '@/app/dashboard/topics/[topicId]/notes/[noteId]/_components/add-chunk-dialog';
@@ -69,42 +67,18 @@ interface TopicsBrowserProps {
 // ── Mobile view states ──
 type MobilePanel = 'notes' | 'chunks' | 'content';
 
-// ── Markdown components for react-markdown v10 ──
-// In v10, fenced code blocks are rendered as <pre><code class="language-xxx">
-// so we intercept at the `pre` level, not `code`.
 const markdownComponents = {
-  pre({ children }: { children?: React.ReactNode }) {
-    const childArray = Children.toArray(children);
-    const first = childArray[0] as
-      | React.ReactElement<{
-          className?: string;
-          children?: React.ReactNode;
-        }>
-      | undefined;
-
-    const className = first?.props?.className ?? '';
-    const match = /language-(\w+)/.exec(className);
-    const lang = match?.[1] ?? '';
-    const code = String(first?.props?.children ?? '').replace(/\n$/, '');
-
-    console.log('pre block:', {
-      className,
-      lang,
-      codePreview: code.slice(0, 50),
-    });
-    return (
-      <SyntaxHighlighter
-        style={oneDark}
-        language={lang || 'text'}
-        PreTag="div"
-        className="rounded-md text-sm my-3"
-      >
-        {code}
-      </SyntaxHighlighter>
-    );
-  },
   code({ className, children, ...props }: React.HTMLAttributes<HTMLElement>) {
-    // This now only handles inline backtick code, not fenced blocks
+    const match = /language-(\w+)/.exec(className || '');
+    if (match) {
+      return (
+        <pre className="bg-muted/50 rounded-md p-3 overflow-auto my-3">
+          <code className={`text-sm font-mono ${className ?? ''}`} {...props}>
+            {children}
+          </code>
+        </pre>
+      );
+    }
     return (
       <code
         className={`bg-muted px-1 py-0.5 rounded text-sm font-mono ${
