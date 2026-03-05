@@ -17,12 +17,12 @@ const openEndedRubricSchema = z.object({
   criteria: z
     .array(z.string())
     .describe(
-      'Structural guidance for how to organize and approach the answer'
+      'VISIBLE to student. Generic structural guidance ONLY (e.g. "Compare at least two approaches", "Include a concrete example", "Discuss trade-offs"). MUST NOT contain any factual content, specific answers, definitions, or hints that reveal what the correct answer is.'
     ),
   keyPoints: z
     .array(z.string())
     .describe(
-      'Internal grading notes with specific facts/details expected (hidden from student)'
+      'HIDDEN from student. Specific facts, definitions, expected reasoning, and details the answer should contain. This is the ONLY place for answer-revealing content.'
     ),
 });
 
@@ -184,9 +184,9 @@ export class LlmService {
             return `**Open-ended explainer questions**
   - The question text asks the student to explain, compare, analyze, or discuss
   - rubric.type MUST be "open_ended"
-  - rubric.sections: list the named sections the answer MUST contain (e.g. ["Definition", "Key Properties", "Example", "Comparison"]) — this tells the student what structure is expected for a sufficient answer
-  - rubric.criteria: structural guidance on how to organize the answer
-  - rubric.keyPoints: internal grading notes with specific expected facts/details (hidden from student)`;
+  - rubric.sections: list the named sections the answer MUST contain (e.g. ["Definition", "Key Properties", "Example", "Comparison"]) — this tells the student what structure is expected
+  - rubric.criteria: VISIBLE to student — generic structural/format guidance ONLY (e.g. "Compare at least two approaches", "Include a concrete example", "Discuss trade-offs"). NEVER put factual content, specific definitions, or anything that reveals the answer here.
+  - rubric.keyPoints: HIDDEN from student — put ALL specific facts, definitions, expected reasoning, and answer details here. This is the ONLY place for answer-revealing content.`;
           case 'leetcode':
             return `**Algorithm/Leetcode-style questions**
   - The question text describes a problem requiring an algorithmic solution
@@ -223,7 +223,13 @@ export class LlmService {
       .join(', ')}
 - Questions must be self-contained (answerable without seeing the original content)
 - Test understanding, application, or synthesis — not just recall of isolated facts
-- Key points are internal grading notes hidden from the student — include specific facts, details, and expected reasoning there
+
+## CRITICAL: Do NOT Give Away Answers
+- rubric.sections and rubric.criteria are SHOWN to the student BEFORE they answer
+- They must NEVER contain specific facts, definitions, explanations, or anything that hints at the correct answer
+- BAD criteria: "Explain that the compiler notes the variable's name and type" (this IS the answer)
+- GOOD criteria: "Describe the role of each stage in the process", "Include a concrete example"
+- ALL specific factual content, expected details, and answer-revealing information goes ONLY in rubric.keyPoints (which is hidden from the student)
 
 ## Constraints
 - Do NOT generate more or fewer than ${count} question(s)
