@@ -331,6 +331,24 @@ export class AppController {
     return { children, contentMd };
   }
 
+  @ApiOperation({ summary: 'Retrieve a Notion page as markdown' })
+  @ApiParam({ name: 'pageId', description: 'Notion page UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('/page/:pageId/markdown')
+  async retrievePageMarkdown(
+    @Param('pageId') pageId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    const children = await this.notionApi.listBlockChildrenRecursive(
+      client,
+      pageId
+    );
+    const markdown = this.blocksToMarkdown(children);
+    return { pageId, markdown };
+  }
+
   @ApiOperation({ summary: 'Archive a page and all its descendants in Notion' })
   @ApiParam({ name: 'pageId', description: 'Notion page UUID' })
   @ApiHeader(USER_ID_HEADER)

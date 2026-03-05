@@ -129,7 +129,17 @@ export class NotionApiService {
   }
 
   async archivePage(client: Client, pageId: string) {
-    return client.pages.update({ page_id: pageId, archived: true });
+    try {
+      return await client.pages.update({ page_id: pageId, archived: true });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      // Notion does not allow archiving workspace-level pages via API
+      if (message.includes('workspace level pages')) {
+        Logger.warn(`Cannot archive workspace-level page ${pageId}, skipping.`);
+        return { id: pageId, archived: false, skipped: true };
+      }
+      throw err;
+    }
   }
 
   async retrieveDataSource(client: Client, datasourceId: string) {
