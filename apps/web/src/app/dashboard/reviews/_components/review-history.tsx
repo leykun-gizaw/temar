@@ -16,7 +16,8 @@ import type {
   AnswerRubric,
 } from '@/lib/fetchers/recall-items';
 import type { AnalysisResult } from '@/lib/actions/analysis';
-import { plateValueToMarkdown } from '@/lib/utils/plate-to-markdown';
+import { lexicalToMarkdown } from '@/components/lexical-editor/utils/serialize';
+import type { SerializedEditorState } from 'lexical';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -142,7 +143,7 @@ export default function ReviewHistory({
   const selectedLog = reviewLogs.find((l) => l.id === selectedLogId) ?? null;
   const analysis = selectedLog?.analysisJson as AnalysisResult | null;
   const answerMarkdown = selectedLog?.answerJson
-    ? plateValueToMarkdown(selectedLog.answerJson)
+    ? lexicalToMarkdown(selectedLog.answerJson as SerializedEditorState)
     : null;
 
   const rubric = selectedItem?.answerRubric as AnswerRubric | null;

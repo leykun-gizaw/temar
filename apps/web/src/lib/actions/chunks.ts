@@ -133,3 +133,28 @@ export async function createChunk(
     };
   }
 }
+
+export async function updateChunkContent(
+  chunkId: string,
+  contentJson: unknown,
+  contentMd: string
+) {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) throw new Error('User not logged in');
+
+  const [existing] = await dbClient
+    .select({ id: chunk.id })
+    .from(chunk)
+    .where(and(eq(chunk.id, chunkId), eq(chunk.userId, loggedInUser.id)));
+
+  if (!existing) throw new Error('Chunk not found');
+
+  await dbClient
+    .update(chunk)
+    .set({
+      contentJson,
+      contentMd,
+      contentUpdatedAt: new Date(),
+    })
+    .where(eq(chunk.id, chunkId));
+}

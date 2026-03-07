@@ -39,8 +39,9 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import type { PanelImperativeHandle } from 'react-resizable-panels';
-import AnswerEditor from '@/components/editor/answer-editor';
-import type { Value } from 'platejs';
+import AnswerEditor from '@/components/lexical-editor/AnswerEditor';
+import type { SerializedEditorState } from 'lexical';
+import { lexicalToPlainText } from '@/components/lexical-editor/utils/serialize';
 import clsx from 'clsx';
 import { cn } from '@/lib/utils';
 
@@ -117,7 +118,7 @@ export default function ReviewSession({
   const [completedCount, setCompletedCount] = useState(0);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const STORAGE_KEY = 'temar:review-answers';
-  const answersRef = useRef<Map<string, Value>>(new Map());
+  const answersRef = useRef<Map<string, SerializedEditorState>>(new Map());
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -130,7 +131,7 @@ export default function ReviewSession({
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as Record<string, Value>;
+        const parsed = JSON.parse(raw) as Record<string, SerializedEditorState>;
         for (const [id, value] of Object.entries(parsed)) {
           answersRef.current.set(id, value);
         }
@@ -144,21 +145,21 @@ export default function ReviewSession({
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       try {
-        const obj: Record<string, Value> = {};
+        const obj: Record<string, SerializedEditorState> = {};
         answersRef.current.forEach((v, k) => {
           obj[k] = v;
         });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
       } catch {
-        // localStorage full or unavailable — silently ignore
+        // Ignore storage errors
       }
-    }, 500);
+    }, 1000);
   }, []);
 
   const removeFromLocalStorage = useCallback((itemId: string) => {
     answersRef.current.delete(itemId);
     try {
-      const obj: Record<string, Value> = {};
+      const obj: Record<string, SerializedEditorState> = {};
       answersRef.current.forEach((v, k) => {
         obj[k] = v;
       });
@@ -245,12 +246,7 @@ export default function ReviewSession({
 
     if (!keyPoints.length) return;
 
-    const plainText = answer
-      .map((node) =>
-        (node.children || []).map((child) => child.text || '').join('')
-      )
-      .join('\n')
-      .trim();
+    const plainText = lexicalToPlainText(answer);
 
     if (!plainText) return;
 

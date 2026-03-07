@@ -11,7 +11,8 @@ import { useState } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 // import MermaidDiagram from '@/components/mermaid-diagram';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, FileEdit } from 'lucide-react';
+import Link from 'next/link';
 import { deleteChunk } from '@/lib/actions/delete';
 import { updateChunk } from '@/lib/actions/update';
 import EditDialog from '@/components/edit-dialog';
@@ -69,6 +70,14 @@ export default function ChunkCard({
       <div className="flex items-end justify-between p-2 border rounded-b-xl">
         <span className="text-sm font-semibold">📄 {name}</span>
         <div className="flex items-center gap-1">
+          <Link
+            href={`/dashboard/topics/${topicId}/notes/${noteId}/chunks/${id}/edit`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-muted-foreground hover:text-primary transition-colors cursor-pointer p-1"
+            title="Edit content"
+          >
+            <FileEdit size={14} />
+          </Link>
           <EditDialog
             entityType="chunk"
             currentName={name}
