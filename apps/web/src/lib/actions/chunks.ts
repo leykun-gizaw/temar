@@ -121,7 +121,7 @@ export async function createChunk(
       userId: loggedInUser.id,
     });
 
-    revalidatePath(`/dashboard/topics/${topicId}/notes/${noteId}/chunks`);
+    revalidatePath('/dashboard/materials');
     return { errors: {}, message: 'Chunk created successfully.' };
   } catch (err) {
     console.error('createChunk error:', err);

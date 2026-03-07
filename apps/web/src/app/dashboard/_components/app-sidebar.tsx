@@ -31,7 +31,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isMobile ? setOpenMobile(false) : setOpen(false);
       return;
     }
-    if (pathname === '/dashboard/topics') {
+    if (pathname === '/dashboard/materials') {
       isMobile ? setOpenMobile(true) : setOpen(true);
       return;
     }

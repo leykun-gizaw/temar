@@ -26,7 +26,7 @@ export async function deleteTopic(topicId: string) {
   // Delete from DB (ON DELETE CASCADE handles notes + chunks)
   await dbClient.delete(topic).where(eq(topic.id, topicId));
 
-  revalidatePath('/dashboard/topics');
+  revalidatePath('/dashboard/materials');
 }
 
 export async function deleteNote(noteId: string, topicId: string) {
@@ -49,7 +49,7 @@ export async function deleteNote(noteId: string, topicId: string) {
   // Delete from DB (ON DELETE CASCADE handles chunks)
   await dbClient.delete(note).where(eq(note.id, noteId));
 
-  revalidatePath(`/dashboard/topics/${topicId}/notes`);
+  revalidatePath('/dashboard/materials');
 }
 
 export async function deleteChunk(
@@ -76,5 +76,5 @@ export async function deleteChunk(
   // Delete from DB
   await dbClient.delete(chunk).where(eq(chunk.id, chunkId));
 
-  revalidatePath(`/dashboard/topics/${topicId}/notes/${noteId}/chunks`);
+  revalidatePath('/dashboard/materials');
 }

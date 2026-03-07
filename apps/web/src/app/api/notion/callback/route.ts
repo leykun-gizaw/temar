@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     console.error('Notion OAuth error:', error);
     return NextResponse.redirect(
       new URL(
-        `${process.env.DOMAIN}/dashboard/topics?error=notion_denied`,
+        `${process.env.DOMAIN}/dashboard/materials?error=notion_denied`,
         request.url
       )
     );
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   if (!code) {
     return NextResponse.redirect(
       new URL(
-        `${process.env.DOMAIN}/dashboard/topics?error=no_code`,
+        `${process.env.DOMAIN}/dashboard/materials?error=no_code`,
         request.url
       )
     );
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     console.error('Missing Notion OAuth env vars');
     return NextResponse.redirect(
       new URL(
-        `${process.env.DOMAIN}/dashboard/topics?error=config`,
+        `${process.env.DOMAIN}/dashboard/materials?error=config`,
         request.url
       )
     );
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     console.error('Notion token exchange failed:', tokenResponse.status, body);
     return NextResponse.redirect(
       new URL(
-        `${process.env.DOMAIN}/dashboard/topics?error=token_exchange`,
+        `${process.env.DOMAIN}/dashboard/materials?error=token_exchange`,
         request.url
       )
     );
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     console.error('No access_token in Notion response:', tokenData);
     return NextResponse.redirect(
       new URL(
-        `${process.env.DOMAIN}/dashboard/topics?error=no_token`,
+        `${process.env.DOMAIN}/dashboard/materials?error=no_token`,
         request.url
       )
     );
@@ -112,6 +112,6 @@ export async function GET(request: NextRequest) {
     .where(eq(user.id, session.user.id));
 
   return NextResponse.redirect(
-    new URL(`${process.env.DOMAIN}/dashboard/topics`, request.url)
+    new URL(`${process.env.DOMAIN}/dashboard/materials`, request.url)
   );
 }

@@ -144,7 +144,7 @@ export async function createNote(
       });
     });
 
-    revalidatePath(`/dashboard/topics/${topicId}/notes`);
+    revalidatePath('/dashboard/materials');
     return { errors: {}, message: 'Note created successfully.' };
   } catch (err) {
     console.error('createNote error:', err);

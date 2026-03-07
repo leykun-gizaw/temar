@@ -169,7 +169,7 @@ export async function createTopic(
       });
     });
 
-    revalidatePath('/dashboard/topics');
+    revalidatePath('/dashboard/materials');
     return { errors: {}, message: 'Topic created successfully.' };
   } catch (err) {
     console.error('createTopic error:', err);

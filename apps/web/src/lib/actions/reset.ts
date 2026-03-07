@@ -61,7 +61,7 @@ export async function resetAllData(): Promise<{
       .where(eq(user.id, loggedInUser.id));
 
     revalidatePath('/dashboard');
-    revalidatePath('/dashboard/topics');
+    revalidatePath('/dashboard/materials');
     revalidatePath('/dashboard/reviews');
     revalidatePath('/dashboard/settings');
 

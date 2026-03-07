@@ -33,7 +33,7 @@ export async function updateTopic(
     .set({ name, description })
     .where(eq(topic.id, topicId));
 
-  revalidatePath('/dashboard/topics');
+  revalidatePath('/dashboard/materials');
 }
 
 export async function updateNote(
@@ -65,7 +65,7 @@ export async function updateNote(
     .set({ name, description })
     .where(eq(note.id, noteId));
 
-  revalidatePath(`/dashboard/topics/${topicId}/notes`);
+  revalidatePath('/dashboard/materials');
 }
 
 export async function updateChunk(
@@ -98,5 +98,5 @@ export async function updateChunk(
     .set({ name, description })
     .where(eq(chunk.id, chunkId));
 
-  revalidatePath(`/dashboard/topics/${topicId}/notes/${noteId}/chunks`);
+  revalidatePath('/dashboard/materials');
 }

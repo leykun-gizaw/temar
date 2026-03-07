@@ -1,13 +1,13 @@
-import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ConnectNotionButton from '@/app/dashboard/topics/_components/connect-notion-button';
-import TopicsBrowser from './_components/topics-browser';
+import { Plus } from 'lucide-react';
+import ConnectNotionButton from './_components/connect-notion-button';
+import MaterialsBrowser from './_components/materials-browser';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { getFilteredTopics } from '@/lib/fetchers/topics';
 import { getTrackingStatus } from '@/lib/actions/tracking';
 import { dbClient, chunk, note, eq } from '@temar/db-client';
 
-export default async function TopicsPage() {
+export default async function MaterialsPage() {
   const currentUser = await getLoggedInUser();
 
   if (!currentUser?.notionPageId) {
@@ -76,7 +76,7 @@ export default async function TopicsPage() {
   }));
 
   return (
-    <TopicsBrowser
+    <MaterialsBrowser
       topics={topics}
       trackedItems={serializedTracked}
       topicTrackedMap={topicTrackedMap}
