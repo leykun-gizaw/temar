@@ -1,136 +1,162 @@
 import type { SerializedEditorState, SerializedLexicalNode } from 'lexical';
 
-interface SerializedTextNode extends SerializedLexicalNode {
-  type: 'text';
-  text: string;
-  format: number;
+/**
+ * Convert a Lexical SerializedEditorState to a Markdown string.
+ * Handles headings, paragraphs, lists, code blocks, horizontal rules,
+ * and inline formatting (bold, italic, code, strikethrough).
+ */
+export function lexicalToMarkdown(state: SerializedEditorState): string {
+  if (!state?.root?.children) return '';
+  return state.root.children.map(nodeToMarkdown).join('\n');
 }
 
-interface SerializedElementNode extends SerializedLexicalNode {
-  type: string;
-  children: SerializedLexicalNode[];
-  tag?: string;
-  listType?: string;
-  language?: string;
-}
+function nodeToMarkdown(node: SerializedLexicalNode): string {
+  const n = node as Record<string, unknown>;
+  const children = (n.children as SerializedLexicalNode[] | undefined) ?? [];
 
-// Lexical format flags
-const IS_BOLD = 1;
-const IS_ITALIC = 1 << 1;
-const IS_STRIKETHROUGH = 1 << 2;
-const IS_UNDERLINE = 1 << 3;
-const IS_CODE = 1 << 4;
-const IS_HIGHLIGHT = 1 << 7;
-
-function serializeTextNode(node: SerializedTextNode): string {
-  let text = node.text;
-  if (!text) return '';
-
-  const format = node.format;
-  if (format & IS_CODE) text = `\`${text}\``;
-  if (format & IS_BOLD) text = `**${text}**`;
-  if (format & IS_ITALIC) text = `*${text}*`;
-  if (format & IS_STRIKETHROUGH) text = `~~${text}~~`;
-  if (format & IS_HIGHLIGHT) text = `==${text}==`;
-
-  return text;
-}
-
-function serializeChildren(children: SerializedLexicalNode[]): string {
-  return children
-    .map((child) => {
-      if (child.type === 'text') {
-        return serializeTextNode(child as SerializedTextNode);
-      }
-      if (child.type === 'linebreak') {
-        return '\n';
-      }
-      if ('children' in child) {
-        return serializeNode(child as SerializedElementNode);
-      }
-      return '';
-    })
-    .join('');
-}
-
-function serializeNode(node: SerializedElementNode): string {
-  const children = node.children ?? [];
-  const inline = serializeChildren(children);
-
-  switch (node.type) {
+  switch (n.type) {
     case 'heading': {
-      const tag = node.tag ?? 'h1';
+      const tag = (n.tag as string) ?? 'h1';
       const level = parseInt(tag.replace('h', ''), 10) || 1;
       const prefix = '#'.repeat(level);
-      return `${prefix} ${inline}`;
+      return `${prefix} ${inlineChildren(children)}\n`;
     }
-    case 'quote':
-      return `> ${inline}`;
-    case 'code': {
-      const lang = node.language ?? '';
-      const lines = children
-        .filter((c) => c.type === 'code-highlight' || c.type === 'text' || c.type === 'linebreak')
-        .map((c) => {
-          if (c.type === 'linebreak') return '\n';
-          return (c as SerializedTextNode).text ?? '';
-        })
-        .join('');
-      return `\`\`\`${lang}\n${lines}\n\`\`\``;
+
+    case 'paragraph': {
+      const text = inlineChildren(children);
+      return `${text}\n`;
     }
-    case 'horizontalrule':
-      return '---';
+
     case 'list': {
-      const isOrdered = node.listType === 'number';
-      return children
-        .map((child, i) => {
-          const content = serializeChildren(
-            (child as SerializedElementNode).children ?? []
-          );
-          return isOrdered ? `${i + 1}. ${content}` : `- ${content}`;
+      const listType = n.listType as string;
+      return (
+        children
+          .map((child, i) => {
+            const content = inlineChildren(
+              ((child as Record<string, unknown>)
+                .children as SerializedLexicalNode[]) ?? []
+            );
+            const prefix = listType === 'number' ? `${i + 1}.` : '-';
+            return `${prefix} ${content}`;
+          })
+          .join('\n') + '\n'
+      );
+    }
+
+    case 'listitem': {
+      return inlineChildren(children);
+    }
+
+    case 'code': {
+      const language = (n.language as string) ?? '';
+      const codeText = children
+        .map((c) => {
+          const cn = c as Record<string, unknown>;
+          return (cn.text as string) ?? '';
         })
         .join('\n');
+      return `\`\`\`${language}\n${codeText}\n\`\`\`\n`;
     }
-    case 'listitem':
-      return serializeChildren(children);
-    case 'paragraph':
+
+    case 'horizontalrule': {
+      return '---\n';
+    }
+
+    case 'quote': {
+      const text = inlineChildren(children);
+      return (
+        text
+          .split('\n')
+          .map((line) => `> ${line}`)
+          .join('\n') + '\n'
+      );
+    }
+
     default:
-      return inline;
+      if (children.length > 0) {
+        return children.map(nodeToMarkdown).join('\n');
+      }
+      return '';
   }
 }
 
-export function lexicalToMarkdown(
-  state: SerializedEditorState | undefined | null
-): string {
-  if (!state?.root?.children) return '';
-  return (state.root.children as SerializedElementNode[])
-    .map(serializeNode)
-    .join('\n\n');
+function inlineChildren(children: SerializedLexicalNode[]): string {
+  return children.map(inlineNode).join('');
 }
 
-export function lexicalToPlainText(
-  state: SerializedEditorState | undefined | null
-): string {
-  if (!state?.root?.children) return '';
+function inlineNode(node: SerializedLexicalNode): string {
+  const n = node as Record<string, unknown>;
 
-  function extractText(nodes: SerializedLexicalNode[]): string {
-    return nodes
-      .map((node) => {
-        if (node.type === 'text') {
-          return (node as SerializedTextNode).text;
-        }
-        if (node.type === 'linebreak') {
-          return '\n';
-        }
-        if ('children' in node) {
-          return extractText((node as SerializedElementNode).children ?? []);
-        }
-        return '';
-      })
-      .join('');
+  if (n.type === 'text') {
+    let text = (n.text as string) ?? '';
+    const format = (n.format as number) ?? 0;
+
+    // Lexical format flags: 1=bold, 2=italic, 4=strikethrough, 8=underline, 16=code
+    if (format & 16) text = `\`${text}\``;
+    if (format & 1) text = `**${text}**`;
+    if (format & 2) text = `*${text}*`;
+    if (format & 4) text = `~~${text}~~`;
+
+    return text;
   }
 
-  return (state.root.children as SerializedElementNode[])
-    .map((node) => extractText(node.children ?? []))
-    .join('\n')
-    .trim();
+  if (n.type === 'linebreak') {
+    return '\n';
+  }
+
+  if (n.type === 'link') {
+    const url = (n.url as string) ?? '';
+    const children = (n.children as SerializedLexicalNode[]) ?? [];
+    const text = inlineChildren(children);
+    return `[${text}](${url})`;
+  }
+
+  // Fallback for unknown inline types
+  const children = (n.children as SerializedLexicalNode[]) ?? [];
+  if (children.length > 0) {
+    return inlineChildren(children);
+  }
+
+  return (n.text as string) ?? '';
+}
+
+/**
+ * Convert a Lexical SerializedEditorState to plain text.
+ * Strips all formatting and returns raw text content.
+ */
+export function lexicalToPlainText(state: SerializedEditorState): string {
+  if (!state?.root?.children) return '';
+  return state.root.children.map(nodeToPlainText).join('\n').trim();
+}
+
+function nodeToPlainText(node: SerializedLexicalNode): string {
+  const n = node as Record<string, unknown>;
+  const children = (n.children as SerializedLexicalNode[] | undefined) ?? [];
+
+  if (n.type === 'text') {
+    return (n.text as string) ?? '';
+  }
+
+  if (n.type === 'linebreak') {
+    return '\n';
+  }
+
+  if (n.type === 'horizontalrule') {
+    return '';
+  }
+
+  const childText = children.map(nodeToPlainText).join('');
+
+  switch (n.type) {
+    case 'paragraph':
+    case 'heading':
+    case 'quote':
+      return `${childText}\n`;
+    case 'listitem':
+      return `${childText}\n`;
+    case 'list':
+      return childText;
+    default:
+      return childText;
+  }
 }

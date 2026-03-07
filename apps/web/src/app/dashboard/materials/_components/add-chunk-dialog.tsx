@@ -41,8 +41,8 @@ export default function AddChunkDialog({
       <DialogTrigger asChild>
         {trigger ?? <Button size="sm">New chunk</Button>}
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-auto">
-        <form className="flex flex-col h-full" action={formAction}>
+      <DialogContent className="sm:max-w-md">
+        <form className="space-y-4" action={formAction}>
           <input type="hidden" name="noteId" value={noteId} />
           <input type="hidden" name="topicId" value={topicId} />
           <DialogHeader>
@@ -51,10 +51,11 @@ export default function AddChunkDialog({
               Add Chunk
             </DialogTitle>
             <DialogDescription className="text-center">
-              Create a new chunk for this note.
+              Create a new chunk to hold your content
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 p-1 overflow-auto space-y-4 mt-2">
+
+          <div className="space-y-2">
             <div className="space-y-2">
               <Label htmlFor="chunk-title">Title</Label>
               <Input
@@ -88,27 +89,25 @@ export default function AddChunkDialog({
           </div>
 
           {errorState.message && (
-            <p className="text-sm text-muted-foreground pt-2">
+            <p className="text-sm text-muted-foreground">
               {errorState.message}
             </p>
           )}
 
-          <DialogFooter className="pt-2">
-            <div className="flex gap-2">
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isPending ? 'Creating...' : 'Create'}
+          <DialogFooter className="gap-2">
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
               </Button>
-              <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOpen(false)}
-                >
-                  Cancel
-                </Button>
-              </DialogClose>
-            </div>
+            </DialogClose>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending ? 'Creating...' : 'Create'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

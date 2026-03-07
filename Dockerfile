@@ -43,8 +43,9 @@ FROM deps AS notion-sync-builder
 COPY /tsconfig.base.json ./
 COPY libs/db-client ./libs/db-client
 COPY apps/notion_sync-service ./apps/notion_sync-service
-# Remove workspace symlinks so webpack bundles @temar/* from source via tsconfig paths
-RUN rm -rf node_modules/@temar
+# Remove workspace symlinks and db-client project tsconfigs so webpack
+# bundles @temar/* from source via the service tsconfig paths only
+RUN rm -rf node_modules/@temar libs/db-client/tsconfig*.json
 # Build 'notion_sync-service'
 RUN NX_DAEMON=false pnpm nx build notion_sync-service --prod
 
@@ -53,8 +54,9 @@ FROM deps AS fsrs-service-builder
 COPY /tsconfig.base.json ./
 COPY libs/db-client ./libs/db-client
 COPY apps/fsrs-service ./apps/fsrs-service
-# Remove workspace symlinks so webpack bundles @temar/* from source via tsconfig paths
-RUN rm -rf node_modules/@temar
+# Remove workspace symlinks and db-client project tsconfigs so webpack
+# bundles @temar/* from source via the service tsconfig paths only
+RUN rm -rf node_modules/@temar libs/db-client/tsconfig*.json
 # Build 'fsrs-service'
 RUN NX_DAEMON=false pnpm nx build fsrs-service --prod
 
@@ -63,8 +65,9 @@ FROM deps AS question-gen-service-builder
 COPY apps/question-gen-service ./apps/question-gen-service
 COPY /tsconfig.base.json ./
 COPY libs/db-client ./libs/db-client
-# Remove workspace symlinks so webpack bundles @temar/* from source via tsconfig paths
-RUN rm -rf node_modules/@temar
+# Remove workspace symlinks and db-client project tsconfigs so webpack
+# bundles @temar/* from source via the service tsconfig paths only
+RUN rm -rf node_modules/@temar libs/db-client/tsconfig*.json
 # Build 'question-gen-service'
 RUN NX_DAEMON=false pnpm nx build question-gen-service --prod
 

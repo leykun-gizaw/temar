@@ -54,5 +54,10 @@
     "../../libs/db-client/src/**/*.test.ts",
     "../../libs/shared-types/src/**/*.spec.ts",
     "../../libs/shared-types/src/**/*.test.ts"
+  ],
+  "references": [
+    {
+      "path": "../../libs/db-client"
+    }
   ]
 }

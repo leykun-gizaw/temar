@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useActionState } from 'react';
+import * as React from 'react';
+import { useActionState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,60 +15,47 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LibraryBig, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { createTopic } from '@/lib/actions/topics';
 import { ErrorState } from '@/lib/definitions';
 
-interface AddTopicDialogProps {
+export function AddTopicDialog({
+  trigger,
+}: {
   trigger?: React.ReactNode;
-}
-
-export function AddTopicDialog({ trigger }: AddTopicDialogProps) {
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const [open, setOpen] = useState(false);
+}) {
+  const [open, setOpen] = React.useState(false);
 
   const initialErrorState: ErrorState = { errors: {}, message: null };
   const [errorState, formAction, isPending] = useActionState(
     createTopic,
     initialErrorState
   );
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-      }}
-    >
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger ?? (
-          <Button
-            ref={triggerRef}
-            type="button"
-            size={'sm'}
-            variant={'outline'}
-          >
-            <LibraryBig /> New Topic
-          </Button>
-        )}
+        {trigger ?? <Button size="sm">New topic</Button>}
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-auto">
-        <form className="flex flex-col h-full" action={formAction}>
+      <DialogContent className="sm:max-w-md">
+        <form className="space-y-4" action={formAction}>
           <DialogHeader>
             <DialogTitle className="flex flex-col items-center gap-2">
               <span className="text-5xl">📚</span>
               Add Topic
             </DialogTitle>
             <DialogDescription className="text-center">
-              Create a new topic to track your learning.
+              Create a new topic to organize your notes and chunks
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 p-1 overflow-auto space-y-4 mt-2">
+
+          <div className="space-y-2">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="topic-title">Title</Label>
               <Input
-                id="title"
+                id="topic-title"
                 name="title"
-                placeholder="e.g. Advanced Graph Theory"
+                placeholder="e.g. Machine Learning Basics"
                 aria-required="true"
               />
               {errorState.errors?.title && (
@@ -77,9 +65,9 @@ export function AddTopicDialog({ trigger }: AddTopicDialogProps) {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="topic-description">Description</Label>
               <textarea
-                id="description"
+                id="topic-description"
                 name="description"
                 placeholder="Describe the topic..."
                 rows={4}
@@ -95,34 +83,28 @@ export function AddTopicDialog({ trigger }: AddTopicDialogProps) {
           </div>
 
           {errorState.message && (
-            <p className="text-sm text-muted-foreground pt-2">
+            <p className="text-sm text-muted-foreground">
               {errorState.message}
             </p>
           )}
 
-          <DialogFooter className="pt-2">
-            <div className="flex gap-2">
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isPending ? 'Creating...' : 'Create'}
+          <DialogFooter className="gap-2">
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
               </Button>
-              <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setOpen(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-              </DialogClose>
-            </div>
+            </DialogClose>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending ? 'Creating...' : 'Create'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
-
-export default AddTopicDialog;

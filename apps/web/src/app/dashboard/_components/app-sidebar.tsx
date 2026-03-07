@@ -25,7 +25,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { setOpen, setOpenMobile, isMobile } = useSidebar();
   // No per-tab title here; Topics panel renders its own header/content.
 
-  // Path-driven default behavior: closed on /dashboard, open on /dashboard/topics
+  // Path-driven default behavior: closed on /dashboard, open on /dashboard/materials
   React.useEffect(() => {
     if (pathname === '/dashboard') {
       isMobile ? setOpenMobile(false) : setOpen(false);

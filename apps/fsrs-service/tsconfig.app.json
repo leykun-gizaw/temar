@@ -1,6 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
     "outDir": "dist",
     "types": ["node"],
     "rootDir": "../..",
@@ -21,5 +25,10 @@
     "eslint.config.mjs",
     "../../libs/db-client/src/**/*.spec.ts",
     "../../libs/db-client/src/**/*.test.ts"
+  ],
+  "references": [
+    {
+      "path": "../../libs/db-client"
+    }
   ]
 }
