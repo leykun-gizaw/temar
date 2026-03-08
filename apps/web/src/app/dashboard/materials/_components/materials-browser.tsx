@@ -188,31 +188,37 @@ export default function MaterialsBrowser({
   }, []);
 
   // ── Toggle helpers ──
-  const toggleTopic = (topicId: string) => {
-    setExpandedTopics((prev) => {
-      const next = new Set(prev);
-      if (next.has(topicId)) {
-        next.delete(topicId);
-      } else {
-        next.add(topicId);
-        fetchNotes(topicId);
-      }
-      return next;
-    });
-  };
+  const toggleTopic = useCallback(
+    (topicId: string) => {
+      setExpandedTopics((prev) => {
+        const next = new Set(prev);
+        if (next.has(topicId)) {
+          next.delete(topicId);
+        } else {
+          next.add(topicId);
+          fetchNotes(topicId);
+        }
+        return next;
+      });
+    },
+    [fetchNotes]
+  );
 
-  const toggleNote = (noteId: string) => {
-    setExpandedNotes((prev) => {
-      const next = new Set(prev);
-      if (next.has(noteId)) {
-        next.delete(noteId);
-      } else {
-        next.add(noteId);
-        fetchChunks(noteId);
-      }
-      return next;
-    });
-  };
+  const toggleNote = useCallback(
+    (noteId: string) => {
+      setExpandedNotes((prev) => {
+        const next = new Set(prev);
+        if (next.has(noteId)) {
+          next.delete(noteId);
+        } else {
+          next.add(noteId);
+          fetchChunks(noteId);
+        }
+        return next;
+      });
+    },
+    [fetchChunks]
+  );
 
   // ── Select chunk ──
   const handleChunkSelect = (
@@ -250,7 +256,7 @@ export default function MaterialsBrowser({
   );
 
   // ── Save chunk content ──
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!selectedChunkId || !editorState) return;
     setIsSaving(true);
     try {
@@ -269,16 +275,29 @@ export default function MaterialsBrowser({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [
+    selectedChunkId,
+    editorState,
+    setHasDraft,
+    setIsEditing,
+    selectedChunkMeta,
+    fetchChunks,
+  ]);
 
   // ── Invalidate cache helpers ──
-  const invalidateNotes = (topicId: string) => {
-    fetchNotes(topicId, true);
-  };
+  const invalidateNotes = useCallback(
+    (topicId: string) => {
+      fetchNotes(topicId, true);
+    },
+    [fetchNotes]
+  );
 
-  const invalidateChunks = (noteId: string) => {
-    fetchChunks(noteId, true);
-  };
+  const invalidateChunks = useCallback(
+    (noteId: string) => {
+      fetchChunks(noteId, true);
+    },
+    [fetchChunks]
+  );
 
   // ── Resolve currently selected chunk from maps ──
   const selectedChunk = useMemo(() => {
@@ -615,6 +634,10 @@ export default function MaterialsBrowser({
     selectedChunkId,
     sidebarCollapsed,
     trackedChunkIds,
+    invalidateChunks,
+    invalidateNotes,
+    toggleNote,
+    toggleTopic,
   ]);
 
   // ── Content panel ──
@@ -649,7 +672,7 @@ export default function MaterialsBrowser({
         : (selectedChunk.contentJson as SerializedEditorState | undefined);
 
     return (
-      <div className="flex-1 flex flex-col min-h-0 min-w-0">
+      <div className="flex-1 flex flex-col min-h-0 min-w-0 gap-4">
         {/* Content header */}
         <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/10 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
@@ -723,9 +746,9 @@ export default function MaterialsBrowser({
         </div>
 
         {/* Editor / Read-only content */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto m-4">
           {isEditing ? (
-            <div className="h-full">
+            <div className="h-full ">
               <ChunkEditor
                 key={`${selectedChunk.id}-editing`}
                 initialValue={editorInitialValue}
@@ -757,6 +780,7 @@ export default function MaterialsBrowser({
     sidebarCollapsed,
     hasDraft,
     handleEditorChange,
+    handleSave,
   ]);
 
   return (
