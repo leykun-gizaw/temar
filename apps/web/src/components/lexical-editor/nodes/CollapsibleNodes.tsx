@@ -19,20 +19,20 @@ export type SerializedCollapsibleContainerNode = Spread<
 export class CollapsibleContainerNode extends ElementNode {
   __open: boolean;
 
-  static getType(): string {
+  static override getType(): string {
     return 'collapsible-container';
   }
 
-  static clone(node: CollapsibleContainerNode): CollapsibleContainerNode {
+  static override clone(node: CollapsibleContainerNode): CollapsibleContainerNode {
     return new CollapsibleContainerNode(node.__open, node.__key);
   }
 
-  constructor(open: boolean = true, key?: NodeKey) {
+  constructor(open = true, key?: NodeKey) {
     super(key);
     this.__open = open;
   }
 
-  createDOM(config: EditorConfig): HTMLElement {
+  override createDOM(_config: EditorConfig): HTMLElement {
     const dom = document.createElement('details');
     dom.classList.add(
       'border',
@@ -45,7 +45,7 @@ export class CollapsibleContainerNode extends ElementNode {
     return dom;
   }
 
-  updateDOM(
+  override updateDOM(
     prevNode: CollapsibleContainerNode,
     dom: HTMLDetailsElement
   ): boolean {
@@ -64,13 +64,13 @@ export class CollapsibleContainerNode extends ElementNode {
     writable.__open = !writable.__open;
   }
 
-  static importJSON(
+  static override importJSON(
     serializedNode: SerializedCollapsibleContainerNode
   ): CollapsibleContainerNode {
     return $createCollapsibleContainerNode(serializedNode.open);
   }
 
-  exportJSON(): SerializedCollapsibleContainerNode {
+  override exportJSON(): SerializedCollapsibleContainerNode {
     return {
       ...super.exportJSON(),
       type: 'collapsible-container',
@@ -79,13 +79,13 @@ export class CollapsibleContainerNode extends ElementNode {
     };
   }
 
-  isShadowRoot(): boolean {
+  override isShadowRoot(): boolean {
     return true;
   }
 }
 
 export function $createCollapsibleContainerNode(
-  open: boolean = true
+  open = true
 ): CollapsibleContainerNode {
   return $applyNodeReplacement(new CollapsibleContainerNode(open));
 }
@@ -101,15 +101,15 @@ export function $isCollapsibleContainerNode(
 export type SerializedCollapsibleTitleNode = SerializedElementNode;
 
 export class CollapsibleTitleNode extends ElementNode {
-  static getType(): string {
+  static override getType(): string {
     return 'collapsible-title';
   }
 
-  static clone(node: CollapsibleTitleNode): CollapsibleTitleNode {
+  static override clone(node: CollapsibleTitleNode): CollapsibleTitleNode {
     return new CollapsibleTitleNode(node.__key);
   }
 
-  createDOM(): HTMLElement {
+  override createDOM(): HTMLElement {
     const dom = document.createElement('summary');
     dom.classList.add(
       'font-medium',
@@ -123,15 +123,15 @@ export class CollapsibleTitleNode extends ElementNode {
     return dom;
   }
 
-  updateDOM(): boolean {
+  override updateDOM(): boolean {
     return false;
   }
 
-  static importJSON(): CollapsibleTitleNode {
+  static override importJSON(): CollapsibleTitleNode {
     return $createCollapsibleTitleNode();
   }
 
-  exportJSON(): SerializedCollapsibleTitleNode {
+  override exportJSON(): SerializedCollapsibleTitleNode {
     return {
       ...super.exportJSON(),
       type: 'collapsible-title',
@@ -139,7 +139,7 @@ export class CollapsibleTitleNode extends ElementNode {
     };
   }
 
-  collapseAtStart(): boolean {
+  override collapseAtStart(): boolean {
     return true;
   }
 }
@@ -159,29 +159,29 @@ export function $isCollapsibleTitleNode(
 export type SerializedCollapsibleContentNode = SerializedElementNode;
 
 export class CollapsibleContentNode extends ElementNode {
-  static getType(): string {
+  static override getType(): string {
     return 'collapsible-content';
   }
 
-  static clone(node: CollapsibleContentNode): CollapsibleContentNode {
+  static override clone(node: CollapsibleContentNode): CollapsibleContentNode {
     return new CollapsibleContentNode(node.__key);
   }
 
-  createDOM(): HTMLElement {
+  override createDOM(): HTMLElement {
     const dom = document.createElement('div');
     dom.classList.add('p-3', 'border-t', 'border-border');
     return dom;
   }
 
-  updateDOM(): boolean {
+  override updateDOM(): boolean {
     return false;
   }
 
-  static importJSON(): CollapsibleContentNode {
+  static override importJSON(): CollapsibleContentNode {
     return $createCollapsibleContentNode();
   }
 
-  exportJSON(): SerializedCollapsibleContentNode {
+  override exportJSON(): SerializedCollapsibleContentNode {
     return {
       ...super.exportJSON(),
       type: 'collapsible-content',
@@ -189,7 +189,7 @@ export class CollapsibleContentNode extends ElementNode {
     };
   }
 
-  isShadowRoot(): boolean {
+  override isShadowRoot(): boolean {
     return true;
   }
 }

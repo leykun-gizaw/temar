@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import {
   $isCodeNode,
-  CodeNode,
   getCodeLanguages,
   getDefaultCodeLanguage,
 } from '@lexical/code';

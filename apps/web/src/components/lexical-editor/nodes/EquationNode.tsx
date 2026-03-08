@@ -9,7 +9,7 @@ import type {
   Spread,
 } from 'lexical';
 import { $applyNodeReplacement, DecoratorNode } from 'lexical';
-import { useEffect, useRef, useState } from 'react';
+import { type JSX, useEffect, useRef, useState } from 'react';
 
 export type SerializedEquationNode = Spread<
   {
@@ -68,11 +68,11 @@ export class EquationNode extends DecoratorNode<JSX.Element> {
   __equation: string;
   __inline: boolean;
 
-  static getType(): string {
+  static override getType(): string {
     return 'equation';
   }
 
-  static clone(node: EquationNode): EquationNode {
+  static override clone(node: EquationNode): EquationNode {
     return new EquationNode(node.__equation, node.__inline, node.__key);
   }
 
@@ -82,7 +82,7 @@ export class EquationNode extends DecoratorNode<JSX.Element> {
     this.__inline = inline;
   }
 
-  createDOM(config: EditorConfig): HTMLElement {
+  override createDOM(config: EditorConfig): HTMLElement {
     const element = this.__inline
       ? document.createElement('span')
       : document.createElement('div');
@@ -92,7 +92,7 @@ export class EquationNode extends DecoratorNode<JSX.Element> {
     return element;
   }
 
-  updateDOM(): false {
+  override updateDOM(): false {
     return false;
   }
 
@@ -109,14 +109,13 @@ export class EquationNode extends DecoratorNode<JSX.Element> {
     writable.__equation = equation;
   }
 
-  static importJSON(serializedNode: SerializedEquationNode): EquationNode {
-    return $createEquationNode(
-      serializedNode.equation,
-      serializedNode.inline
-    );
+  static override importJSON(
+    serializedNode: SerializedEquationNode
+  ): EquationNode {
+    return $createEquationNode(serializedNode.equation, serializedNode.inline);
   }
 
-  exportJSON(): SerializedEquationNode {
+  override exportJSON(): SerializedEquationNode {
     return {
       type: 'equation',
       version: 1,
@@ -125,7 +124,7 @@ export class EquationNode extends DecoratorNode<JSX.Element> {
     };
   }
 
-  exportDOM(): DOMExportOutput {
+  override exportDOM(): DOMExportOutput {
     const element = this.__inline
       ? document.createElement('span')
       : document.createElement('div');
@@ -135,7 +134,7 @@ export class EquationNode extends DecoratorNode<JSX.Element> {
     return { element };
   }
 
-  decorate(): JSX.Element {
+  override decorate(): JSX.Element {
     return (
       <EquationComponent
         equation={this.__equation}
@@ -145,14 +144,14 @@ export class EquationNode extends DecoratorNode<JSX.Element> {
     );
   }
 
-  isInline(): boolean {
+  override isInline(): boolean {
     return this.__inline;
   }
 }
 
 export function $createEquationNode(
-  equation: string = '',
-  inline: boolean = true
+  equation = '',
+  inline = true
 ): EquationNode {
   return $applyNodeReplacement(new EquationNode(equation, inline));
 }

@@ -9,7 +9,7 @@ import type {
   Spread,
 } from 'lexical';
 import { $applyNodeReplacement, DecoratorNode } from 'lexical';
-import { useEffect, useId, useRef, useState } from 'react';
+import { JSX, useEffect, useId, useRef, useState } from 'react';
 
 export type SerializedMermaidNode = Spread<
   { code: string },
@@ -87,11 +87,11 @@ function MermaidComponent({
 export class MermaidNode extends DecoratorNode<JSX.Element> {
   __code: string;
 
-  static getType(): string {
+  static override getType(): string {
     return 'mermaid';
   }
 
-  static clone(node: MermaidNode): MermaidNode {
+  static override clone(node: MermaidNode): MermaidNode {
     return new MermaidNode(node.__code, node.__key);
   }
 
@@ -100,7 +100,7 @@ export class MermaidNode extends DecoratorNode<JSX.Element> {
     this.__code = code;
   }
 
-  createDOM(config: EditorConfig): HTMLElement {
+  override createDOM(config: EditorConfig): HTMLElement {
     const div = document.createElement('div');
     const theme = config.theme;
     const className = theme.mermaid;
@@ -108,7 +108,7 @@ export class MermaidNode extends DecoratorNode<JSX.Element> {
     return div;
   }
 
-  updateDOM(): false {
+  override updateDOM(): false {
     return false;
   }
 
@@ -121,11 +121,13 @@ export class MermaidNode extends DecoratorNode<JSX.Element> {
     writable.__code = code;
   }
 
-  static importJSON(serializedNode: SerializedMermaidNode): MermaidNode {
+  static override importJSON(
+    serializedNode: SerializedMermaidNode
+  ): MermaidNode {
     return $createMermaidNode(serializedNode.code);
   }
 
-  exportJSON(): SerializedMermaidNode {
+  override exportJSON(): SerializedMermaidNode {
     return {
       type: 'mermaid',
       version: 1,
@@ -133,23 +135,23 @@ export class MermaidNode extends DecoratorNode<JSX.Element> {
     };
   }
 
-  exportDOM(): DOMExportOutput {
+  override exportDOM(): DOMExportOutput {
     const element = document.createElement('pre');
     element.setAttribute('data-lexical-mermaid', 'true');
     element.textContent = this.__code;
     return { element };
   }
 
-  decorate(): JSX.Element {
+  override decorate(): JSX.Element {
     return <MermaidComponent code={this.__code} nodeKey={this.getKey()} />;
   }
 
-  isInline(): boolean {
+  override isInline(): boolean {
     return false;
   }
 }
 
-export function $createMermaidNode(code: string = ''): MermaidNode {
+export function $createMermaidNode(code = ''): MermaidNode {
   return $applyNodeReplacement(new MermaidNode(code));
 }
 
