@@ -15,18 +15,41 @@ const theme: EditorThemeClasses = {
     underline: 'underline',
     strikethrough: 'line-through',
     code: 'bg-muted px-1.5 py-0.5 rounded text-sm font-mono',
+    subscript: 'text-[0.8em] align-sub',
+    superscript: 'text-[0.8em] align-super',
+    highlight: 'bg-yellow-200 dark:bg-yellow-800/50',
   },
   list: {
     ul: 'list-disc ml-6 mb-2',
     ol: 'list-decimal ml-6 mb-2',
     listitem: 'mb-1',
+    checklist: 'ml-0 list-none mb-2',
+    listitemChecked:
+      'relative pl-7 mb-1 line-through text-muted-foreground before:absolute before:left-0 before:top-0.5 before:w-4 before:h-4 before:border before:border-primary before:rounded-sm before:bg-primary before:content-["✓"] before:text-primary-foreground before:text-xs before:flex before:items-center before:justify-center before:cursor-pointer',
+    listitemUnchecked:
+      'relative pl-7 mb-1 before:absolute before:left-0 before:top-0.5 before:w-4 before:h-4 before:border before:border-muted-foreground before:rounded-sm before:content-[""] before:cursor-pointer',
     nested: {
       listitem: 'list-none',
     },
   },
   link: 'text-primary underline cursor-pointer',
-  quote: 'border-l-4 border-muted-foreground/30 pl-4 italic text-muted-foreground mb-2',
-  code: 'bg-muted rounded-md p-4 font-mono text-sm mb-2 block overflow-x-auto',
+  quote:
+    'border-l-4 border-muted-foreground/30 pl-4 italic text-muted-foreground mb-2',
+  code: 'bg-muted rounded-md p-4 font-mono text-sm mb-2 block overflow-x-auto relative',
+  table: 'border-collapse border border-border my-2 w-full',
+  tableCell: 'border border-border px-3 py-2 text-left min-w-[75px] align-top',
+  tableCellHeader:
+    'border border-border px-3 py-2 text-left font-bold bg-muted min-w-[75px] align-top',
+  tableRow: '',
+  tableScrollableWrapper: 'overflow-x-auto my-2',
+  image: 'inline-block max-w-full',
+  equation: '',
+  mermaid: '',
+  embedBlock: {
+    base: 'my-2',
+    focus: 'outline outline-2 outline-primary rounded-md',
+  },
+  indent: 'pl-8',
   codeHighlight: {
     atrule: 'text-blue-500',
     attr: 'text-blue-500',

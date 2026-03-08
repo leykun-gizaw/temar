@@ -72,6 +72,71 @@ function nodeToMarkdown(node: SerializedLexicalNode): string {
       );
     }
 
+    case 'table': {
+      const rows = children.map((row) => {
+        const cells =
+          ((row as Record<string, unknown>)
+            .children as SerializedLexicalNode[]) ?? [];
+        return (
+          '| ' +
+          cells
+            .map((cell) => {
+              const cellChildren =
+                ((cell as Record<string, unknown>)
+                  .children as SerializedLexicalNode[]) ?? [];
+              return cellChildren.map(nodeToMarkdown).join('').trim();
+            })
+            .join(' | ') +
+          ' |'
+        );
+      });
+      if (rows.length > 0) {
+        const firstRow =
+          ((children[0] as Record<string, unknown>)
+            .children as SerializedLexicalNode[]) ?? [];
+        const separator = '| ' + firstRow.map(() => '---').join(' | ') + ' |';
+        return [rows[0], separator, ...rows.slice(1)].join('\n') + '\n';
+      }
+      return '';
+    }
+
+    case 'image': {
+      const src = (n.src as string) ?? '';
+      const alt = (n.altText as string) ?? '';
+      return `![${alt}](${src})\n`;
+    }
+
+    case 'equation': {
+      const equation = (n.equation as string) ?? '';
+      const inline = (n.inline as boolean) ?? false;
+      if (inline) return `$${equation}$`;
+      return `$$\n${equation}\n$$\n`;
+    }
+
+    case 'mermaid': {
+      const code = (n.code as string) ?? '';
+      return `\`\`\`mermaid\n${code}\n\`\`\`\n`;
+    }
+
+    case 'youtube': {
+      const videoID = (n.videoID as string) ?? '';
+      return `[YouTube](https://www.youtube.com/watch?v=${videoID})\n`;
+    }
+
+    case 'collapsible-container': {
+      return children.map(nodeToMarkdown).join('\n');
+    }
+
+    case 'collapsible-title': {
+      const text = inlineChildren(children);
+      return `<details><summary>${text}</summary>\n`;
+    }
+
+    case 'collapsible-content': {
+      const content = children.map(nodeToMarkdown).join('\n');
+      return `${content}\n</details>\n`;
+    }
+
     default:
       if (children.length > 0) {
         return children.map(nodeToMarkdown).join('\n');
@@ -91,11 +156,12 @@ function inlineNode(node: SerializedLexicalNode): string {
     let text = (n.text as string) ?? '';
     const format = (n.format as number) ?? 0;
 
-    // Lexical format flags: 1=bold, 2=italic, 4=strikethrough, 8=underline, 16=code
+    // Lexical format flags: 1=bold, 2=italic, 4=strikethrough, 8=underline, 16=code, 32=subscript, 64=superscript, 128=highlight
     if (format & 16) text = `\`${text}\``;
     if (format & 1) text = `**${text}**`;
     if (format & 2) text = `*${text}*`;
     if (format & 4) text = `~~${text}~~`;
+    if (format & 128) text = `==${text}==`;
 
     return text;
   }
@@ -145,6 +211,22 @@ function nodeToPlainText(node: SerializedLexicalNode): string {
     return '';
   }
 
+  if (n.type === 'image') {
+    return (n.altText as string) ?? '';
+  }
+
+  if (n.type === 'equation') {
+    return (n.equation as string) ?? '';
+  }
+
+  if (n.type === 'mermaid') {
+    return (n.code as string) ?? '';
+  }
+
+  if (n.type === 'youtube') {
+    return `https://www.youtube.com/watch?v=${(n.videoID as string) ?? ''}`;
+  }
+
   const childText = children.map(nodeToPlainText).join('');
 
   switch (n.type) {
@@ -156,6 +238,13 @@ function nodeToPlainText(node: SerializedLexicalNode): string {
       return `${childText}\n`;
     case 'list':
       return childText;
+    case 'table':
+    case 'tablerow':
+    case 'tablecell':
+    case 'collapsible-container':
+    case 'collapsible-title':
+    case 'collapsible-content':
+      return `${childText}\n`;
     default:
       return childText;
   }

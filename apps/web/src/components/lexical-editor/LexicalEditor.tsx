@@ -5,17 +5,25 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
+import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin';
 import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
+import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
+import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import type { SerializedEditorState } from 'lexical';
+import 'katex/dist/katex.min.css';
 
 import theme from './theme';
 import { editorNodes } from './nodes';
 import ToolbarPlugin from './plugins/ToolbarPlugin';
 import CodeHighlightPlugin from './plugins/CodeHighlightPlugin';
+import CodeActionMenuPlugin from './plugins/CodeActionMenuPlugin';
 import MarkdownShortcutsPlugin from './plugins/MarkdownShortcutsPlugin';
 import SlashCommandPlugin from './plugins/SlashCommandPlugin';
 import OnChangePlugin from './plugins/OnChangePlugin';
+import LinkPlugin from './plugins/LinkPlugin';
+import AutoLinkPlugin from './plugins/AutoLinkPlugin';
+import CollapsiblePlugin from './plugins/CollapsiblePlugin';
 
 interface LexicalEditorProps {
   initialState?: SerializedEditorState;
@@ -68,10 +76,17 @@ export default function LexicalEditor({
           />
           <HistoryPlugin />
           <ListPlugin />
+          <CheckListPlugin />
           <HorizontalRulePlugin />
+          <TablePlugin />
+          <TabIndentationPlugin />
           <CodeHighlightPlugin />
+          <CodeActionMenuPlugin />
           <MarkdownShortcutsPlugin />
           <SlashCommandPlugin />
+          <LinkPlugin />
+          <AutoLinkPlugin />
+          <CollapsiblePlugin />
           <OnChangePlugin onChange={onChange} />
         </div>
       </div>

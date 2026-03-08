@@ -6,19 +6,31 @@ import {
   $getSelection,
   $isRangeSelection,
   $isTextNode,
+  $createParagraphNode,
   KEY_ENTER_COMMAND,
   COMMAND_PRIORITY_LOW,
 } from 'lexical';
 import { $createHeadingNode } from '@lexical/rich-text';
+import { $createCodeNode } from '@lexical/code';
+import { $createQuoteNode } from '@lexical/rich-text';
 import {
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
+  INSERT_CHECK_LIST_COMMAND,
 } from '@lexical/list';
 import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRuleNode';
+import { INSERT_TABLE_COMMAND } from '@lexical/table';
+import { $createImageNode } from '../nodes/ImageNode';
+import { $createEquationNode } from '../nodes/EquationNode';
+import { $createMermaidNode } from '../nodes/MermaidNode';
+import { $createYouTubeNode } from '../nodes/YouTubeNode';
+import { INSERT_COLLAPSIBLE_COMMAND } from './CollapsiblePlugin';
 
 interface SlashMenuItem {
   title: string;
+  icon: string;
   description: string;
+  keywords: string[];
   action: () => void;
 }
 
@@ -33,69 +45,259 @@ export default function SlashCommandPlugin() {
     return [
       {
         title: 'Heading 1',
+        icon: 'H1',
         description: 'Large heading',
+        keywords: ['h1', 'heading', 'title'],
         action: () => {
           editor.update(() => {
             const selection = $getSelection();
             if ($isRangeSelection(selection)) {
-              const node = $createHeadingNode('h1');
-              selection.insertNodes([node]);
+              selection.insertNodes([$createHeadingNode('h1')]);
             }
           });
         },
       },
       {
         title: 'Heading 2',
+        icon: 'H2',
         description: 'Medium heading',
+        keywords: ['h2', 'heading', 'subtitle'],
         action: () => {
           editor.update(() => {
             const selection = $getSelection();
             if ($isRangeSelection(selection)) {
-              const node = $createHeadingNode('h2');
-              selection.insertNodes([node]);
+              selection.insertNodes([$createHeadingNode('h2')]);
             }
           });
         },
       },
       {
         title: 'Heading 3',
+        icon: 'H3',
         description: 'Small heading',
+        keywords: ['h3', 'heading'],
         action: () => {
           editor.update(() => {
             const selection = $getSelection();
             if ($isRangeSelection(selection)) {
-              const node = $createHeadingNode('h3');
-              selection.insertNodes([node]);
+              selection.insertNodes([$createHeadingNode('h3')]);
             }
           });
         },
       },
       {
         title: 'Bulleted List',
+        icon: '•',
         description: 'Create a bulleted list',
+        keywords: ['ul', 'unordered', 'bullet'],
         action: () => {
           editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
         },
       },
       {
         title: 'Numbered List',
+        icon: '1.',
         description: 'Create a numbered list',
+        keywords: ['ol', 'ordered', 'number'],
         action: () => {
           editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
         },
       },
       {
+        title: 'Check List',
+        icon: '☑',
+        description: 'Create a check list',
+        keywords: ['todo', 'check', 'task'],
+        action: () => {
+          editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
+        },
+      },
+      {
+        title: 'Quote',
+        icon: '"',
+        description: 'Insert a blockquote',
+        keywords: ['blockquote', 'quote'],
+        action: () => {
+          editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+              selection.insertNodes([$createQuoteNode()]);
+            }
+          });
+        },
+      },
+      {
+        title: 'Code Block',
+        icon: '<>',
+        description: 'Insert a code block',
+        keywords: ['code', 'pre', 'block'],
+        action: () => {
+          editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+              selection.insertNodes([$createCodeNode()]);
+            }
+          });
+        },
+      },
+      {
         title: 'Divider',
+        icon: '—',
         description: 'Insert a horizontal rule',
+        keywords: ['hr', 'divider', 'separator', 'line'],
         action: () => {
           editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined);
+        },
+      },
+      {
+        title: 'Table',
+        icon: '⊞',
+        description: 'Insert a table',
+        keywords: ['table', 'grid', 'spreadsheet'],
+        action: () => {
+          const rows = prompt('Number of rows:', '3');
+          const cols = prompt('Number of columns:', '3');
+          if (rows && cols) {
+            editor.dispatchCommand(INSERT_TABLE_COMMAND, {
+              rows,
+              columns: cols,
+              includeHeaders: true,
+            });
+          }
+        },
+      },
+      {
+        title: 'Image',
+        icon: '🖼',
+        description: 'Insert an image from URL',
+        keywords: ['image', 'photo', 'picture', 'img'],
+        action: () => {
+          const src = prompt('Image URL:');
+          if (src) {
+            const alt = prompt('Alt text (optional):', '') || '';
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                selection.insertNodes([
+                  $createImageNode({ src, altText: alt }),
+                ]);
+              }
+            });
+          }
+        },
+      },
+      {
+        title: 'Equation (Block)',
+        icon: 'Σ',
+        description: 'Insert a block math equation',
+        keywords: ['math', 'equation', 'latex', 'katex', 'formula'],
+        action: () => {
+          const equation = prompt('LaTeX equation:', 'E = mc^2');
+          if (equation) {
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                selection.insertNodes([
+                  $createEquationNode(equation, false),
+                  $createParagraphNode(),
+                ]);
+              }
+            });
+          }
+        },
+      },
+      {
+        title: 'Equation (Inline)',
+        icon: 'x²',
+        description: 'Insert an inline math equation',
+        keywords: ['math', 'inline', 'equation', 'latex', 'katex'],
+        action: () => {
+          const equation = prompt('Inline LaTeX equation:', 'x^2');
+          if (equation) {
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                selection.insertNodes([$createEquationNode(equation, true)]);
+              }
+            });
+          }
+        },
+      },
+      {
+        title: 'Mermaid Diagram',
+        icon: '◈',
+        description: 'Insert a Mermaid diagram',
+        keywords: [
+          'mermaid',
+          'diagram',
+          'flowchart',
+          'chart',
+          'graph',
+          'sequence',
+        ],
+        action: () => {
+          const code = prompt(
+            'Mermaid diagram code:',
+            'graph TD\n    A[Start] --> B[End]'
+          );
+          if (code) {
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                selection.insertNodes([
+                  $createMermaidNode(code),
+                  $createParagraphNode(),
+                ]);
+              }
+            });
+          }
+        },
+      },
+      {
+        title: 'YouTube Video',
+        icon: '▶',
+        description: 'Embed a YouTube video',
+        keywords: ['youtube', 'video', 'embed'],
+        action: () => {
+          const url = prompt('YouTube URL or video ID:');
+          if (url) {
+            let videoID = url;
+            const match = url.match(
+              /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+            );
+            if (match) videoID = match[1];
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                selection.insertNodes([
+                  $createYouTubeNode(videoID),
+                  $createParagraphNode(),
+                ]);
+              }
+            });
+          }
+        },
+      },
+      {
+        title: 'Collapsible',
+        icon: '▸',
+        description: 'Insert a collapsible section',
+        keywords: [
+          'collapsible',
+          'toggle',
+          'details',
+          'accordion',
+          'expandable',
+        ],
+        action: () => {
+          editor.dispatchCommand(INSERT_COLLAPSIBLE_COMMAND, undefined);
         },
       },
     ];
   }, [editor]);
 
   useEffect(() => {
-    const removeListener = editor.registerTextContentListener((text) => {
+    const removeListener = editor.registerTextContentListener(() => {
       editor.getEditorState().read(() => {
         const selection = $getSelection();
         if (!$isRangeSelection(selection)) {
@@ -124,7 +326,8 @@ export default function SlashCommandPlugin() {
           const items = getMenuItems().filter(
             (item) =>
               item.title.toLowerCase().includes(query) ||
-              item.description.toLowerCase().includes(query)
+              item.description.toLowerCase().includes(query) ||
+              item.keywords.some((kw) => kw.includes(query))
           );
           setMenuItems(items);
           setSelectedIndex(0);
@@ -189,14 +392,16 @@ export default function SlashCommandPlugin() {
 
   return (
     <div
-      className="fixed z-50 w-56 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+      className="fixed z-50 w-64 max-h-80 overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
       style={{ top: menuPosition.top, left: menuPosition.left }}
     >
       {menuItems.map((item, index) => (
         <button
           key={item.title}
-          className={`flex w-full flex-col items-start rounded-sm px-2 py-1.5 text-sm outline-none ${
-            index === selectedIndex ? 'bg-accent text-accent-foreground' : ''
+          className={`flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-sm outline-none cursor-pointer ${
+            index === selectedIndex
+              ? 'bg-accent text-accent-foreground'
+              : 'hover:bg-accent/50'
           }`}
           onMouseEnter={() => setSelectedIndex(index)}
           onClick={() => {
@@ -204,17 +409,24 @@ export default function SlashCommandPlugin() {
               const selection = $getSelection();
               if ($isRangeSelection(selection)) {
                 const anchorNode = selection.anchor.getNode();
-                if ($isTextNode(anchorNode)) anchorNode.setTextContent('');
+                if ($isTextNode(anchorNode)) {
+                  anchorNode.setTextContent('');
+                }
               }
             });
             item.action();
             setShowMenu(false);
           }}
         >
-          <span className="font-medium">{item.title}</span>
-          <span className="text-xs text-muted-foreground">
-            {item.description}
+          <span className="flex items-center justify-center w-6 h-6 rounded bg-muted text-xs font-mono shrink-0">
+            {item.icon}
           </span>
+          <div className="flex flex-col items-start">
+            <span className="font-medium">{item.title}</span>
+            <span className="text-xs text-muted-foreground">
+              {item.description}
+            </span>
+          </div>
         </button>
       ))}
     </div>
