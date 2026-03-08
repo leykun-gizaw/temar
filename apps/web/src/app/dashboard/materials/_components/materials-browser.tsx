@@ -188,31 +188,37 @@ export default function MaterialsBrowser({
   }, []);
 
   // ── Toggle helpers ──
-  const toggleTopic = (topicId: string) => {
-    setExpandedTopics((prev) => {
-      const next = new Set(prev);
-      if (next.has(topicId)) {
-        next.delete(topicId);
-      } else {
-        next.add(topicId);
-        fetchNotes(topicId);
-      }
-      return next;
-    });
-  };
+  const toggleTopic = useCallback(
+    (topicId: string) => {
+      setExpandedTopics((prev) => {
+        const next = new Set(prev);
+        if (next.has(topicId)) {
+          next.delete(topicId);
+        } else {
+          next.add(topicId);
+          fetchNotes(topicId);
+        }
+        return next;
+      });
+    },
+    [fetchNotes]
+  );
 
-  const toggleNote = (noteId: string) => {
-    setExpandedNotes((prev) => {
-      const next = new Set(prev);
-      if (next.has(noteId)) {
-        next.delete(noteId);
-      } else {
-        next.add(noteId);
-        fetchChunks(noteId);
-      }
-      return next;
-    });
-  };
+  const toggleNote = useCallback(
+    (noteId: string) => {
+      setExpandedNotes((prev) => {
+        const next = new Set(prev);
+        if (next.has(noteId)) {
+          next.delete(noteId);
+        } else {
+          next.add(noteId);
+          fetchChunks(noteId);
+        }
+        return next;
+      });
+    },
+    [fetchChunks]
+  );
 
   // ── Select chunk ──
   const handleChunkSelect = (
@@ -250,7 +256,7 @@ export default function MaterialsBrowser({
   );
 
   // ── Save chunk content ──
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!selectedChunkId || !editorState) return;
     setIsSaving(true);
     try {
@@ -269,18 +275,24 @@ export default function MaterialsBrowser({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [selectedChunkMeta, editorState, fetchChunks, selectedChunkId]);
 
   // ── Invalidate cache helpers ──
-  const invalidateNotes = (topicId: string) => {
-    fetchNotes(topicId, true);
-  };
+  const invalidateNotes = useCallback(
+    (topicId: string) => {
+      fetchNotes(topicId, true);
+    },
+    [fetchNotes]
+  );
 
-  const invalidateChunks = (noteId: string) => {
-    fetchChunks(noteId, true);
-  };
+  const invalidateChunks = useCallback(
+    (noteId: string) => {
+      fetchChunks(noteId, true);
+    },
+    [fetchChunks]
+  );
 
-  // ── Resolve currently selected chunk from maps ──
+  // ── Resolve currently chunk from maps ──
   const selectedChunk = useMemo(() => {
     if (!selectedChunkId || !selectedChunkMeta) return null;
     const chunks = chunksMap[selectedChunkMeta.noteId];
@@ -291,7 +303,7 @@ export default function MaterialsBrowser({
   const treeSidebar = useMemo(() => {
     return (
       <div
-        className={`flex flex-col min-h-0 h-full border-r bg-muted/20 transition-all duration-200 z-20 ${
+        className={`flex flex-col min-h-0 h-full border rounded-xl bg-card transition-all duration-200 z-20 ${
           sidebarCollapsed
             ? 'w-0 overflow-hidden border-r-0'
             : 'w-[280px] min-w-[280px]'
@@ -615,6 +627,10 @@ export default function MaterialsBrowser({
     selectedChunkId,
     sidebarCollapsed,
     trackedChunkIds,
+    invalidateChunks,
+    invalidateNotes,
+    toggleNote,
+    toggleTopic,
   ]);
 
   // ── Content panel ──
@@ -649,7 +665,7 @@ export default function MaterialsBrowser({
         : (selectedChunk.contentJson as SerializedEditorState | undefined);
 
     return (
-      <div className="flex-1 flex flex-col min-h-0 min-w-0">
+      <div className="flex-1 flex flex-col min-h-0 min-w-0 border rounded-xl bg-card p-2">
         {/* Content header */}
         <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/10 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
@@ -730,19 +746,24 @@ export default function MaterialsBrowser({
                 key={`${selectedChunk.id}-editing`}
                 initialValue={editorInitialValue}
                 onChange={handleEditorChange}
+                editable
+              />
+            </div>
+          ) : selectedChunk.contentJson ? (
+            <div className="h-full bg-card">
+              <ChunkEditor
+                key={`${selectedChunk.id}-readonly`}
+                initialValue={
+                  selectedChunk.contentJson as SerializedEditorState
+                }
+                editable={false}
               />
             </div>
           ) : (
             <div className="px-4 py-3">
-              {selectedChunk.contentMd ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                  {selectedChunk.contentMd}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm italic">
-                  No content yet. Click Edit to start writing.
-                </p>
-              )}
+              <p className="text-muted-foreground text-sm italic">
+                No content yet. Click Edit to start writing.
+              </p>
             </div>
           )}
         </div>
@@ -757,10 +778,11 @@ export default function MaterialsBrowser({
     sidebarCollapsed,
     hasDraft,
     handleEditorChange,
+    handleSave,
   ]);
 
   return (
-    <div className="relative flex h-[calc(100vh-var(--header-height))] min-h-0">
+    <div className="relative flex gap-4 h-[calc(100vh-var(--header-height))] min-h-0 m-4">
       {treeSidebar}
       {contentPanel}
     </div>
