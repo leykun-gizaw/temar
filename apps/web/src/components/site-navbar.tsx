@@ -12,7 +12,11 @@ interface NavLink {
   label: string;
 }
 
-const primaryLinks: NavLink[] = [{ href: '/pricing', label: 'Pricing' }];
+const primaryLinks: NavLink[] = [
+  { href: '/#features', label: 'Features' },
+  { href: '/#methodology', label: 'Methodology' },
+  { href: '/pricing', label: 'Pricing' },
+];
 
 const authLinks: NavLink[] = [
   { href: '/auth/sign-in', label: 'Sign In' },

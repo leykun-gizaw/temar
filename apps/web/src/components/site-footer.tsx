@@ -18,6 +18,18 @@ export default function SiteFooter() {
           >
             Terms
           </Link>
+          <Link
+            href="/pricing"
+            className="hover:text-foreground transition-colors"
+          >
+            Pricing
+          </Link>
+          <a
+            href="mailto:contact@temar.app"
+            className="hover:text-foreground transition-colors"
+          >
+            Contact
+          </a>
         </div>
       </div>
     </footer>
