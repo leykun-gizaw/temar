@@ -1,7 +1,7 @@
 'use client';
 
 import { Target, LibraryBigIcon } from 'lucide-react';
-import { clsx } from 'clsx';
+import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 
 export function TopicStats({
@@ -15,7 +15,7 @@ export function TopicStats({
 }) {
   return (
     <Card
-      className={clsx('flex flex-col gap-1 p-3 rounded-xl border', className)}
+      className={cn('flex flex-col gap-1 p-3 rounded-xl border', className)}
     >
       <div className="flex justify-between items-center">
         <div className="flex gap-1.5 items-center pr-2 border-r text-sm">

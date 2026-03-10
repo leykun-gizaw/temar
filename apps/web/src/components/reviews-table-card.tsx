@@ -42,7 +42,7 @@ import {
   searchRecallItemsAction,
   getAllRecallItemsAction,
 } from '@/lib/actions/review';
-import clsx from 'clsx';
+import { cn } from '@/lib/utils';
 
 const STATE_LABELS: Record<number, string> = {
   0: 'New',
@@ -159,7 +159,7 @@ export default function ReviewsTableCard({
 
   return (
     <Card
-      className={clsx('min-h-0 h-full shadow-none overflow-hidden', className)}
+      className={cn('min-h-0 h-full shadow-none overflow-hidden', className)}
     >
       <CardHeader className="border-b">
         <CardTitle>Recall Items</CardTitle>

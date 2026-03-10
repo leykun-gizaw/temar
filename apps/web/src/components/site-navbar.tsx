@@ -16,7 +16,7 @@ const primaryLinks: NavLink[] = [{ href: '/pricing', label: 'Pricing' }];
 
 const authLinks: NavLink[] = [
   { href: '/auth/sign-in', label: 'Sign In' },
-  { href: '/auth/sign-up', label: 'Register' },
+  { href: '/auth/sign-up', label: 'Sign Up' },
 ];
 
 export function SiteNavbar() {
@@ -62,7 +62,7 @@ export function SiteNavbar() {
                 key={l.href}
                 href={l.href}
                 className={
-                  l.label === 'Register'
+                  l.label === 'Sign Up'
                     ? 'inline-flex h-9 items-center rounded-md bg-primary px-4 font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors'
                     : 'text-muted-foreground hover:text-foreground transition-colors'
                 }
@@ -122,7 +122,7 @@ export function SiteNavbar() {
                 href={l.href}
                 onClick={() => setOpen(false)}
                 className={
-                  l.label === 'Register'
+                  l.label === 'Sign Up'
                     ? 'block rounded bg-primary px-2 py-2 text-center font-medium text-primary-foreground hover:bg-primary/90'
                     : 'block rounded px-2 py-2 text-muted-foreground hover:bg-accent hover:text-foreground'
                 }

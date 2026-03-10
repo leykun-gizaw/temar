@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import SiteNavbar from '@/components/site-navbar';
+import SiteFooter from '@/components/site-footer';
 
 interface Tier {
   name: string;
@@ -155,11 +156,7 @@ export default function PricingPage() {
           </div>
         </section>
       </main>
-      <footer className="border-t py-10 text-center text-xs text-muted-foreground">
-        <div className="mx-auto max-w-6xl px-6">
-          &copy; {new Date().getFullYear()} Temar. All rights reserved.
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
