@@ -10,19 +10,7 @@ export default async function MaterialsPage() {
     getTrackingStatus(),
   ]);
 
-  const topicTrackedMap: Record<string, Set<string>> = {};
-  for (const item of trackedItems) {
-    if (!topicTrackedMap[item.chunkId]) {
-      topicTrackedMap[item.chunkId] = new Set();
-    }
-    topicTrackedMap[item.chunkId].add(item.status);
-  }
-
   return (
-    <MaterialsBrowser
-      topics={topics}
-      trackedItems={trackedItems}
-      topicTrackedMap={topicTrackedMap}
-    />
+    <MaterialsBrowser topics={topics} trackedItems={trackedItems} />
   );
 }

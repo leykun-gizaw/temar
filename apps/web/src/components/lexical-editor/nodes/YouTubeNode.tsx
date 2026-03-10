@@ -9,6 +9,7 @@ import type {
   Spread,
 } from 'lexical';
 import { $applyNodeReplacement, DecoratorNode } from 'lexical';
+import type { JSX } from 'react';
 
 export type SerializedYouTubeNode = Spread<
   { videoID: string },
@@ -38,11 +39,11 @@ function YouTubeComponent({
 export class YouTubeNode extends DecoratorNode<JSX.Element> {
   __id: string;
 
-  static getType(): string {
+  static override getType(): string {
     return 'youtube';
   }
 
-  static clone(node: YouTubeNode): YouTubeNode {
+  static override clone(node: YouTubeNode): YouTubeNode {
     return new YouTubeNode(node.__id, node.__key);
   }
 
@@ -51,7 +52,7 @@ export class YouTubeNode extends DecoratorNode<JSX.Element> {
     this.__id = id;
   }
 
-  createDOM(config: EditorConfig): HTMLElement {
+  override createDOM(config: EditorConfig): HTMLElement {
     const div = document.createElement('div');
     const theme = config.theme;
     const className = theme.embedBlock;
@@ -65,7 +66,7 @@ export class YouTubeNode extends DecoratorNode<JSX.Element> {
     return div;
   }
 
-  updateDOM(): false {
+  override updateDOM(): false {
     return false;
   }
 
@@ -73,11 +74,11 @@ export class YouTubeNode extends DecoratorNode<JSX.Element> {
     return this.__id;
   }
 
-  static importJSON(serializedNode: SerializedYouTubeNode): YouTubeNode {
+  static override importJSON(serializedNode: SerializedYouTubeNode): YouTubeNode {
     return $createYouTubeNode(serializedNode.videoID);
   }
 
-  exportJSON(): SerializedYouTubeNode {
+  override exportJSON(): SerializedYouTubeNode {
     return {
       type: 'youtube',
       version: 1,
@@ -85,7 +86,7 @@ export class YouTubeNode extends DecoratorNode<JSX.Element> {
     };
   }
 
-  exportDOM(): DOMExportOutput {
+  override exportDOM(): DOMExportOutput {
     const element = document.createElement('iframe');
     element.setAttribute(
       'src',
@@ -97,11 +98,11 @@ export class YouTubeNode extends DecoratorNode<JSX.Element> {
     return { element };
   }
 
-  decorate(): JSX.Element {
+  override decorate(): JSX.Element {
     return <YouTubeComponent videoID={this.__id} />;
   }
 
-  isInline(): boolean {
+  override isInline(): boolean {
     return false;
   }
 }

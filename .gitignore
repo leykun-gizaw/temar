@@ -57,3 +57,4 @@ test-output
 
 # miscellaneous scripts
 sync-deps.js
+.nx/polygraph

@@ -55,7 +55,6 @@ interface Chunk {
 interface MaterialsBrowserProps {
   topics: Topic[];
   trackedItems: TrackingItem[];
-  topicTrackedMap: Record<string, Set<string>>;
 }
 
 // ── localStorage helpers ──
@@ -95,7 +94,6 @@ function clearDraft(chunkId: string) {
 export default function MaterialsBrowser({
   topics,
   trackedItems,
-  topicTrackedMap,
 }: MaterialsBrowserProps) {
   // ── Tree state ──
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());

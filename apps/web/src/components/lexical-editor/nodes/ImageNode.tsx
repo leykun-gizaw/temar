@@ -11,6 +11,7 @@ import type {
   Spread,
 } from 'lexical';
 import { $applyNodeReplacement, DecoratorNode } from 'lexical';
+import { JSX } from 'react';
 
 export interface ImagePayload {
   altText: string;
@@ -44,6 +45,7 @@ function ImageComponent({
 }): JSX.Element {
   return (
     <div className="relative inline-block max-w-full my-2">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt={altText}
@@ -70,11 +72,11 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   __width: number | undefined;
   __height: number | undefined;
 
-  static getType(): string {
+  static override getType(): string {
     return 'image';
   }
 
-  static clone(node: ImageNode): ImageNode {
+  static override clone(node: ImageNode): ImageNode {
     return new ImageNode(
       node.__src,
       node.__altText,
@@ -98,7 +100,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     this.__height = height;
   }
 
-  createDOM(config: EditorConfig): HTMLElement {
+  override createDOM(config: EditorConfig): HTMLElement {
     const span = document.createElement('span');
     const theme = config.theme;
     const className = theme.image;
@@ -106,7 +108,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return span;
   }
 
-  updateDOM(): false {
+  override updateDOM(): false {
     return false;
   }
 
@@ -118,12 +120,12 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return this.__altText;
   }
 
-  static importJSON(serializedNode: SerializedImageNode): ImageNode {
+  static override importJSON(serializedNode: SerializedImageNode): ImageNode {
     const { src, altText, width, height } = serializedNode;
     return $createImageNode({ src, altText, width, height });
   }
 
-  exportJSON(): SerializedImageNode {
+  override exportJSON(): SerializedImageNode {
     return {
       type: 'image',
       version: 1,
@@ -134,7 +136,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     };
   }
 
-  static importDOM(): DOMConversionMap | null {
+  static override importDOM(): DOMConversionMap | null {
     return {
       img: () => ({
         conversion: (domNode: HTMLElement): DOMConversionOutput | null => {
@@ -153,7 +155,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     };
   }
 
-  exportDOM(): DOMExportOutput {
+  override exportDOM(): DOMExportOutput {
     const element = document.createElement('img');
     element.setAttribute('src', this.__src);
     element.setAttribute('alt', this.__altText);
@@ -162,7 +164,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return { element };
   }
 
-  decorate(): JSX.Element {
+  override decorate(): JSX.Element {
     return (
       <ImageComponent
         src={this.__src}
@@ -174,7 +176,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     );
   }
 
-  isInline(): boolean {
+  override isInline(): boolean {
     return false;
   }
 }
