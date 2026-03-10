@@ -44,7 +44,7 @@ export const Section = React.forwardRef<HTMLElement, SectionProps>(
 
     return (
       <Component
-        ref={ref as React.Ref<any>}
+        ref={ref as React.Ref<never>}
         className={cn(layout.section[spacing], className)}
         {...props}
       >
