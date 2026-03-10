@@ -1,5 +1,7 @@
 import SiteNavbar from '@/components/site-navbar';
-import Link from 'next/link';
+import SiteFooter from '@/components/site-footer';
+import { Heading, Text } from '@/components/shared/Typography';
+import { Section } from '@/components/shared/Layout';
 
 export const metadata = {
   title: 'Terms of Service | Temar',
@@ -11,19 +13,19 @@ export default function TermsPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <SiteNavbar />
       <main className="flex-1">
-        <div className="mx-auto max-w-3xl px-6 py-16 md:py-24">
-          <h1 className="text-3xl font-bold tracking-tight mb-4">
+        <Section containerWidth="narrow" spacing="lg">
+          <Heading as="h1" className="mb-4">
             Terms of Service
-          </h1>
-          <p className="text-sm text-muted-foreground mb-10">
+          </Heading>
+          <Text variant="body-small" className="mb-10 text-muted-foreground">
             Last updated: February 13, 2025
-          </p>
+          </Text>
 
           <div className="space-y-10 text-muted-foreground leading-relaxed">
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 1. Acceptance of Terms
-              </h2>
+              </Heading>
               <p className="mb-4">
                 Welcome to Temar (&quot;we,&quot; &quot;our,&quot; or
                 &quot;us&quot;). These Terms of Service (&quot;Terms&quot;)
@@ -50,9 +52,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 2. Definitions
-              </h2>
+              </Heading>
               <p className="mb-4">
                 For the purposes of these Terms, the following definitions
                 apply:
@@ -102,9 +104,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 3. Eligibility and Account Registration
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">
                 3.1 Age and Capacity Requirements
               </p>
@@ -153,9 +155,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 4. Subscription Plans and Payment
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">
                 4.1 Subscription Terms
               </p>
@@ -192,9 +194,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 5. License and Restrictions
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">
                 5.1 Grant of License
               </p>
@@ -252,9 +254,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 6. User Content
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">6.1 Ownership</p>
               <p className="mb-4">
                 You retain all ownership rights, title, and interest in and to
@@ -326,9 +328,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 7. Intellectual Property Rights
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">
                 7.1 Service Ownership
               </p>
@@ -358,9 +360,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 8. Acceptable Use Policy
-              </h2>
+              </Heading>
               <p className="mb-4">
                 You agree to use the Service only for lawful purposes and in
                 accordance with these Terms. Specifically, you agree not to use
@@ -401,9 +403,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 9. Termination and Suspension
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">
                 9.1 Termination by You
               </p>
@@ -446,9 +448,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 10. Disclaimer of Warranties
-              </h2>
+              </Heading>
               <p className="mb-4 uppercase">
                 THE SERVICE IS PROVIDED ON AN &quot;AS IS&quot; AND &quot;AS
                 AVAILABLE&quot; BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER
@@ -485,9 +487,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 11. Limitation of Liability
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">
                 11.1 Liability Cap
               </p>
@@ -556,9 +558,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 12. Indemnification
-              </h2>
+              </Heading>
               <p className="mb-4">
                 You agree to defend, indemnify, and hold harmless Temar, our
                 parent company, subsidiaries, affiliates, officers, directors,
@@ -598,9 +600,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 13. Dispute Resolution and Governing Law
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">
                 13.1 Governing Law
               </p>
@@ -678,9 +680,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 14. DMCA Copyright Policy
-              </h2>
+              </Heading>
               <p className="mb-4">
                 We respect the Intellectual Property Rights of others and comply
                 with the Digital Millennium Copyright Act (&quot;DMCA&quot;). If
@@ -731,9 +733,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 15. General Provisions
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">
                 15.1 Entire Agreement
               </p>
@@ -820,9 +822,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 16. Changes to Terms
-              </h2>
+              </Heading>
               <p className="mb-4">
                 We reserve the right, in our sole discretion, to modify or
                 replace these Terms at any time. If a revision is material, we
@@ -841,9 +843,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 17. Electronic Communications
-              </h2>
+              </Heading>
               <p className="mb-4">
                 By using the Service, you consent to receive electronic
                 communications from us, including emails, push notifications,
@@ -855,9 +857,9 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 18. Contact Information
-              </h2>
+              </Heading>
               <p className="mb-4">
                 If you have any questions, concerns, or comments about these
                 Terms or the Service, please contact us at:
@@ -867,37 +869,12 @@ export default function TermsPage() {
                 <br />
                 Support: support@temar.app
                 <br />
-                Address: Temar Legal Department
-                <br />
-                [Your Business Address]
-                <br />
-                United States
               </p>
             </section>
           </div>
-        </div>
+        </Section>
       </main>
-      <footer className="border-t py-10 text-center text-xs text-muted-foreground">
-        <div className="mx-auto max-w-6xl px-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <span>
-            &copy; {new Date().getFullYear()} Temar. All rights reserved.
-          </span>
-          <div className="flex gap-4">
-            <Link
-              href="/privacy"
-              className="hover:text-foreground transition-colors"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="hover:text-foreground transition-colors"
-            >
-              Terms
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
