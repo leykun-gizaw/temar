@@ -103,6 +103,7 @@
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.83.1",
+    "canvas": "^3.2.1",
     "shadcn": "^3.2.1",
     "tw-animate-css": "^1.3.6"
   }
