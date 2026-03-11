@@ -305,10 +305,10 @@ export default function KnowledgeNetwork() {
   return (
     <div className="absolute inset-0 w-full h-full">
       <div ref={mountRef} className="absolute inset-0 z-0" />
-      <div className="absolute bottom-6 right-6 bg-white/90 dark:bg-[#1a1d24]/80 backdrop-blur-md border border-gray-200 dark:border-[#2a2f3a] px-4 py-2.5 rounded-xl shadow-lg z-10 transition-colors duration-300">
+      <div className="absolute bottom-6 right-6 bg-card-forground dark:bg-[#1a1d24]/80 backdrop-blur-md border border-gray-300 dark:border-[#2a2f3a] px-4 py-2.5 rounded-2xl shadow-lg z-10 transition-colors duration-300">
         <div className="flex items-center space-x-3">
           <Sparkles className="w-4 h-4 text-sky-500 animate-pulse" />
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+          <span className="text-xs font-semibold text-forground dark:text-gray-300">
             AI Orb navigating the knowledge mesh to restore sinking chunks
           </span>
         </div>
