@@ -10,17 +10,18 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Check, Coins, Zap } from 'lucide-react';
 
 interface Tier {
   name: string;
   price: string;
   period?: string;
   tagline: string;
+  passPerMonth: string;
   cta: string;
   href: string;
   highlighted?: boolean;
   features: string[];
-  limitations?: string[];
 }
 
 const tiers: Tier[] = [
@@ -28,55 +29,64 @@ const tiers: Tier[] = [
     name: 'Free',
     price: '$0',
     period: '/mo',
-    tagline: 'For students exploring structured learning',
+    tagline: 'Bring your own API key',
+    passPerMonth: '0 Pass/mo',
     cta: 'Get Started',
-    href: '/auth/register?plan=free',
+    href: '/auth/register',
     features: [
-      'Unlimited topics',
-      'Basic search',
-      'Manual progress tracking',
-      'Community updates (coming soon)',
+      'BYOK — use your own AI API key',
+      'Question generation (BYOK)',
+      'Answer analysis (BYOK)',
+      'Spaced repetition (FSRS)',
+      'Unlimited topics & notes',
+      'Notion import',
     ],
-    limitations: ['No real-time sync', 'Email support only'],
   },
   {
-    name: 'Pro',
-    price: '$9',
+    name: 'Starter',
+    price: '$9.99',
     period: '/mo',
-    tagline: 'Level up consistency & insight',
-    cta: 'Start Pro Trial',
-    href: '/auth/register?plan=pro',
+    tagline: 'Managed AI, no key needed',
+    passPerMonth: '200 Pass/mo',
+    cta: 'Start Starter',
+    href: '/auth/register?plan=starter',
     highlighted: true,
     features: [
-      'Priority sync frequency',
-      'Advanced filters & saved views',
-      'Streak & velocity analytics',
-      'Export to Notion / Markdown',
-      'Upcoming spaced repetition hints',
+      '200 Pass per month (rolls over up to 60)',
+      'Managed AI — no API key required',
+      'Question generation & answer analysis',
+      'Economy & Standard model tiers',
+      'All Free features included',
+      'Top-up packs available',
     ],
-    limitations: ['Single user only'],
   },
   {
-    name: 'Team',
-    price: '$29',
+    name: 'Scholar',
+    price: '$24.99',
     period: '/mo',
-    tagline: 'Collaborative learning hubs',
-    cta: 'Contact Sales',
-    href: '/contact?plan=team',
+    tagline: 'Power users & premium models',
+    passPerMonth: '600 Pass/mo',
+    cta: 'Go Scholar',
+    href: '/auth/register?plan=scholar',
     features: [
-      'Shared topic libraries',
-      'Team progress dashboards',
-      'Role-based access',
-      'Custom integrations (API)',
+      '600 Pass per month (rolls over up to 200)',
+      'Access to Premium model tier',
+      'All Starter features included',
       'Priority support',
+      'Top-up packs available',
     ],
-    limitations: ['Seat limits apply (add-on tiers)'],
   },
+];
+
+const topups = [
+  { pass: 100, price: '$3.99', perPass: '$0.040' },
+  { pass: 300, price: '$9.99', perPass: '$0.033' },
+  { pass: 600, price: '$17.99', perPass: '$0.030', best: true },
 ];
 
 export const metadata = {
   title: 'Pricing | Temar',
-  description: 'Choose the Temar plan that fits your learning journey.',
+  description: 'Simple, transparent pricing for AI-powered learning.',
 };
 
 export default function PricingPage() {
@@ -84,78 +94,196 @@ export default function PricingPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <SiteNavbar />
       <main className="flex-1">
-        <section className="relative">
-          <div className="text-center mx-auto max-w-5xl px-6 md:py-18">
+        {/* Hero */}
+        <section className="py-16 md:py-24 text-center">
+          <div className="mx-auto max-w-3xl px-6">
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-              Simple, transparent pricing
+              Pricing
             </h1>
-            <p className="text-center mt-6 text-lg text-muted-foreground">
-              Start free. Upgrade only if Temar meaningfully improves the way
-              you learn.
+            <p className="mt-5 text-lg text-muted-foreground">
+              Bring your own API key for free, or let Temar handle it with a
+              Pass subscription. Top up anytime.
             </p>
           </div>
         </section>
-        <section className="py-14 md:py-20">
+
+        {/* Tiers */}
+        <section className="pb-16 md:pb-24">
           <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-3">
-            {tiers.map((tier) => {
-              return (
-                <Card
-                  key={tier.name}
-                  className={cn(
-                    'relative flex flex-col',
-                    tier.highlighted &&
-                      'ring-1 ring-primary/30 shadow-md md:scale-105 md:-translate-y-2'
-                  )}
-                >
-                  {tier.highlighted && (
-                    <span className="absolute -top-3 left-4 inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow">
-                      Most Popular
-                    </span>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="text-xl">{tier.name}</CardTitle>
-                    <CardDescription>{tier.tagline}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <div className="flex items-end gap-1 font-semibold mb-6">
-                      <span className="text-3xl">{tier.price}</span>
+            {tiers.map((tier) => (
+              <Card
+                key={tier.name}
+                className={cn(
+                  'relative flex flex-col',
+                  tier.highlighted &&
+                    'ring-2 ring-primary shadow-lg md:scale-105 md:-translate-y-2'
+                )}
+              >
+                {tier.highlighted && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow">
+                    Most Popular
+                  </span>
+                )}
+                <CardHeader>
+                  <CardTitle className="text-xl">{tier.name}</CardTitle>
+                  <CardDescription>{tier.tagline}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col flex-1 gap-6">
+                  <div>
+                    <div className="flex items-end gap-1">
+                      <span className="text-4xl font-bold">{tier.price}</span>
                       {tier.period && (
-                        <span className="text-sm font-normal text-muted-foreground">
+                        <span className="mb-1 text-sm text-muted-foreground">
                           {tier.period}
                         </span>
                       )}
                     </div>
-                    <Button
-                      asChild
-                      variant={tier.highlighted ? 'default' : 'outline'}
-                      className="w-full mb-6"
-                    >
-                      <Link href={tier.href}>{tier.cta}</Link>
-                    </Button>
-                    <ul className="space-y-2 text-sm">
-                      {tier.features.map((f) => (
-                        <li key={f} className="flex gap-2">
-                          <span className="mt-1 inline-block h-1.5 w-1.5 flex-none rounded-full bg-primary" />
-                          <span className="text-muted-foreground">{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {tier.limitations && (
-                      <div className="mt-6 border-t pt-4">
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/80">
-                          Limitations
-                        </p>
-                        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                          {tier.limitations.map((l) => (
-                            <li key={l}>• {l}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </CardContent>
+                    <div className="mt-1 flex items-center gap-1 text-sm text-primary font-medium">
+                      <Coins className="h-3.5 w-3.5" />
+                      {tier.passPerMonth}
+                    </div>
+                  </div>
+
+                  <Button
+                    asChild
+                    variant={tier.highlighted ? 'default' : 'outline'}
+                    className="w-full"
+                  >
+                    <Link href={tier.href}>{tier.cta}</Link>
+                  </Button>
+
+                  <ul className="space-y-2 text-sm flex-1">
+                    {tier.features.map((f) => (
+                      <li key={f} className="flex gap-2 items-start">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        <span className="text-muted-foreground">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Top-up packs */}
+        <section className="py-16 bg-muted/40">
+          <div className="mx-auto max-w-4xl px-6">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl font-bold">Pass Top-up Packs</h2>
+              <p className="mt-2 text-muted-foreground">
+                Need more Pass mid-month? Buy once, use anytime. No expiry.
+              </p>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-3">
+              {topups.map((pack) => (
+                <Card
+                  key={pack.pass}
+                  className={cn(
+                    'relative flex flex-col items-center text-center py-6 px-4',
+                    pack.best && 'ring-2 ring-primary/60'
+                  )}
+                >
+                  {pack.best && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                      <Zap className="h-3 w-3" /> Best value
+                    </span>
+                  )}
+                  <Coins className="h-8 w-8 text-primary mb-3" />
+                  <p className="text-3xl font-bold">{pack.pass}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Pass</p>
+                  <p className="text-xl font-semibold">{pack.price}</p>
+                  <p className="text-xs text-muted-foreground mb-5">
+                    {pack.perPass} per Pass
+                  </p>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href="/dashboard/billing">Buy Pack</Link>
+                  </Button>
                 </Card>
-              );
-            })}
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Model cost table */}
+        <section className="py-16">
+          <div className="mx-auto max-w-3xl px-6">
+            <h2 className="text-2xl font-bold text-center mb-2">
+              Pass cost per operation
+            </h2>
+            <p className="text-center text-muted-foreground mb-8">
+              Pass costs vary by AI model tier. BYOK users pay 0 Pass for
+              current features.
+            </p>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50 text-left">
+                    <th className="px-4 py-3 font-semibold">Operation</th>
+                    <th className="px-4 py-3 font-semibold text-center">
+                      Economy
+                    </th>
+                    <th className="px-4 py-3 font-semibold text-center">
+                      Standard
+                    </th>
+                    <th className="px-4 py-3 font-semibold text-center">
+                      Premium
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    {
+                      op: 'Question Generation',
+                      economy: 3,
+                      standard: 6,
+                      premium: 12,
+                    },
+                    {
+                      op: 'Answer Analysis',
+                      economy: 1,
+                      standard: 2,
+                      premium: 5,
+                    },
+                    {
+                      op: 'Chunk Enhancement ✦',
+                      economy: 2,
+                      standard: 4,
+                      premium: 8,
+                    },
+                    {
+                      op: 'Content Generation ✦',
+                      economy: 5,
+                      standard: 10,
+                      premium: 20,
+                    },
+                  ].map((row, i) => (
+                    <tr
+                      key={row.op}
+                      className={cn(
+                        'border-b last:border-0',
+                        i % 2 === 1 && 'bg-muted/20'
+                      )}
+                    >
+                      <td className="px-4 py-3 font-medium">{row.op}</td>
+                      <td className="px-4 py-3 text-center">
+                        {row.economy} Pass
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {row.standard} Pass
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {row.premium} Pass
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground text-center">
+              ✦ Coming soon. Large inputs may increase cost proportionally
+              (consent required).
+            </p>
           </div>
         </section>
       </main>
