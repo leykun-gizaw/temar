@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import type { OutdatedChunk } from '@/lib/actions/tracking';
 import { regenerateChunkQuestions } from '@/lib/actions/tracking';
-import clsx from 'clsx';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function OutdatedQuestionsCard({
@@ -44,7 +44,7 @@ export default function OutdatedQuestionsCard({
 
   if (chunks.length === 0) {
     return (
-      <Card className={clsx('shadow-none', className)}>
+      <Card className={cn('shadow-none', className)}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
             <AlertTriangle className="h-4 w-4 text-green-500" />
@@ -103,7 +103,7 @@ export default function OutdatedQuestionsCard({
   };
 
   return (
-    <Card className={clsx('shadow-none flex flex-col', className)}>
+    <Card className={cn('shadow-none flex flex-col', className)}>
       <CardHeader className="pb-2 border-b">
         <CardTitle className="flex items-center gap-2 text-sm">
           <AlertTriangle className="h-4 w-4 text-amber-500" />

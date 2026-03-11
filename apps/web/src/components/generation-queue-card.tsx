@@ -39,7 +39,7 @@ import {
   retryFailedGeneration,
   retryAllFailedGenerations,
 } from '@/lib/actions/tracking';
-import clsx from 'clsx';
+import { cn } from '@/lib/utils';
 
 const STATUS_CONFIG: Record<
   TrackingItem['status'],
@@ -141,7 +141,7 @@ export default function GenerationQueueCard({
   if (items.length === 0) {
     return (
       <Card
-        className={clsx(
+        className={cn(
           'shadow-none flex-1 h-full min-h-0 overflow-hidden col-span-2',
           className
         )}
@@ -171,7 +171,7 @@ export default function GenerationQueueCard({
 
   return (
     <Card
-      className={clsx(
+      className={cn(
         'shadow-none flex-1 h-full min-h-0 overflow-hidden col-span-2',
         className
       )}

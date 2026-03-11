@@ -2,7 +2,6 @@
 
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { NavUser } from '@/components/nav-user';
 import { Fragment } from 'react';
 import {
@@ -90,7 +89,6 @@ export function SiteHeader() {
           </Breadcrumb>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <ThemeToggle />
           <NavUser />
         </div>
       </div>

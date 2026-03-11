@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { dbClient, topic, note, chunk, eq, and } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
-import { syncServiceFetch } from '../sync-service';
 
 export async function updateTopic(
   topicId: string,
@@ -20,20 +19,12 @@ export async function updateTopic(
 
   if (!existing) throw new Error('Topic not found');
 
-  // Update in Notion
-  await syncServiceFetch(`page/${topicId}/properties`, {
-    method: 'PATCH',
-    body: { name, description },
-    userId: loggedInUser.id,
-  });
-
-  // Update in DB
   await dbClient
     .update(topic)
     .set({ name, description })
     .where(eq(topic.id, topicId));
 
-  revalidatePath('/dashboard/topics');
+  revalidatePath('/dashboard/materials');
 }
 
 export async function updateNote(
@@ -52,20 +43,12 @@ export async function updateNote(
 
   if (!existing) throw new Error('Note not found');
 
-  // Update in Notion
-  await syncServiceFetch(`page/${noteId}/properties`, {
-    method: 'PATCH',
-    body: { name, description },
-    userId: loggedInUser.id,
-  });
-
-  // Update in DB
   await dbClient
     .update(note)
     .set({ name, description })
     .where(eq(note.id, noteId));
 
-  revalidatePath(`/dashboard/topics/${topicId}/notes`);
+  revalidatePath('/dashboard/materials');
 }
 
 export async function updateChunk(
@@ -85,18 +68,10 @@ export async function updateChunk(
 
   if (!existing) throw new Error('Chunk not found');
 
-  // Update in Notion
-  await syncServiceFetch(`page/${chunkId}/properties`, {
-    method: 'PATCH',
-    body: { name, description },
-    userId: loggedInUser.id,
-  });
-
-  // Update in DB
   await dbClient
     .update(chunk)
     .set({ name, description })
     .where(eq(chunk.id, chunkId));
 
-  revalidatePath(`/dashboard/topics/${topicId}/notes/${noteId}/chunks`);
+  revalidatePath('/dashboard/materials');
 }

@@ -1,6 +1,6 @@
 import SiteFooter from '@/components/site-footer';
 import SiteNavbar from '@/components/site-navbar';
-import { AuthView } from '@daveyplate/better-auth-ui';
+import { AuthView } from './auth-view-wrapper';
 import { authViewPaths } from '@daveyplate/better-auth-ui/server';
 
 export const dynamicParams = false;

@@ -20,6 +20,8 @@ const config: Config = {
   },
   moduleNameMapper: {
     '^better-auth/react$': '<rootDir>/specs/__mocks__/better-auth-react.ts',
+    '^@/components/knowledge-network-wrapper$':
+      '<rootDir>/specs/__mocks__/knowledge-network-wrapper.tsx',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@temar/db-client$': '<rootDir>/../../libs/db-client/src/index.ts',
     '^@temar/shared-types$': '<rootDir>/../../libs/shared-types/src/index.ts',

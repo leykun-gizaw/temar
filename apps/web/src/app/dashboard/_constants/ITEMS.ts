@@ -9,8 +9,8 @@ import {
 
 export const NAV_ITEMS = [
   {
-    title: 'Topics',
-    url: '/dashboard/topics',
+    title: 'Materials',
+    url: '/dashboard/materials',
     icon: LibraryBig,
     isActive: false,
   },

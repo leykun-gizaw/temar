@@ -16,23 +16,19 @@ import type {
   AnswerRubric,
 } from '@/lib/fetchers/recall-items';
 import type { AnalysisResult } from '@/lib/actions/analysis';
-import { plateValueToMarkdown } from '@/lib/utils/plate-to-markdown';
+import { lexicalToMarkdown } from '@/components/lexical-editor/utils/serialize';
+import type { SerializedEditorState } from 'lexical';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import {
-  RotateCcw,
-  CheckCircle2,
-  Clock,
-  ListChecks,
-  Sparkles,
-  History,
-} from 'lucide-react';
+import { ReviewAnalysis } from './review-analysis';
+import { ReviewRubricDisplay } from './review-rubric';
+import { RotateCcw, CheckCircle2, Clock, History } from 'lucide-react';
 
 const RATING_LABELS: Record<number, { label: string; color: string }> = {
-  1: { label: 'Again', color: 'text-red-500' },
-  2: { label: 'Hard', color: 'text-orange-500' },
-  3: { label: 'Good', color: 'text-green-500' },
-  4: { label: 'Easy', color: 'text-blue-500' },
+  1: { label: 'Again', color: 'text-fsrs-again' },
+  2: { label: 'Hard', color: 'text-fsrs-hard' },
+  3: { label: 'Good', color: 'text-fsrs-good' },
+  4: { label: 'Easy', color: 'text-fsrs-easy' },
 };
 
 interface ReviewHistoryProps {
@@ -142,7 +138,7 @@ export default function ReviewHistory({
   const selectedLog = reviewLogs.find((l) => l.id === selectedLogId) ?? null;
   const analysis = selectedLog?.analysisJson as AnalysisResult | null;
   const answerMarkdown = selectedLog?.answerJson
-    ? plateValueToMarkdown(selectedLog.answerJson)
+    ? lexicalToMarkdown(selectedLog.answerJson as SerializedEditorState)
     : null;
 
   const rubric = selectedItem?.answerRubric as AnswerRubric | null;
@@ -182,7 +178,7 @@ export default function ReviewHistory({
             <span className="text-sm font-medium">Review History</span>
           </div>
           {completedCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium flex items-center gap-1">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-fsrs-good-bg text-fsrs-good font-medium flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
               {completedCount} reviewed this session
             </span>
@@ -318,192 +314,7 @@ export default function ReviewHistory({
               <hr />
 
               {/* Type-specific rubric */}
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-                  <ListChecks className="h-3.5 w-3.5" />
-                  {rubric?.type === 'mcq'
-                    ? 'Choices'
-                    : rubric?.type === 'leetcode'
-                    ? 'Problem Details'
-                    : 'Answer Rubric'}
-                </h3>
-
-                {!rubric ? (
-                  <p className="text-sm text-muted-foreground italic">
-                    No rubric available.
-                  </p>
-                ) : rubric.type === 'mcq' ? (
-                  <div className="space-y-2">
-                    {rubric.choices.map((choice) => (
-                      <div
-                        key={choice.label}
-                        className={`flex items-start gap-2.5 rounded-lg border p-3 ${
-                          choice.label === rubric.correctAnswer
-                            ? 'border-green-500/50 bg-green-50 dark:bg-green-950/20'
-                            : ''
-                        }`}
-                      >
-                        <span
-                          className={`shrink-0 mt-0.5 h-5 w-5 rounded-full text-xs flex items-center justify-center font-bold ${
-                            choice.label === rubric.correctAnswer
-                              ? 'bg-green-500/20 text-green-700 dark:text-green-400'
-                              : 'bg-primary/10 text-primary'
-                          }`}
-                        >
-                          {choice.label}
-                        </span>
-                        <span className="text-sm leading-relaxed">
-                          {choice.text}
-                        </span>
-                      </div>
-                    ))}
-                    {rubric.explanation && (
-                      <div className="mt-3 p-3 rounded-md bg-muted/30 border">
-                        <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                          Explanation
-                        </h4>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {rubric.explanation}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ) : rubric.type === 'leetcode' ? (
-                  <div className="space-y-4">
-                    {rubric.functionPrototype && (
-                      <div>
-                        <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                          Function Signature
-                        </h4>
-                        <pre className="text-sm bg-muted/50 rounded-md p-3 overflow-auto font-mono">
-                          {rubric.functionPrototype}
-                        </pre>
-                      </div>
-                    )}
-                    {rubric.examples && rubric.examples.length > 0 && (
-                      <div>
-                        <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                          Examples
-                        </h4>
-                        <div className="space-y-3">
-                          {rubric.examples.map((ex, i) => (
-                            <div
-                              key={i}
-                              className="rounded-lg border p-3 bg-muted/20 space-y-1.5"
-                            >
-                              <p className="text-xs">
-                                <span className="font-semibold text-muted-foreground">
-                                  Input:{' '}
-                                </span>
-                                <code className="text-xs bg-muted rounded px-1 py-0.5">
-                                  {ex.input}
-                                </code>
-                              </p>
-                              <p className="text-xs">
-                                <span className="font-semibold text-muted-foreground">
-                                  Output:{' '}
-                                </span>
-                                <code className="text-xs bg-muted rounded px-1 py-0.5">
-                                  {ex.output}
-                                </code>
-                              </p>
-                              {ex.explanation && (
-                                <p className="text-xs text-muted-foreground">
-                                  <span className="font-semibold">
-                                    Explanation:{' '}
-                                  </span>
-                                  {ex.explanation}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {rubric.constraints && rubric.constraints.length > 0 && (
-                      <div>
-                        <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                          Constraints
-                        </h4>
-                        <ul className="space-y-1">
-                          {rubric.constraints.map((c, i) => (
-                            <li
-                              key={i}
-                              className="text-xs text-muted-foreground flex items-start gap-2"
-                            >
-                              <span className="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                              <code className="text-xs">{c}</code>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ) : rubric.type === 'open_ended' ? (
-                  <div className="space-y-4">
-                    {'sections' in rubric &&
-                      rubric.sections &&
-                      rubric.sections.length > 0 && (
-                        <div>
-                          <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                            Required Sections
-                          </h4>
-                          <div className="flex flex-wrap gap-1.5">
-                            {rubric.sections.map((s, i) => (
-                              <span
-                                key={i}
-                                className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
-                              >
-                                {s}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    {'criteria' in rubric &&
-                      rubric.criteria &&
-                      rubric.criteria.length > 0 && (
-                        <ol className="space-y-2">
-                          {rubric.criteria.map((c, i) => (
-                            <li
-                              key={i}
-                              className="text-sm text-muted-foreground flex items-start gap-2.5"
-                            >
-                              <span className="shrink-0 mt-0.5 h-5 w-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-medium">
-                                {i + 1}
-                              </span>
-                              <span className="leading-relaxed">{c}</span>
-                            </li>
-                          ))}
-                        </ol>
-                      )}
-                  </div>
-                ) : (
-                  <div>
-                    {'criteria' in rubric &&
-                    rubric.criteria &&
-                    rubric.criteria.length > 0 ? (
-                      <ol className="space-y-2">
-                        {rubric.criteria.map((c, i) => (
-                          <li
-                            key={i}
-                            className="text-sm text-muted-foreground flex items-start gap-2.5"
-                          >
-                            <span className="shrink-0 mt-0.5 h-5 w-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-medium">
-                              {i + 1}
-                            </span>
-                            <span className="leading-relaxed">{c}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic">
-                        No rubric available.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+              <ReviewRubricDisplay rubric={rubric} isHistoryView />
 
               {/* Key Points */}
               {rubric?.keyPoints && rubric.keyPoints.length > 0 && (
@@ -618,84 +429,7 @@ export default function ReviewHistory({
                 </div>
 
                 {/* Analysis results */}
-                {analysis && (
-                  <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      Analysis Results
-                    </h3>
-                    <div className="space-y-3 rounded-md border p-4 bg-muted/20">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`text-lg font-bold ${
-                            analysis.suggestedRating === 1
-                              ? 'text-red-500'
-                              : analysis.suggestedRating === 2
-                              ? 'text-orange-500'
-                              : analysis.suggestedRating === 3
-                              ? 'text-green-500'
-                              : 'text-blue-500'
-                          }`}
-                        >
-                          {analysis.scorePercent}%
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          Suggested:{' '}
-                          <span className="font-medium text-foreground">
-                            {analysis.suggestedLabel}
-                          </span>
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {analysis.reasoning}
-                      </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        {analysis.strengths &&
-                          analysis.strengths.length > 0 && (
-                            <div>
-                              <h4 className="text-[10px] font-semibold text-green-600 dark:text-green-400 mb-1 uppercase tracking-wider">
-                                Strengths
-                              </h4>
-                              <ul className="text-xs text-muted-foreground space-y-0.5">
-                                {analysis.strengths.map((s, i) => (
-                                  <li
-                                    key={i}
-                                    className="flex items-start gap-1"
-                                  >
-                                    <span className="text-green-500 shrink-0">
-                                      +
-                                    </span>
-                                    {s}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        {analysis.weaknesses &&
-                          analysis.weaknesses.length > 0 && (
-                            <div>
-                              <h4 className="text-[10px] font-semibold text-red-600 dark:text-red-400 mb-1 uppercase tracking-wider">
-                                Weaknesses
-                              </h4>
-                              <ul className="text-xs text-muted-foreground space-y-0.5">
-                                {analysis.weaknesses.map((w, i) => (
-                                  <li
-                                    key={i}
-                                    className="flex items-start gap-1"
-                                  >
-                                    <span className="text-red-500 shrink-0">
-                                      -
-                                    </span>
-                                    {w}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {analysis && <ReviewAnalysis analysis={analysis} />}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">

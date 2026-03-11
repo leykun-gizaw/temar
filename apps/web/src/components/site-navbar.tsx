@@ -1,23 +1,114 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, Moon, Sun, X } from 'lucide-react';
 import Logo from '@/assets/logo';
 import { ThemeToggle } from './theme-toggle';
 import { authClient } from '@/lib/auth-client';
-import { Button } from './ui/button';
+import { useTheme } from 'next-themes';
+import { useRouter } from 'next/navigation';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface NavLink {
   href: string;
   label: string;
 }
 
-const primaryLinks: NavLink[] = [{ href: '/pricing', label: 'Pricing' }];
+const primaryLinks: NavLink[] = [
+  { href: '/#features', label: 'Features' },
+  { href: '/#methodology', label: 'Methodology' },
+  { href: '/pricing', label: 'Pricing' },
+];
 
 const authLinks: NavLink[] = [
   { href: '/auth/sign-in', label: 'Sign In' },
-  { href: '/auth/sign-up', label: 'Register' },
+  { href: '/auth/sign-up', label: 'Sign Up' },
 ];
+
+function AccountMenu({
+  user,
+}: {
+  user: { name?: string | null; email: string; image?: string | null };
+}) {
+  const { theme, setTheme } = useTheme();
+  const router = useRouter();
+  const isDark = theme === 'dark';
+  const initials = (user.name ?? user.email)
+    .split(' ')
+    .map((s) => s[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  const handleSignOut = async () => {
+    await authClient.signOut();
+    router.push('/');
+    router.refresh();
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="flex items-center gap-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Account menu"
+        >
+          <Avatar className="h-8 w-8">
+            <AvatarImage
+              src={user.image ?? undefined}
+              alt={user.name ?? user.email}
+            />
+            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" sideOffset={8} className="w-52">
+        <DropdownMenuLabel className="flex flex-col gap-0.5">
+          {user.name && (
+            <span className="text-sm font-medium">{user.name}</span>
+          )}
+          <span className="text-xs font-normal text-muted-foreground truncate">
+            {user.email}
+          </span>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard" className="cursor-pointer">
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+        >
+          {isDark ? (
+            <Sun className="mr-2 h-4 w-4" />
+          ) : (
+            <Moon className="mr-2 h-4 w-4" />
+          )}
+          {isDark ? 'Light mode' : 'Dark mode'}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer text-destructive focus:text-destructive"
+          onClick={handleSignOut}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export function SiteNavbar() {
   const [open, setOpen] = useState(false);
@@ -29,7 +120,7 @@ export function SiteNavbar() {
   const isLoggedIn = !!data;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
+    <header className="sticky top-3 z-40 w-3/4 mx-auto border rounded-2xl backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
           <Link
@@ -57,37 +148,25 @@ export function SiteNavbar() {
         </div>
         <div className="hidden md:flex items-center gap-4 text-sm">
           {!isLoggedIn ? (
-            authLinks.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={
-                  l.label === 'Register'
-                    ? 'inline-flex h-9 items-center rounded-md bg-primary px-4 font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors'
-                    : 'text-muted-foreground hover:text-foreground transition-colors'
-                }
-              >
-                {l.label}
-              </Link>
-            ))
-          ) : (
             <>
-              <Link href={'/dashboard'}>
-                <Button asChild variant={'outline'}>
-                  <span>Dashboard</span>
-                </Button>
-              </Link>
-              <Link href="/auth/sign-out">
-                <Button asChild>
-                  <span>
-                    <LogOut /> Sign Out
-                  </span>
-                </Button>
-              </Link>
+              {authLinks.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={
+                    l.label === 'Sign Up'
+                      ? 'inline-flex h-9 items-center rounded-md bg-primary px-4 font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors'
+                      : 'text-muted-foreground hover:text-foreground transition-colors'
+                  }
+                >
+                  {l.label}
+                </Link>
+              ))}
+              <ThemeToggle />
             </>
+          ) : (
+            data?.user && <AccountMenu user={data.user} />
           )}
-
-          <ThemeToggle />
         </div>
         <button
           type="button"
@@ -116,20 +195,26 @@ export function SiteNavbar() {
               </Link>
             ))}
             <div className="mt-2 border-t pt-2" />
-            {authLinks.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className={
-                  l.label === 'Register'
-                    ? 'block rounded bg-primary px-2 py-2 text-center font-medium text-primary-foreground hover:bg-primary/90'
-                    : 'block rounded px-2 py-2 text-muted-foreground hover:bg-accent hover:text-foreground'
-                }
-              >
-                {l.label}
-              </Link>
-            ))}
+            {!isLoggedIn
+              ? authLinks.map((l) => (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => setOpen(false)}
+                    className={
+                      l.label === 'Sign Up'
+                        ? 'block rounded bg-primary px-2 py-2 text-center font-medium text-primary-foreground hover:bg-primary/90'
+                        : 'block rounded px-2 py-2 text-muted-foreground hover:bg-accent hover:text-foreground'
+                    }
+                  >
+                    {l.label}
+                  </Link>
+                ))
+              : data?.user && (
+                  <div className="flex items-center gap-2 px-2 py-2">
+                    <AccountMenu user={data.user} />
+                  </div>
+                )}
           </nav>
         </div>
       )}

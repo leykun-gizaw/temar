@@ -14,6 +14,11 @@ const nextConfig = {
       issuer: /\.[jt]sx?$/,
       use: ['@svgr/webpack'],
     });
+    config.resolve.extensionAlias = {
+      ...config.resolve.extensionAlias,
+      '.jsx': ['.tsx', '.jsx'],
+      '.js': ['.ts', '.tsx', '.js'],
+    };
     return config;
   },
 };

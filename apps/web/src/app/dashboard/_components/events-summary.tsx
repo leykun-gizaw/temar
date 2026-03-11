@@ -4,7 +4,7 @@ import type { RecallItemDue } from '@/lib/fetchers/recall-items';
 import { Button } from '../../../components/ui/button';
 import Link from 'next/link';
 import { BellRing } from 'lucide-react';
-import clsx from 'clsx';
+import { cn } from '@/lib/utils';
 
 export function EventsSummary({
   dueItems,
@@ -20,9 +20,7 @@ export function EventsSummary({
   const currentItem = dueNow[0] ?? null;
 
   return (
-    <div
-      className={clsx('flex flex-col gap-2 h-full justify-around', className)}
-    >
+    <div className={cn('flex flex-col gap-2 h-full justify-around', className)}>
       <div className="flex flex-col">
         <span className="text-xl">Due Items</span>
         <span className="text-xs text-muted-foreground">

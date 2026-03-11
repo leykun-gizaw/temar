@@ -18,7 +18,7 @@ async function getAiHeaders(): Promise<Record<string, string>> {
 export async function trackTopic(
   topicId: string,
   questionTypes?: string[],
-  questionCount?: number,
+  questionCount?: number
 ) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
@@ -36,7 +36,7 @@ export async function trackTopic(
   });
 
   revalidatePath('/dashboard');
-  revalidatePath('/dashboard/topics');
+  revalidatePath('/dashboard/materials');
   return result;
 }
 
@@ -44,7 +44,7 @@ export async function trackNote(
   noteId: string,
   topicId: string,
   questionTypes?: string[],
-  questionCount?: number,
+  questionCount?: number
 ) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
@@ -62,7 +62,7 @@ export async function trackNote(
   });
 
   revalidatePath('/dashboard');
-  revalidatePath(`/dashboard/topics/${topicId}/notes`);
+  revalidatePath('/dashboard/materials');
   return result;
 }
 
@@ -71,7 +71,7 @@ export async function trackChunk(
   noteId: string,
   topicId: string,
   questionTypes?: string[],
-  questionCount?: number,
+  questionCount?: number
 ) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
@@ -89,7 +89,7 @@ export async function trackChunk(
   });
 
   revalidatePath('/dashboard');
-  revalidatePath(`/dashboard/topics/${topicId}/notes/${noteId}`);
+  revalidatePath('/dashboard/materials');
   return result;
 }
 
@@ -103,7 +103,7 @@ export async function untrackTopic(topicId: string) {
   });
 
   revalidatePath('/dashboard');
-  revalidatePath('/dashboard/topics');
+  revalidatePath('/dashboard/materials');
   return result;
 }
 
@@ -117,14 +117,14 @@ export async function untrackNote(noteId: string, topicId: string) {
   });
 
   revalidatePath('/dashboard');
-  revalidatePath(`/dashboard/topics/${topicId}/notes`);
+  revalidatePath('/dashboard/materials');
   return result;
 }
 
 export async function untrackChunk(
   chunkId: string,
   noteId: string,
-  topicId: string,
+  topicId: string
 ) {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
@@ -135,7 +135,7 @@ export async function untrackChunk(
   });
 
   revalidatePath('/dashboard');
-  revalidatePath(`/dashboard/topics/${topicId}/notes/${noteId}`);
+  revalidatePath('/dashboard/materials');
   return result;
 }
 
@@ -243,7 +243,7 @@ export interface UnderperformingChunk {
 
 export async function getUnderperformingChunks(
   minLapses?: number,
-  maxStability?: number,
+  maxStability?: number
 ): Promise<UnderperformingChunk[]> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) return [];
@@ -256,7 +256,7 @@ export async function getUnderperformingChunks(
   const qs = params.toString();
   const result = await fsrsServiceFetch<UnderperformingChunk[]>(
     `track/underperforming${qs ? `?${qs}` : ''}`,
-    { userId: loggedInUser.id },
+    { userId: loggedInUser.id }
   );
 
   return result ?? [];
