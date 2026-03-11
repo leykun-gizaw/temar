@@ -57,13 +57,13 @@ export default function Index() {
             <div className="flex flex-col sm:flex-row items-start gap-4">
               <Link
                 href="/dashboard"
-                className="px-8 py-3.5 bg-primary text-primary-foreground font-semibold rounded-md hover:bg-primary/90 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 flex items-center gap-2 shadow-md shadow-primary/15"
+                className="p-3.5 bg-primary rounded-xl text-primary-foreground font-semibold hover:bg-primary/90 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 flex items-center gap-2 shadow-md shadow-primary/15"
               >
                 Get Started <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/pricing"
-                className="px-8 py-3.5 bg-background/70 backdrop-blur-sm border border-border text-foreground font-semibold rounded-md hover:bg-muted transition-colors flex items-center"
+                className="px-8 py-3.5 bg-background/70 backdrop-blur-sm border border-border text-foreground font-semibold rounded-xl hover:bg-muted transition-colors flex items-center"
               >
                 View Pricing
               </Link>
