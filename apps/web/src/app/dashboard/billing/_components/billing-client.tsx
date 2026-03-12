@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,14 +13,52 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Coins, CreditCard, ArrowUpCircle, Zap, ExternalLink } from 'lucide-react';
+import {
+  Coins,
+  CreditCard,
+  ArrowUpCircle,
+  Zap,
+  ExternalLink,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PassTransaction } from '@/lib/actions/pass';
 
+declare global {
+  interface Window {
+    Paddle?: {
+      Environment: { set: (env: string) => void };
+      Setup: (opts: { token: string }) => void;
+      Checkout: {
+        open: (opts: {
+          items: { priceId: string; quantity: number }[];
+          customData?: Record<string, string>;
+          settings?: { successUrl?: string };
+        }) => void;
+      };
+    };
+  }
+}
+
 const TOPUP_PACKS = [
-  { id: 'topup_100', pass: 100, price: '$3.99', priceId: process.env.NEXT_PUBLIC_STRIPE_TOPUP_100_PRICE_ID ?? '' },
-  { id: 'topup_300', pass: 300, price: '$9.99', priceId: process.env.NEXT_PUBLIC_STRIPE_TOPUP_300_PRICE_ID ?? '', best: true },
-  { id: 'topup_600', pass: 600, price: '$17.99', priceId: process.env.NEXT_PUBLIC_STRIPE_TOPUP_600_PRICE_ID ?? '' },
+  {
+    id: 'topup_100',
+    pass: 100,
+    price: '$3.99',
+    priceId: process.env.NEXT_PUBLIC_PADDLE_TOPUP_100_PRICE_ID ?? '',
+  },
+  {
+    id: 'topup_300',
+    pass: 300,
+    price: '$9.99',
+    priceId: process.env.NEXT_PUBLIC_PADDLE_TOPUP_300_PRICE_ID ?? '',
+    best: true,
+  },
+  {
+    id: 'topup_600',
+    pass: 600,
+    price: '$17.99',
+    priceId: process.env.NEXT_PUBLIC_PADDLE_TOPUP_600_PRICE_ID ?? '',
+  },
 ];
 
 const PLAN_LABELS: Record<string, string> = {
@@ -37,37 +76,65 @@ const PLAN_BADGE_VARIANT: Record<string, string> = {
 interface BillingClientProps {
   balance: number;
   plan: string;
+  userId: string;
   transactions: PassTransaction[];
 }
 
-export function BillingClient({ balance, plan, transactions }: BillingClientProps) {
+export function BillingClient({
+  balance,
+  plan,
+  userId,
+  transactions,
+}: BillingClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [paddleReady, setPaddleReady] = useState(false);
 
-  const startCheckout = async (type: 'subscription' | 'topup', priceId: string, packId?: string) => {
-    setLoading(packId ?? type);
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, priceId }),
-      });
-      const data = await res.json() as { url?: string };
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } finally {
-      setLoading(null);
+  const initPaddle = useCallback(() => {
+    if (!window.Paddle) return;
+    const env = process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT ?? 'sandbox';
+    if (env === 'sandbox') {
+      window.Paddle.Environment.set('sandbox');
     }
+    window.Paddle.Setup({
+      token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? '',
+    });
+    setPaddleReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (window.Paddle) initPaddle();
+  }, [initPaddle]);
+
+  const openCheckout = (
+    priceId: string,
+    customData?: Record<string, string>,
+    packId?: string
+  ) => {
+    if (!window.Paddle || !paddleReady) return;
+    setLoading(packId ?? 'checkout');
+    window.Paddle.Checkout.open({
+      items: [{ priceId, quantity: 1 }],
+      customData: { userId, ...customData },
+      settings: {
+        successUrl: `${window.location.origin}/dashboard/billing?success=1`,
+      },
+    });
+    setTimeout(() => setLoading(null), 2000);
   };
 
-  const openPortal = async () => {
+  const manageSubscription = async () => {
     setLoading('portal');
     try {
-      const res = await fetch('/api/stripe/portal', { method: 'POST' });
-      const data = await res.json() as { url?: string };
-      if (data.url) {
-        window.location.href = data.url;
+      const res = await fetch('/api/paddle/manage', { method: 'POST' });
+      const data = (await res.json()) as {
+        updatePaymentMethod?: string | null;
+        cancel?: string | null;
+      };
+      if (data.updatePaymentMethod) {
+        window.open(data.updatePaymentMethod, '_blank');
+      } else if (data.cancel) {
+        window.open(data.cancel, '_blank');
       }
     } finally {
       setLoading(null);
@@ -76,6 +143,11 @@ export function BillingClient({ balance, plan, transactions }: BillingClientProp
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
+      <Script
+        src="https://cdn.paddle.com/paddle/v2/paddle.js"
+        onLoad={initPaddle}
+      />
+
       <div>
         <h1 className="text-2xl font-bold">Billing &amp; Pass</h1>
         <p className="text-muted-foreground mt-1">
@@ -91,7 +163,10 @@ export function BillingClient({ balance, plan, transactions }: BillingClientProp
               <Coins className="h-5 w-5 text-primary" />
               Pass Balance
             </span>
-            <Badge variant={PLAN_BADGE_VARIANT[plan] as 'default' | 'secondary'} className="capitalize">
+            <Badge
+              variant={PLAN_BADGE_VARIANT[plan] as 'default' | 'secondary'}
+              className="capitalize"
+            >
               {PLAN_LABELS[plan] ?? plan}
             </Badge>
           </CardTitle>
@@ -108,7 +183,7 @@ export function BillingClient({ balance, plan, transactions }: BillingClientProp
             <Button
               variant="outline"
               size="sm"
-              onClick={openPortal}
+              onClick={manageSubscription}
               disabled={loading === 'portal'}
               className="gap-2"
             >
@@ -121,16 +196,28 @@ export function BillingClient({ balance, plan, transactions }: BillingClientProp
             <div className="flex gap-3 flex-wrap">
               <Button
                 size="sm"
-                onClick={() => startCheckout('subscription', process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID ?? '', 'starter')}
-                disabled={!!loading}
+                onClick={() =>
+                  openCheckout(
+                    process.env.NEXT_PUBLIC_PADDLE_STARTER_PRICE_ID ?? '',
+                    undefined,
+                    'starter'
+                  )
+                }
+                disabled={!paddleReady || !!loading}
               >
                 Upgrade to Starter — $9.99/mo
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => startCheckout('subscription', process.env.NEXT_PUBLIC_STRIPE_SCHOLAR_PRICE_ID ?? '', 'scholar')}
-                disabled={!!loading}
+                onClick={() =>
+                  openCheckout(
+                    process.env.NEXT_PUBLIC_PADDLE_SCHOLAR_PRICE_ID ?? '',
+                    undefined,
+                    'scholar'
+                  )
+                }
+                disabled={!paddleReady || !!loading}
               >
                 Go Scholar — $24.99/mo
               </Button>
@@ -167,16 +254,22 @@ export function BillingClient({ balance, plan, transactions }: BillingClientProp
                 className="w-full"
                 variant="outline"
                 size="sm"
-                disabled={!!loading}
-                onClick={() => startCheckout('topup', pack.priceId, pack.id)}
+                disabled={!paddleReady || !!loading}
+                onClick={() =>
+                  openCheckout(
+                    pack.priceId,
+                    { topupPassAmount: String(pack.pass) },
+                    pack.id
+                  )
+                }
               >
-                {loading === pack.id ? 'Redirecting…' : 'Buy'}
+                {loading === pack.id ? 'Opening…' : 'Buy'}
               </Button>
             </Card>
           ))}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Purchased Pass never expires. Redirects to Stripe Checkout.
+          Top-up Passes expire after 12 months. Checkout powered by Paddle.
         </p>
       </div>
 
@@ -203,10 +296,13 @@ export function BillingClient({ balance, plan, transactions }: BillingClientProp
                 <span
                   className={cn(
                     'tabular-nums font-semibold text-sm',
-                    tx.delta > 0 ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
+                    tx.delta > 0
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-muted-foreground'
                   )}
                 >
-                  {tx.delta > 0 ? '+' : ''}{tx.delta}
+                  {tx.delta > 0 ? '+' : ''}
+                  {tx.delta}
                 </span>
               </div>
             ))}

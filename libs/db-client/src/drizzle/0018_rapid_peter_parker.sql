@@ -16,20 +16,10 @@ CREATE TABLE "pass_transaction" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "topic" DROP CONSTRAINT "topic_parent_page_id_user_notion_page_id_fk";
---> statement-breakpoint
-ALTER TABLE "chunk" ALTER COLUMN "parent_database_id" DROP NOT NULL;--> statement-breakpoint
-ALTER TABLE "chunk" ALTER COLUMN "datasource_id" DROP NOT NULL;--> statement-breakpoint
-ALTER TABLE "note" ALTER COLUMN "parent_database_id" DROP NOT NULL;--> statement-breakpoint
-ALTER TABLE "note" ALTER COLUMN "datasource_id" DROP NOT NULL;--> statement-breakpoint
-ALTER TABLE "topic" ALTER COLUMN "parent_database_id" DROP NOT NULL;--> statement-breakpoint
-ALTER TABLE "topic" ALTER COLUMN "datasource_id" DROP NOT NULL;--> statement-breakpoint
 ALTER TABLE "user" ADD COLUMN "stripe_customer_id" text;--> statement-breakpoint
 ALTER TABLE "user" ADD COLUMN "stripe_plan" text DEFAULT 'free' NOT NULL;--> statement-breakpoint
 ALTER TABLE "user" ADD COLUMN "stripe_subscription_id" text;--> statement-breakpoint
 ALTER TABLE "user" ADD COLUMN "pass_reset_at" timestamp with time zone;--> statement-breakpoint
-ALTER TABLE "recall_item" ADD COLUMN "question_type" text;--> statement-breakpoint
-ALTER TABLE "review_log" ADD COLUMN "analysis_json" jsonb;--> statement-breakpoint
 ALTER TABLE "pass_balance" ADD CONSTRAINT "pass_balance_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pass_transaction" ADD CONSTRAINT "pass_transaction_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "pass_balance_userId_idx" ON "pass_balance" USING btree ("user_id");--> statement-breakpoint

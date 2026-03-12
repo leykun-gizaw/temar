@@ -31,7 +31,7 @@ export async function getPassBalance(): Promise<PassBalanceInfo> {
   const [row] = await dbClient
     .select({
       balance: passBalance.balance,
-      plan: user.stripePlan,
+      plan: user.plan,
     })
     .from(passBalance)
     .innerJoin(user, eq(user.id, passBalance.userId))
@@ -40,7 +40,7 @@ export async function getPassBalance(): Promise<PassBalanceInfo> {
 
   if (!row) {
     const [userRow] = await dbClient
-      .select({ plan: user.stripePlan })
+      .select({ plan: user.plan })
       .from(user)
       .where(eq(user.id, sessionUser.id))
       .limit(1);
@@ -55,7 +55,7 @@ export async function creditPass(
   amount: number,
   description: string,
   operationType = 'credit',
-  stripePaymentIntentId?: string
+  paddleTransactionId?: string
 ): Promise<void> {
   await dbClient.transaction(async (tx) => {
     const [existing] = await tx
@@ -78,7 +78,7 @@ export async function creditPass(
       delta: amount,
       operationType,
       description,
-      stripePaymentIntentId: stripePaymentIntentId ?? null,
+      paddleTransactionId: paddleTransactionId ?? null,
     });
   });
 }
@@ -107,7 +107,7 @@ export async function checkAndDeductPass(
   const [userRow] = await dbClient
     .select({
       aiApiKeyEncrypted: user.aiApiKeyEncrypted,
-      stripePlan: user.stripePlan,
+      plan: user.plan,
     })
     .from(user)
     .where(eq(user.id, sessionUser.id))
@@ -180,7 +180,7 @@ export type PassTransaction = {
   delta: number;
   operationType: string;
   description: string;
-  stripePaymentIntentId: string | null;
+  paddleTransactionId: string | null;
   createdAt: Date;
 };
 

@@ -55,24 +55,6 @@ services:
     networks:
       - temar-network
 
-  notion_sync-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: notion_sync-service
-    restart: unless-stopped
-    env_file:
-      - .env.docker
-    depends_on:
-      db:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
-    ports:
-      - "${NOTION_SYNC_SERVICE_PORT:-3333}:3333"
-    networks:
-      - temar-network
-
   fsrs-service:
     build:
       context: .
