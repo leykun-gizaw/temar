@@ -39,27 +39,13 @@ declare global {
   }
 }
 
-const TOPUP_PACKS = [
-  {
-    id: 'topup_100',
-    pass: 100,
-    price: '$3.99',
-    priceId: process.env.NEXT_PUBLIC_PADDLE_TOPUP_100_PRICE_ID ?? '',
-  },
-  {
-    id: 'topup_300',
-    pass: 300,
-    price: '$9.99',
-    priceId: process.env.NEXT_PUBLIC_PADDLE_TOPUP_300_PRICE_ID ?? '',
-    best: true,
-  },
-  {
-    id: 'topup_600',
-    pass: 600,
-    price: '$17.99',
-    priceId: process.env.NEXT_PUBLIC_PADDLE_TOPUP_600_PRICE_ID ?? '',
-  },
-];
+interface TopupPack {
+  id: string;
+  pass: number;
+  price: string;
+  priceId: string;
+  best?: boolean;
+}
 
 const PLAN_LABELS: Record<string, string> = {
   free: 'Free',
@@ -73,11 +59,20 @@ const PLAN_BADGE_VARIANT: Record<string, string> = {
   scholar: 'default',
 };
 
+interface PaddleConfig {
+  clientToken: string;
+  environment: string;
+  starterPriceId: string;
+  scholarPriceId: string;
+  topupPacks: TopupPack[];
+}
+
 interface BillingClientProps {
   balance: number;
   plan: string;
   userId: string;
   transactions: PassTransaction[];
+  paddleConfig: PaddleConfig;
 }
 
 export function BillingClient({
@@ -85,6 +80,7 @@ export function BillingClient({
   plan,
   userId,
   transactions,
+  paddleConfig,
 }: BillingClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
@@ -92,15 +88,12 @@ export function BillingClient({
 
   const initPaddle = useCallback(() => {
     if (!window.Paddle) return;
-    const env = process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT ?? 'sandbox';
-    if (env === 'sandbox') {
+    if (paddleConfig.environment === 'sandbox') {
       window.Paddle.Environment.set('sandbox');
     }
-    window.Paddle.Setup({
-      token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? '',
-    });
+    window.Paddle.Setup({ token: paddleConfig.clientToken });
     setPaddleReady(true);
-  }, []);
+  }, [paddleConfig.clientToken, paddleConfig.environment]);
 
   useEffect(() => {
     if (window.Paddle) initPaddle();
@@ -198,7 +191,7 @@ export function BillingClient({
                 size="sm"
                 onClick={() =>
                   openCheckout(
-                    process.env.NEXT_PUBLIC_PADDLE_STARTER_PRICE_ID ?? '',
+                    paddleConfig.starterPriceId,
                     undefined,
                     'starter'
                   )
@@ -212,7 +205,7 @@ export function BillingClient({
                 variant="outline"
                 onClick={() =>
                   openCheckout(
-                    process.env.NEXT_PUBLIC_PADDLE_SCHOLAR_PRICE_ID ?? '',
+                    paddleConfig.scholarPriceId,
                     undefined,
                     'scholar'
                   )
@@ -233,7 +226,7 @@ export function BillingClient({
           Top-up Packs
         </h2>
         <div className="grid gap-4 sm:grid-cols-3">
-          {TOPUP_PACKS.map((pack) => (
+          {paddleConfig.topupPacks.map((pack) => (
             <Card
               key={pack.id}
               className={cn(

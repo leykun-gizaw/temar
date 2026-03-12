@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Check, Coins, Zap } from 'lucide-react';
+import { getLoggedInUser } from '@/lib/fetchers/users';
 
 interface Tier {
   name: string;
@@ -19,7 +20,9 @@ interface Tier {
   tagline: string;
   passPerMonth: string;
   cta: string;
+  ctaLoggedIn: string;
   href: string;
+  hrefLoggedIn: string;
   highlighted?: boolean;
   features: string[];
 }
@@ -32,7 +35,9 @@ const tiers: Tier[] = [
     tagline: 'Bring your own API key',
     passPerMonth: '0 Pass/mo',
     cta: 'Get Started',
+    ctaLoggedIn: 'Current Plan',
     href: '/auth/register',
+    hrefLoggedIn: '/dashboard',
     features: [
       'BYOK — use your own AI API key',
       'Question generation (BYOK)',
@@ -49,7 +54,9 @@ const tiers: Tier[] = [
     tagline: 'Managed AI, no key needed',
     passPerMonth: '200 Pass/mo',
     cta: 'Start Starter',
+    ctaLoggedIn: 'Upgrade to Starter',
     href: '/auth/register?plan=starter',
+    hrefLoggedIn: '/dashboard/billing',
     highlighted: true,
     features: [
       '200 Pass per month (rolls over up to 60)',
@@ -67,7 +74,9 @@ const tiers: Tier[] = [
     tagline: 'Power users & premium models',
     passPerMonth: '600 Pass/mo',
     cta: 'Go Scholar',
+    ctaLoggedIn: 'Upgrade to Scholar',
     href: '/auth/register?plan=scholar',
+    hrefLoggedIn: '/dashboard/billing',
     features: [
       '600 Pass per month (rolls over up to 200)',
       'Access to Premium model tier',
@@ -89,7 +98,8 @@ export const metadata = {
   description: 'Simple, transparent pricing for AI-powered learning.',
 };
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const sessionUser = await getLoggedInUser();
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteNavbar />
@@ -149,7 +159,9 @@ export default function PricingPage() {
                     variant={tier.highlighted ? 'default' : 'outline'}
                     className="w-full"
                   >
-                    <Link href={tier.href}>{tier.cta}</Link>
+                    <Link href={sessionUser ? tier.hrefLoggedIn : tier.href}>
+                      {sessionUser ? tier.ctaLoggedIn : tier.cta}
+                    </Link>
                   </Button>
 
                   <ul className="space-y-2 text-sm flex-1">
