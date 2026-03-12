@@ -86,7 +86,6 @@ services:
       - caddy_config:/config
     depends_on:
       - web
-      - notion_sync-service
       - fsrs-service
     networks:
       - temar-network
