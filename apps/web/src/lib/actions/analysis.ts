@@ -3,6 +3,9 @@
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { getUserAiConfig } from './ai-settings';
 import { analysisServiceFetch } from '../answer-analysis-service';
+import { checkAndDeductPass } from './pass';
+import { estimateInputTokens } from '@/lib/config/ai-operations';
+import type { AiProvider } from '@/lib/config/ai-operations';
 
 async function getAiHeaders(): Promise<Record<string, string>> {
   const config = await getUserAiConfig();
@@ -23,28 +26,74 @@ export interface AnalysisResult {
   suggestedLabel: 'Again' | 'Hard' | 'Good' | 'Easy';
 }
 
+export type AnalyzeAnswerResult =
+  | { status: 'success'; data: AnalysisResult; passDeducted: number }
+  | {
+      status: 'consent_required';
+      estimatedPassCost: number;
+      basePassCost: number;
+    }
+  | { status: 'insufficient_pass'; balance: number; required: number }
+  | { status: 'error'; message: string };
+
 export async function analyzeAnswer(
   answer: string,
   questionTitle: string,
   questionText: string,
   criteria: string[],
-  keyPoints: string[]
-): Promise<AnalysisResult> {
+  keyPoints: string[],
+  consentedPassCost?: number
+): Promise<AnalyzeAnswerResult> {
   const loggedInUser = await getLoggedInUser();
-  if (!loggedInUser) throw new Error('User not logged in');
+  if (!loggedInUser) return { status: 'error', message: 'User not logged in' };
+
+  const aiConfig = await getUserAiConfig();
+  const provider = (aiConfig?.provider ?? 'google') as AiProvider;
+  const modelId = aiConfig?.model ?? 'gemini-2.0-flash';
+
+  const inputText = [
+    answer,
+    questionTitle,
+    questionText,
+    ...criteria,
+    ...keyPoints,
+  ].join(' ');
+  const estimatedTokens = estimateInputTokens(inputText, provider);
+
+  const passResult = await checkAndDeductPass(
+    'answer_analysis',
+    modelId,
+    inputText,
+    provider,
+    consentedPassCost
+  );
+
+  if (passResult.status !== 'ok') {
+    return passResult as AnalyzeAnswerResult;
+  }
 
   const aiHeaders = await getAiHeaders();
 
-  return analysisServiceFetch<AnalysisResult>('analyze', {
-    method: 'POST',
-    userId: loggedInUser.id,
-    headers: aiHeaders,
-    body: {
-      answer,
-      questionTitle,
-      questionText,
-      criteria,
-      keyPoints,
-    },
-  });
+  try {
+    const data = await analysisServiceFetch<AnalysisResult>('analyze', {
+      method: 'POST',
+      userId: loggedInUser.id,
+      headers: aiHeaders,
+      body: {
+        answer,
+        questionTitle,
+        questionText,
+        criteria,
+        keyPoints,
+        maxOutputTokens: 1000,
+        _estimatedTokens: estimatedTokens,
+      },
+    });
+    return { status: 'success', data, passDeducted: passResult.passDeducted };
+  } catch (err) {
+    return {
+      status: 'error',
+      message: err instanceof Error ? err.message : 'Analysis failed',
+    };
+  }
 }

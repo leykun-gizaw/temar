@@ -32,6 +32,10 @@ export const user = pgTable('user', {
   aiModel: text('ai_model'),
   aiApiKeyEncrypted: text('ai_api_key_encrypted'),
   maxQuestionReviews: integer('max_question_reviews').notNull().default(5),
+  paddleCustomerId: text('paddle_customer_id').unique(),
+  plan: text('plan').notNull().default('free'),
+  paddleSubscriptionId: text('paddle_subscription_id'),
+  passResetAt: timestamp('pass_reset_at', { withTimezone: true }),
 });
 
 export const session = pgTable(

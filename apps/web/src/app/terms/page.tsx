@@ -2,6 +2,7 @@ import SiteNavbar from '@/components/site-navbar';
 import SiteFooter from '@/components/site-footer';
 import { Heading, Text } from '@/components/shared/Typography';
 import { Section } from '@/components/shared/Layout';
+import Link from 'next/link';
 
 export const metadata = {
   title: 'Terms of Service | Temar',
@@ -18,7 +19,7 @@ export default function TermsPage() {
             Terms of Service
           </Heading>
           <Text variant="body-small" className="mb-10 text-muted-foreground">
-            Last updated: February 13, 2025
+            Last updated: March 2026
           </Text>
 
           <div className="space-y-10 text-muted-foreground leading-relaxed">
@@ -85,7 +86,13 @@ export default function TermsPage() {
                 <li>
                   <strong>&quot;Subscription Plan&quot;</strong> means the
                   specific pricing tier and feature set you have selected for
-                  your Account (e.g., Free, Pro, Team).
+                  your Account, which may include Free, Starter, Scholar, or
+                  other tiers as made available from time to time.
+                </li>
+                <li>
+                  <strong>&quot;Pass&quot; or &quot;Pass Credits&quot;</strong>{' '}
+                  means the virtual credits used within the Service to access
+                  AI-powered features, as further described in Section 4.4.
                 </li>
                 <li>
                   <strong>&quot;Intellectual Property Rights&quot;</strong>{' '}
@@ -99,6 +106,10 @@ export default function TermsPage() {
                   designated as confidential or that reasonably should be
                   understood to be confidential given the nature of the
                   information and the circumstances of disclosure.
+                </li>
+                <li>
+                  <strong>&quot;Paddle&quot;</strong> means Paddle.net Market
+                  Ltd, our designated Merchant of Record for payment processing.
                 </li>
               </ul>
             </section>
@@ -159,37 +170,152 @@ export default function TermsPage() {
                 4. Subscription Plans and Payment
               </Heading>
               <p className="mb-4 font-medium text-foreground">
-                4.1 Subscription Terms
+                4.1 Payment Processing and Merchant of Record
+              </p>
+              <p className="mb-4">
+                Payments for the Service are processed by{' '}
+                <strong>Paddle.net Market Ltd (&quot;Paddle&quot;)</strong>,
+                acting as the Merchant of Record for all transactions. By
+                completing a purchase, you enter into a payment agreement with
+                Paddle, subject to Paddle&apos;s Buyer Terms of Use at{' '}
+                <Link
+                  href="https://paddle.com/legal/buyers-terms-of-use"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground"
+                >
+                  paddle.com/legal/buyers-terms-of-use
+                </Link>
+                . Temar is the provider of the Service, not the payment
+                merchant. For billing enquiries, VAT receipts, or payment
+                disputes, contact Paddle directly at{' '}
+                <Link
+                  href="https://paddle.com/support"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground"
+                >
+                  paddle.com/support
+                </Link>
+                .
+              </p>
+
+              <p className="mb-4 font-medium text-foreground mt-6">
+                4.2 Subscription Terms
               </p>
               <p className="mb-4">
                 We offer various Subscription Plans with different features and
                 pricing. By selecting a paid Subscription Plan, you agree to pay
                 all applicable fees as described at the time of purchase. All
-                fees are exclusive of taxes, and you are responsible for paying
-                all applicable taxes.
+                applicable taxes (including VAT and GST) are calculated and
+                collected by Paddle at the time of purchase in accordance with
+                applicable law. Tax amounts are included in or added to the
+                displayed price at checkout.
               </p>
 
               <p className="mb-4 font-medium text-foreground mt-6">
-                4.2 Billing and Renewal
+                4.3 Billing and Renewal
               </p>
               <p className="mb-4">
                 Paid subscriptions automatically renew for successive periods
                 equal to your initial subscription term unless cancelled before
-                the renewal date. You authorize us to charge your payment method
-                for all renewal fees. You may cancel your subscription at any
-                time through your Account settings, and cancellation will take
-                effect at the end of your current billing period.
+                the renewal date. Your payment method is charged by Paddle on a
+                recurring basis for all renewal fees. You may manage your
+                billing, update payment details, and cancel your subscription at
+                any time through Paddle&apos;s customer portal or through your
+                Account settings. Cancellation takes effect at the end of your
+                current billing period.
               </p>
 
               <p className="mb-4 font-medium text-foreground mt-6">
-                4.3 Refunds
+                4.4 Pass Credits
               </p>
               <p className="mb-4">
-                Unless otherwise required by applicable law, all fees are
-                non-refundable. We do not provide refunds for partial months of
-                service, unused features, or downgrades. If you believe you were
-                charged in error, you must contact us within 30 days of the
-                charge to dispute it.
+                <strong>4.4.1 Definition.</strong> &quot;Pass&quot; or
+                &quot;Pass credits&quot; are virtual credits used within the
+                Service to access AI-powered features. Passes have no monetary
+                value, are non-transferable, and cannot be redeemed for cash.
+              </p>
+              <p className="mb-4">
+                <strong>4.4.2 Monthly Allocation.</strong> Paid Subscription
+                Plans include a monthly Pass allocation as described on the
+                pricing page. Monthly allocations reset at the start of each
+                billing cycle.
+              </p>
+              <p className="mb-4">
+                <strong>4.4.3 Rollover.</strong> Unused monthly-allocated Passes
+                may carry over to the next billing period up to a maximum
+                rollover cap determined by your plan tier (as stated on the
+                pricing page). Passes exceeding the rollover cap are forfeited
+                at cycle reset.
+              </p>
+              <p className="mb-4">
+                <strong>4.4.4 Top-Up Packs.</strong> Additional Passes may be
+                purchased as one-time top-up packs. Top-up Passes do not expire
+                for 12 months from the date of purchase and are consumed after
+                your monthly allocation is depleted.
+              </p>
+              <p className="mb-4">
+                <strong>4.4.5 Pass Costs.</strong> The number of Passes deducted
+                per AI operation depends on: (a) the AI model you have selected;
+                and (b) the type of operation performed. A current Pass cost
+                table is available in your account settings. We reserve the
+                right to adjust Pass costs on 7 days&apos; notice.
+              </p>
+              <p className="mb-4">
+                <strong>4.4.6 Variable Deduction.</strong> Pass deductions are
+                based on actual tokens processed by the AI model, which may
+                exceed the base Pass cost for unusually large inputs. Where a
+                single operation is estimated to cost significantly more Pass
+                than the standard rate, the Service will display an estimated
+                cost and require your confirmation before proceeding. No Passes
+                are deducted if you decline.
+              </p>
+              <p className="mb-4">
+                <strong>4.4.7 Insufficient Balance.</strong> If your Pass
+                balance is insufficient for a requested operation, the operation
+                will not proceed and no Passes will be deducted. You will be
+                directed to purchase additional Passes.
+              </p>
+              <p className="mb-4">
+                <strong>4.4.8 On Cancellation.</strong> Upon cancellation of a
+                paid plan, remaining monthly-allocated Passes are forfeited.
+                Remaining top-up Passes are accessible until their expiry date
+                if you retain a free account.
+              </p>
+
+              <p className="mb-4 font-medium text-foreground mt-6">
+                4.5 Refunds
+              </p>
+              <p className="mb-4">
+                For information on refunds, please see our{' '}
+                <Link
+                  href="/refunds"
+                  className="underline hover:text-foreground"
+                >
+                  Refund Policy
+                </Link>
+                . Billing disputes should be directed to Paddle (
+                <Link
+                  href="https://paddle.com/support"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground"
+                >
+                  paddle.com/support
+                </Link>
+                ) as the payment processor. If you believe you were charged in
+                error by us directly, contact support@temar.app within 30 days
+                of the charge.
+              </p>
+              <p className="mb-4">
+                <strong>EU and UK Users:</strong> If you are a consumer in the
+                European Union or United Kingdom, you have the right to withdraw
+                from a purchase within 14 days. However, by proceeding with a
+                purchase and using the Service immediately, you expressly
+                request early performance of the contract and acknowledge that
+                your right of withdrawal is waived upon your first use of the
+                Service.
               </p>
             </section>
 
@@ -205,7 +331,7 @@ export default function TermsPage() {
                 limited, non-exclusive, non-transferable, non-sublicensable,
                 revocable license to access and use the Service for your
                 personal, non-commercial learning purposes (or internal business
-                purposes if using a Team plan). This license does not permit you
+                purposes if using a paid plan). This license does not permit you
                 to resell, redistribute, or make the Service available to
                 unauthorized third parties.
               </p>
@@ -251,6 +377,39 @@ export default function TermsPage() {
                   any applicable laws.
                 </li>
               </ul>
+
+              <p className="mb-4 font-medium text-foreground mt-6">
+                5.3 Bring Your Own Key (BYOK)
+              </p>
+              <p className="mb-4">
+                <strong>5.3.1</strong> You may connect your own API keys from
+                third-party AI providers (&quot;BYOK&quot;) to use certain
+                features of the Service at no Pass cost.
+              </p>
+              <p className="mb-4">
+                <strong>5.3.2</strong> By providing an API key, you authorize us
+                to use it solely to fulfill your requested AI operations within
+                the Service. We store API keys in encrypted form and do not use
+                them for any purpose other than executing your requests.
+              </p>
+              <p className="mb-4">
+                <strong>5.3.3</strong> You are solely responsible for all costs
+                and usage incurred on your API provider account resulting from
+                your use of the Service via BYOK. We are not responsible for any
+                overage charges, rate limiting, or account suspension imposed by
+                your API provider.
+              </p>
+              <p className="mb-4">
+                <strong>5.3.4</strong> BYOK exempts you from Pass deduction for
+                current AI features only. Future features may require Pass
+                credits regardless of whether BYOK is enabled, as disclosed on
+                the pricing page.
+              </p>
+              <p className="mb-4">
+                <strong>5.3.5</strong> You represent that your use of a
+                third-party API key through the Service complies with the
+                applicable terms of service of that provider.
+              </p>
             </section>
 
             <section>
@@ -471,6 +630,15 @@ export default function TermsPage() {
                 SECURITY, RELIABILITY, OR AVAILABILITY OF YOUR USER CONTENT; AND
                 (E) WARRANTIES THAT DEFECTS IN THE SERVICE WILL BE CORRECTED.
               </p>
+              <p className="mb-4 font-semibold">
+                THE SERVICE USES ARTIFICIAL INTELLIGENCE TO GENERATE STUDY
+                CONTENT, QUESTIONS, AND LEARNING MATERIALS. AI-GENERATED CONTENT
+                MAY BE INACCURATE, INCOMPLETE, OR OUTDATED. WE MAKE NO WARRANTY
+                REGARDING THE ACCURACY OR EDUCATIONAL SUITABILITY OF
+                AI-GENERATED CONTENT. AI OUTPUTS ARE PROVIDED FOR STUDY
+                ASSISTANCE PURPOSES ONLY AND SHOULD NOT BE RELIED UPON AS THE
+                SOLE SOURCE OF TRUTH FOR ANY SUBJECT.
+              </p>
               <p className="mb-4">
                 WE DO NOT WARRANT, ENDORSE, GUARANTEE, OR ASSUME RESPONSIBILITY
                 FOR ANY PRODUCT OR SERVICE ADVERTISED OR OFFERED BY A THIRD
@@ -651,6 +819,13 @@ export default function TermsPage() {
                 judgment on the award rendered by the arbitrator may be entered
                 in any court having jurisdiction thereof.
               </p>
+              <p className="mb-4">
+                <strong>EU and UK Consumers:</strong> The arbitration clause in
+                this Section 13.3 does not apply to users who are consumers
+                located in the European Union or United Kingdom, who retain the
+                right to bring proceedings in the courts of their country of
+                residence.
+              </p>
 
               <p className="mb-4 font-medium text-foreground mt-6">
                 13.4 Class Action Waiver
@@ -740,11 +915,12 @@ export default function TermsPage() {
                 15.1 Entire Agreement
               </p>
               <p className="mb-4">
-                These Terms, together with our Privacy Policy and any other
-                legal notices published by us on the Service, constitute the
-                entire agreement between you and us concerning the Service and
-                supersede and replace any prior agreements, communications, and
-                proposals, whether oral or written, between you and us.
+                These Terms, together with our Privacy Policy, Refund Policy,
+                and any other legal notices published by us on the Service,
+                constitute the entire agreement between you and us concerning
+                the Service and supersede and replace any prior agreements,
+                communications, and proposals, whether oral or written, between
+                you and us.
               </p>
 
               <p className="mb-4 font-medium text-foreground mt-6">

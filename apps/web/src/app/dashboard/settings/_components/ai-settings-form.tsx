@@ -17,9 +17,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Key, Sparkles, Trash2, Shield } from 'lucide-react';
+import {
+  Loader2,
+  Key,
+  Sparkles,
+  Trash2,
+  Shield,
+  Coins,
+  Info,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { AiSettings, AiProvider } from '@/lib/actions/ai-settings';
+import {
+  MODEL_CONFIGS,
+  OPERATION_CONFIGS,
+  type OperationType,
+} from '@/lib/config/ai-operations';
 import {
   saveAiSettings,
   clearAiApiKey,
@@ -67,6 +80,18 @@ export function AiSettingsForm({
     initialSettings.maxQuestionReviews
   );
   const [isPending, startTransition] = useTransition();
+
+  const modelConfig = MODEL_CONFIGS.find((m) => m.modelId === model);
+  const isByok = !!(provider && (hasExistingKey || apiKey));
+
+  const CURRENT_OPS: OperationType[] = [
+    'question_generation',
+    'answer_analysis',
+  ];
+  const FUTURE_OPS: OperationType[] = [
+    'chunk_enhancement',
+    'content_generation',
+  ];
 
   const handleProviderChange = (value: string) => {
     if (value === 'system') {
@@ -231,6 +256,76 @@ export function AiSettingsForm({
                 </p>
               </div>
             </>
+          )}
+
+          {/* Pass cost preview */}
+          {model && provider && (
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium flex items-center gap-1.5">
+                  <Coins className="h-4 w-4 text-primary" />
+                  Pass Cost Preview
+                </span>
+                {modelConfig && (
+                  <span className="text-xs rounded-full px-2 py-0.5 font-semibold bg-primary/10 text-primary capitalize">
+                    {modelConfig.tier}
+                  </span>
+                )}
+              </div>
+              {isByok ? (
+                <div className="flex items-start gap-2 text-sm text-green-600 dark:text-green-400">
+                  <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>
+                    BYOK — current AI features (question generation &amp; answer
+                    analysis) are
+                    <strong> free</strong> with your own API key.
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {CURRENT_OPS.map((op) => {
+                    const cfg = OPERATION_CONFIGS[op];
+                    const tier = modelConfig?.tier ?? 'economy';
+                    return (
+                      <div key={op} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {cfg.label}
+                        </span>
+                        <span className="font-medium tabular-nums">
+                          {cfg.passCost[tier]} Pass
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <div className="border-t pt-2 mt-2">
+                    {FUTURE_OPS.map((op) => {
+                      const cfg = OPERATION_CONFIGS[op];
+                      const tier = modelConfig?.tier ?? 'economy';
+                      return (
+                        <div
+                          key={op}
+                          className="flex justify-between text-sm opacity-50"
+                        >
+                          <span className="text-muted-foreground">
+                            {cfg.label} (coming soon)
+                          </span>
+                          <span className="font-medium tabular-nums">
+                            {cfg.passCost[tier]} Pass
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {!isByok && (
+                <p className="text-xs text-muted-foreground flex items-start gap-1">
+                  <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  No API key set — uses your Pass balance. Add a BYOK key above
+                  for free current-feature access.
+                </p>
+              )}
+            </div>
           )}
 
           <div className="flex items-center gap-3 pt-2">

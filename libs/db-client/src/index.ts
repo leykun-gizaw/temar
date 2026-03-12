@@ -3,6 +3,7 @@ export * from './lib/crypto';
 export * from './schema/auth-schema';
 export * from './schema/notion-cache-schema';
 export * from './schema/fsrs-schema';
+export * from './schema/pass-schema';
 export {
   eq,
   ne,

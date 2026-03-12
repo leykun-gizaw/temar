@@ -2,6 +2,7 @@ import {
   BinocularsIcon,
   CalendarDaysIcon,
   ChartNoAxesCombinedIcon,
+  Coins,
   LibraryBig,
   Settings,
   Trash2,
@@ -30,6 +31,12 @@ export const NAV_ITEMS = [
     title: 'Analytics',
     url: '#',
     icon: ChartNoAxesCombinedIcon,
+    isActive: false,
+  },
+  {
+    title: 'Billing',
+    url: '/dashboard/billing',
+    icon: Coins,
     isActive: false,
   },
   {

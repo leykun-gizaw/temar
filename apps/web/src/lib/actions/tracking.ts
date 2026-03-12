@@ -4,6 +4,18 @@ import { revalidatePath } from 'next/cache';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { fsrsServiceFetch } from '../fsrs-service';
 import { getUserAiConfig } from './ai-settings';
+import { checkAndDeductPass } from './pass';
+import { dbClient, chunk, eq } from '@temar/db-client';
+import type { AiProvider } from '@/lib/config/ai-operations';
+
+export type TrackResult<T = unknown> =
+  | { status: 'success'; data: T }
+  | { status: 'insufficient_pass'; balance: number; required: number }
+  | {
+      status: 'consent_required';
+      estimatedPassCost: number;
+      basePassCost: number;
+    };
 
 async function getAiHeaders(): Promise<Record<string, string>> {
   const config = await getUserAiConfig();
@@ -15,20 +27,48 @@ async function getAiHeaders(): Promise<Record<string, string>> {
   };
 }
 
+async function passCheckForGeneration(
+  inputText: string,
+  consentedPassCost?: number
+): Promise<
+  { ok: true; passDeducted: number } | { ok: false; result: TrackResult }
+> {
+  const aiConfig = await getUserAiConfig();
+  const provider = (aiConfig?.provider ?? 'google') as AiProvider;
+  const modelId = aiConfig?.model ?? 'gemini-2.0-flash';
+
+  const passResult = await checkAndDeductPass(
+    'question_generation',
+    modelId,
+    inputText,
+    provider,
+    consentedPassCost
+  );
+
+  if (passResult.status === 'ok') {
+    return { ok: true, passDeducted: passResult.passDeducted };
+  }
+  return { ok: false, result: passResult as TrackResult };
+}
+
 export async function trackTopic(
   topicId: string,
   questionTypes?: string[],
-  questionCount?: number
-) {
+  questionCount?: number,
+  consentedPassCost?: number
+): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
+
+  const passCheck = await passCheckForGeneration('', consentedPassCost);
+  if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
   const body: Record<string, unknown> = {};
   if (questionTypes?.length) body.questionTypes = questionTypes;
   if (questionCount != null) body.questionCount = questionCount;
 
-  const result = await fsrsServiceFetch(`track/topic/${topicId}`, {
+  const data = await fsrsServiceFetch(`track/topic/${topicId}`, {
     method: 'POST',
     userId: loggedInUser.id,
     headers: aiHeaders,
@@ -37,24 +77,28 @@ export async function trackTopic(
 
   revalidatePath('/dashboard');
   revalidatePath('/dashboard/materials');
-  return result;
+  return { status: 'success', data };
 }
 
 export async function trackNote(
   noteId: string,
   topicId: string,
   questionTypes?: string[],
-  questionCount?: number
-) {
+  questionCount?: number,
+  consentedPassCost?: number
+): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
+
+  const passCheck = await passCheckForGeneration('', consentedPassCost);
+  if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
   const body: Record<string, unknown> = {};
   if (questionTypes?.length) body.questionTypes = questionTypes;
   if (questionCount != null) body.questionCount = questionCount;
 
-  const result = await fsrsServiceFetch(`track/note/${noteId}`, {
+  const data = await fsrsServiceFetch(`track/note/${noteId}`, {
     method: 'POST',
     userId: loggedInUser.id,
     headers: aiHeaders,
@@ -63,7 +107,7 @@ export async function trackNote(
 
   revalidatePath('/dashboard');
   revalidatePath('/dashboard/materials');
-  return result;
+  return { status: 'success', data };
 }
 
 export async function trackChunk(
@@ -71,17 +115,28 @@ export async function trackChunk(
   noteId: string,
   topicId: string,
   questionTypes?: string[],
-  questionCount?: number
-) {
+  questionCount?: number,
+  consentedPassCost?: number
+): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
+
+  const [chunkRow] = await dbClient
+    .select({ contentMd: chunk.contentMd })
+    .from(chunk)
+    .where(eq(chunk.id, chunkId))
+    .limit(1);
+  const inputText = chunkRow?.contentMd ?? '';
+
+  const passCheck = await passCheckForGeneration(inputText, consentedPassCost);
+  if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
   const body: Record<string, unknown> = {};
   if (questionTypes?.length) body.questionTypes = questionTypes;
   if (questionCount != null) body.questionCount = questionCount;
 
-  const result = await fsrsServiceFetch(`track/chunk/${chunkId}`, {
+  const data = await fsrsServiceFetch(`track/chunk/${chunkId}`, {
     method: 'POST',
     userId: loggedInUser.id,
     headers: aiHeaders,
@@ -90,7 +145,7 @@ export async function trackChunk(
 
   revalidatePath('/dashboard');
   revalidatePath('/dashboard/materials');
-  return result;
+  return { status: 'success', data };
 }
 
 export async function untrackTopic(topicId: string) {
@@ -161,34 +216,52 @@ export async function getTrackingStatus(): Promise<TrackingItem[]> {
   return result ?? [];
 }
 
-export async function retryFailedGeneration(chunkId: string) {
+export async function retryFailedGeneration(
+  chunkId: string,
+  consentedPassCost?: number
+): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
+  const [chunkRow] = await dbClient
+    .select({ contentMd: chunk.contentMd })
+    .from(chunk)
+    .where(eq(chunk.id, chunkId))
+    .limit(1);
+  const inputText = chunkRow?.contentMd ?? '';
+
+  const passCheck = await passCheckForGeneration(inputText, consentedPassCost);
+  if (!passCheck.ok) return passCheck.result;
+
   const aiHeaders = await getAiHeaders();
-  const result = await fsrsServiceFetch(`track/retry/${chunkId}`, {
+  const data = await fsrsServiceFetch(`track/retry/${chunkId}`, {
     method: 'POST',
     userId: loggedInUser.id,
     headers: aiHeaders,
   });
 
   revalidatePath('/dashboard');
-  return result;
+  return { status: 'success', data };
 }
 
-export async function retryAllFailedGenerations() {
+export async function retryAllFailedGenerations(
+  consentedPassCost?: number
+): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
+  const passCheck = await passCheckForGeneration('', consentedPassCost);
+  if (!passCheck.ok) return passCheck.result;
+
   const aiHeaders = await getAiHeaders();
-  const result = await fsrsServiceFetch('track/retry-all-failed', {
+  const data = await fsrsServiceFetch('track/retry-all-failed', {
     method: 'POST',
     userId: loggedInUser.id,
     headers: aiHeaders,
   });
 
   revalidatePath('/dashboard');
-  return result;
+  return { status: 'success', data };
 }
 
 export interface OutdatedChunk {
@@ -214,19 +287,32 @@ export async function getOutdatedChunks(): Promise<OutdatedChunk[]> {
   return result ?? [];
 }
 
-export async function regenerateChunkQuestions(chunkId: string) {
+export async function regenerateChunkQuestions(
+  chunkId: string,
+  consentedPassCost?: number
+): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
+  const [chunkRow] = await dbClient
+    .select({ contentMd: chunk.contentMd })
+    .from(chunk)
+    .where(eq(chunk.id, chunkId))
+    .limit(1);
+  const inputText = chunkRow?.contentMd ?? '';
+
+  const passCheck = await passCheckForGeneration(inputText, consentedPassCost);
+  if (!passCheck.ok) return passCheck.result;
+
   const aiHeaders = await getAiHeaders();
-  const result = await fsrsServiceFetch(`track/regenerate/${chunkId}`, {
+  const data = await fsrsServiceFetch(`track/regenerate/${chunkId}`, {
     method: 'POST',
     userId: loggedInUser.id,
     headers: aiHeaders,
   });
 
   revalidatePath('/dashboard');
-  return result;
+  return { status: 'success', data };
 }
 
 export interface UnderperformingChunk {

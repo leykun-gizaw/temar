@@ -17,7 +17,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { submitReview } from '@/lib/actions/review';
-import { analyzeAnswer, type AnalysisResult } from '@/lib/actions/analysis';
+import {
+  analyzeAnswer,
+  type AnalysisResult,
+  type AnalyzeAnswerResult,
+} from '@/lib/actions/analysis';
 import type { RecallItemDue, AnswerRubric } from '@/lib/fetchers/recall-items';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -44,6 +48,14 @@ import AnswerEditor from '@/components/lexical-editor/AnswerEditor';
 import type { SerializedEditorState } from 'lexical';
 import { lexicalToPlainText } from '@/components/lexical-editor/utils/serialize';
 import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 const STATE_LABELS: Record<number, string> = {
   0: 'New',
@@ -123,6 +135,12 @@ export default function ReviewSession({
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  type AnalyzeBaseArgs = [string, string, string, string[], string[]];
+  const [analysisConsent, setAnalysisConsent] = useState<{
+    estimatedPassCost: number;
+    basePassCost: number;
+    pendingArgs: AnalyzeBaseArgs;
+  } | null>(null);
   const resultsPanelRef = useRef<PanelImperativeHandle>(null);
   const [resultsCollapsed, setResultsCollapsed] = useState(false);
 
@@ -253,18 +271,65 @@ export default function ReviewSession({
     setIsAnalyzing(true);
     setAnalysisError(null);
     setAnalysis(null);
+    setAnalysisConsent(null);
+
+    const baseArgs: AnalyzeBaseArgs = [
+      plainText,
+      currentItem.questionTitle ?? '',
+      currentItem.questionText ?? '',
+      criteria,
+      keyPoints,
+    ];
 
     try {
-      const result = await analyzeAnswer(
-        plainText,
-        currentItem.questionTitle ?? '',
-        currentItem.questionText ?? '',
-        criteria,
-        keyPoints
-      );
-      setAnalysis(result);
+      const result: AnalyzeAnswerResult = await analyzeAnswer(...baseArgs);
+      if (result.status === 'success') {
+        setAnalysis(result.data);
+      } else if (result.status === 'consent_required') {
+        setAnalysisConsent({
+          estimatedPassCost: result.estimatedPassCost,
+          basePassCost: result.basePassCost,
+          pendingArgs: baseArgs,
+        });
+      } else if (result.status === 'insufficient_pass') {
+        setAnalysisError(
+          `Not enough Pass (have ${result.balance}, need ${result.required}). Top up in billing.`
+        );
+      } else {
+        setAnalysisError(result.message);
+      }
     } catch (err) {
       console.error('Analysis failed:', err);
+      setAnalysisError(err instanceof Error ? err.message : 'Analysis failed');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleAnalysisConsentApprove = async () => {
+    if (!analysisConsent) return;
+    setAnalysisConsent(null);
+    setIsAnalyzing(true);
+    try {
+      const [a, qt, qtext, crit, kp] = analysisConsent.pendingArgs;
+      const result: AnalyzeAnswerResult = await analyzeAnswer(
+        a,
+        qt,
+        qtext,
+        crit,
+        kp,
+        analysisConsent.estimatedPassCost
+      );
+      if (result.status === 'success') {
+        setAnalysis(result.data);
+      } else if (result.status === 'insufficient_pass') {
+        setAnalysisError(
+          `Not enough Pass (have ${result.balance}, need ${result.required}). Top up in billing.`
+        );
+      } else if (result.status === 'error') {
+        setAnalysisError(result.message);
+      }
+    } catch (err) {
       setAnalysisError(err instanceof Error ? err.message : 'Analysis failed');
     } finally {
       setIsAnalyzing(false);
@@ -663,6 +728,32 @@ export default function ReviewSession({
           ))}
         </TooltipProvider>
       </div>
+      {/* Pass consent dialog */}
+      <Dialog
+        open={!!analysisConsent}
+        onOpenChange={(open) => {
+          if (!open) setAnalysisConsent(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Extra Pass required</DialogTitle>
+            <DialogDescription>
+              Your answer is larger than the standard budget. This analysis will
+              cost <strong>{analysisConsent?.estimatedPassCost} Pass</strong>{' '}
+              instead of the base {analysisConsent?.basePassCost} Pass.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAnalysisConsent(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAnalysisConsentApprove}>
+              Approve &amp; Analyze
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

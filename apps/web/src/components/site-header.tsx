@@ -17,6 +17,7 @@ import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
+import { PassBalanceChip } from './pass-balance-chip';
 
 export function SiteHeader() {
   const pathname = usePathname() ?? '/';
@@ -89,6 +90,7 @@ export function SiteHeader() {
           </Breadcrumb>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <PassBalanceChip />
           <NavUser />
         </div>
       </div>
