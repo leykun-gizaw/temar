@@ -17,10 +17,12 @@ export default async function AuthPage({
   const { path } = await params;
 
   return (
-    <main className="h-full flex flex-col justify-between items-center">
+    <main className="h-full">
       <SiteNavbar />
-      <AuthView path={path} />
-      <SiteFooter />
+      <div className="h-full flex flex-col justify-center items-center">
+        <AuthView path={path} />
+        <SiteFooter className="fixed bottom-0" />
+      </div>
     </main>
   );
 }
