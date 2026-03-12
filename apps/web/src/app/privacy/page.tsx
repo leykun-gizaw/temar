@@ -1,4 +1,7 @@
 import SiteNavbar from '@/components/site-navbar';
+import SiteFooter from '@/components/site-footer';
+import { Heading, Text } from '@/components/shared/Typography';
+import { Section } from '@/components/shared/Layout';
 import Link from 'next/link';
 
 export const metadata = {
@@ -12,19 +15,19 @@ export default function PrivacyPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <SiteNavbar />
       <main className="flex-1">
-        <div className="mx-auto max-w-3xl px-6 py-16 md:py-24">
-          <h1 className="text-3xl font-bold tracking-tight mb-4">
+        <Section containerWidth="narrow" spacing="lg">
+          <Heading as="h1" className="mb-4">
             Privacy Policy
-          </h1>
-          <p className="text-sm text-muted-foreground mb-10">
-            Last updated: February 13, 2025
-          </p>
+          </Heading>
+          <Text variant="body-small" className="mb-10 text-muted-foreground">
+            Last updated: March 2026
+          </Text>
 
           <div className="space-y-10 text-muted-foreground leading-relaxed">
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 1. Who We Are (Data Controller)
-              </h2>
+              </Heading>
               <p className="mb-4">
                 Temar (&quot;Temar&quot;, &quot;we&quot;, &quot;us&quot;, or
                 &quot;our&quot;) operates a spaced repetition and knowledge
@@ -44,9 +47,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 2. Scope of This Policy
-              </h2>
+              </Heading>
               <p className="mb-4">
                 This Privacy Policy applies to all users of the Service,
                 including:
@@ -64,9 +67,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 3. Legal Basis for Processing (GDPR Compliance)
-              </h2>
+              </Heading>
               <p className="mb-4">
                 Where applicable under the General Data Protection Regulation
                 (GDPR) or similar laws, we process your personal data based on
@@ -75,7 +78,12 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-6 space-y-2 mb-4">
                 <li>
                   <strong>Performance of a contract</strong> – to provide you
-                  with the Service you request.
+                  with the Service you request, including the generation of
+                  AI-powered study content, schedules, and learning insights.
+                  Where you use AI-powered features, the processing of your
+                  submitted content by AI model providers is carried out on this
+                  legal basis, as it is necessary to provide the features you
+                  have requested.
                 </li>
                 <li>
                   <strong>Legitimate interests</strong> – to improve the
@@ -93,9 +101,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 4. Information We Collect
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">
                 4.1 Information You Provide Directly
               </p>
@@ -124,9 +132,30 @@ export default function PrivacyPage() {
                 Payment Information
               </p>
               <p className="mb-4">
-                Subscription payments are processed through secure third-party
-                providers such as Stripe. We do not store full credit card
-                numbers.
+                Subscription payments are processed by{' '}
+                <strong>Paddle.net Market Ltd (&quot;Paddle&quot;)</strong>,
+                acting as our Merchant of Record. We do not receive or store
+                your full credit card details. Paddle collects and processes
+                payment information directly. Please review{' '}
+                <Link
+                  href="https://paddle.com/legal/buyer-privacy-notice"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground"
+                >
+                  Paddle&apos;s Buyer Privacy Notice
+                </Link>{' '}
+                for information on how Paddle processes your payment data.
+              </p>
+              <p className="mb-2 font-medium text-foreground text-sm">
+                API Keys (BYOK)
+              </p>
+              <p className="mb-4">
+                If you choose to connect a third-party API key (&quot;Bring Your
+                Own Key&quot;), we store that key in encrypted form solely for
+                the purpose of executing your requested AI operations. API keys
+                are not shared with any party other than the corresponding AI
+                provider when fulfilling your requests.
               </p>
               <p className="mb-2 font-medium text-foreground text-sm">
                 Communications
@@ -159,44 +188,49 @@ export default function PrivacyPage() {
                 4.3 Information from Third Parties
               </p>
               <p className="mb-4">
-                If you authenticate via third-party providers such as:
-              </p>
-              <ul className="list-disc pl-6 space-y-1 mb-4">
-                <li>Google</li>
-                <li>GitHub</li>
-              </ul>
-              <p className="mb-4">
-                We may receive basic profile information (such as name and email
-                address) as permitted by your account settings with those
-                services.
+                If you authenticate via third-party providers such as Google or
+                GitHub, we may receive basic profile information (such as name
+                and email address) as permitted by your account settings with
+                those services.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 5. How We Use Your Information
-              </h2>
+              </Heading>
               <p className="mb-4">We use your information to:</p>
               <ul className="list-disc pl-6 space-y-2 mb-4">
                 <li>Provide and maintain the Service</li>
                 <li>Generate personalized spaced repetition schedules</li>
                 <li>Synchronize data across devices</li>
-                <li>Process subscription payments</li>
+                <li>Process subscription payments through Paddle</li>
                 <li>Improve platform performance and reliability</li>
                 <li>Prevent fraud and unauthorized access</li>
                 <li>Comply with legal obligations</li>
               </ul>
+              <p className="mb-4">
+                <strong>AI-Powered Features:</strong> When you use AI-powered
+                features, the content you have submitted (including notes,
+                learning materials, and questions) may be transmitted to
+                third-party AI model providers for processing. These providers
+                process your content solely to generate AI outputs and do not
+                retain your content for their own training purposes unless you
+                have separately consented to such use with that provider. We
+                encourage you to review the privacy policies of any AI provider
+                whose model you select.
+              </p>
               <p className="mb-4">We do not sell your personal data.</p>
               <p className="mb-4">
-                We do not use your User Content to train machine learning models
-                without your explicit consent.
+                We do not use your User Content to train our own machine
+                learning models without your explicit consent.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 6. Automated Processing and Profiling
-              </h2>
+              </Heading>
               <p className="mb-4">
                 The Service uses automated processing to generate study
                 schedules and optimize learning intervals.
@@ -215,9 +249,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 7. Data Storage and Infrastructure
-              </h2>
+              </Heading>
               <p className="mb-4 font-medium text-foreground">
                 7.1 Hosting and Database Architecture
               </p>
@@ -228,7 +262,8 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   Infrastructure is hosted on secure cloud servers located in
-                  the United States.
+                  the United States (see subprocessors table in Section 9.1 for
+                  our current hosting provider).
                 </li>
                 <li>
                   We use logical access controls to restrict internal access.
@@ -258,9 +293,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 8. Data Retention
-              </h2>
+              </Heading>
               <p className="mb-4">We retain personal information:</p>
               <ul className="list-disc pl-6 space-y-2 mb-4">
                 <li>For as long as your account remains active</li>
@@ -286,27 +321,63 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 9. Data Sharing and Subprocessors
-              </h2>
+              </Heading>
               <p className="mb-4">We share personal information only with:</p>
               <p className="mb-4 font-medium text-foreground">
-                9.1 Service Providers
-              </p>
-              <p className="mb-4">Including:</p>
-              <ul className="list-disc pl-6 space-y-2 mb-4">
-                <li>Cloud hosting providers</li>
-                <li>Payment processors</li>
-                <li>Email delivery providers</li>
-                <li>Analytics tools</li>
-                <li>Infrastructure monitoring services</li>
-              </ul>
-              <p className="mb-4">
-                These providers process data on our behalf under contractual
-                confidentiality and security obligations.
+                9.1 Service Providers (Subprocessors)
               </p>
               <p className="mb-4">
-                We maintain a list of subprocessors available upon request.
+                We use the following subprocessors who process personal data on
+                our behalf. Each is bound by contractual confidentiality and
+                security obligations:
+              </p>
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full text-sm border">
+                  <thead>
+                    <tr className="border-b bg-muted/40">
+                      <th className="text-left px-3 py-2 font-medium text-foreground">
+                        Subprocessor
+                      </th>
+                      <th className="text-left px-3 py-2 font-medium text-foreground">
+                        Purpose
+                      </th>
+                      <th className="text-left px-3 py-2 font-medium text-foreground">
+                        Location
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b">
+                      <td className="px-3 py-2">OpenAI</td>
+                      <td className="px-3 py-2">GPT model AI processing</td>
+                      <td className="px-3 py-2">USA</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="px-3 py-2">Google LLC</td>
+                      <td className="px-3 py-2">Gemini model AI processing</td>
+                      <td className="px-3 py-2">USA</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="px-3 py-2">Anthropic</td>
+                      <td className="px-3 py-2">Claude model AI processing</td>
+                      <td className="px-3 py-2">USA</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="px-3 py-2">Paddle.net Market Ltd</td>
+                      <td className="px-3 py-2">
+                        Payment processing (Merchant of Record)
+                      </td>
+                      <td className="px-3 py-2">UK / Ireland</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="mb-4">
+                When AI features are used, your content is processed by the
+                respective AI provider under that provider&apos;s API data usage
+                policies.
               </p>
               <p className="mb-4 font-medium text-foreground mt-6">
                 9.2 Legal and Safety Reasons
@@ -330,9 +401,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 10. International Data Transfers
-              </h2>
+              </Heading>
               <p className="mb-4">Our Service operates in the United States.</p>
               <p className="mb-4">
                 If you access the Service from outside the United States, your
@@ -345,9 +416,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 11. Data Breach Notification
-              </h2>
+              </Heading>
               <p className="mb-4">
                 In the event of a security breach affecting personal data, we
                 will:
@@ -363,9 +434,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 12. Your Privacy Rights
-              </h2>
+              </Heading>
               <p className="mb-4">
                 Depending on your location, you may have rights including:
               </p>
@@ -390,9 +461,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 13. California Privacy Rights
-              </h2>
+              </Heading>
               <p className="mb-4">
                 If you are a California resident, you have rights under the
                 CCPA/CPRA, including:
@@ -410,9 +481,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 14. Children&apos;s Privacy
-              </h2>
+              </Heading>
               <p className="mb-4">
                 The Service is not directed to children under 13 (or 16 where
                 applicable). We do not knowingly collect personal data from
@@ -421,9 +492,9 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 15. Changes to This Policy
-              </h2>
+              </Heading>
               <p className="mb-4">
                 We may update this Privacy Policy periodically. Material changes
                 will be communicated through the Service or via email.
@@ -431,37 +502,17 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+              <Heading as="h2" className="text-foreground mb-4">
                 16. Contact Information
-              </h2>
+              </Heading>
               <p className="font-medium text-foreground">
                 Email: privacy@temar.app
               </p>
             </section>
           </div>
-        </div>
+        </Section>
       </main>
-      <footer className="border-t py-10 text-center text-xs text-muted-foreground">
-        <div className="mx-auto max-w-6xl px-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <span>
-            &copy; {new Date().getFullYear()} Temar. All rights reserved.
-          </span>
-          <div className="flex gap-4">
-            <Link
-              href="/privacy"
-              className="hover:text-foreground transition-colors"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="hover:text-foreground transition-colors"
-            >
-              Terms
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

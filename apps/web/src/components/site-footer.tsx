@@ -25,6 +25,12 @@ export default function SiteFooter({ className }: { className?: string }) {
             Terms
           </Link>
           <Link
+            href="/refunds"
+            className="hover:text-foreground transition-colors"
+          >
+            Refunds
+          </Link>
+          <Link
             href="/pricing"
             className="hover:text-foreground transition-colors"
           >
