@@ -1,0 +1,41 @@
+{
+  "name": "answer-analysis-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/answer-analysis-service/src",
+  "projectType": "application",
+  "tags": ["scope:backend"],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/answer-analysis-service",
+        "main": "apps/answer-analysis-service/src/main.ts",
+        "tsConfig": "apps/answer-analysis-service/tsconfig.app.json",
+        "webpackConfig": "apps/answer-analysis-service/webpack.config.js"
+      },
+      "configurations": {
+        "development": {},
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "answer-analysis-service:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "answer-analysis-service:build:development"
+        },
+        "production": {
+          "buildTarget": "answer-analysis-service:build:production"
+        }
+      }
+    }
+  }
+}

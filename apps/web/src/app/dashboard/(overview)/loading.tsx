@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function Loading() {
   return (
     <>
+      <div className="h-[calc(100svh-var(--header-height))] overflow-hidden flex flex-col lg:grid lg:grid-cols-[1fr_1fr_1fr_1fr_400px] lg:grid-rows-[auto_1fr_1fr_1fr_300px] gap-4 p-4"></div>
       <div className="flex flex-col gap-4 p-6 lg:h-full lg:min-h-[calc(100svh-3rem)]">
         {/* Top header */}
         <div className="flex justify-between">

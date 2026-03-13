@@ -1,8 +1,14 @@
+import clsx from 'clsx';
 import Link from 'next/link';
 
-export default function SiteFooter() {
+export default function SiteFooter({ className }: { className?: string }) {
   return (
-    <footer className="border w-full py-5 text-center text-xs text-muted-foreground">
+    <footer
+      className={clsx(
+        'border-t w-full py-5 text-center text-xs text-muted-foreground',
+        className
+      )}
+    >
       <div className="mx-auto max-w-6xl px-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p>&copy; {new Date().getFullYear()} Temar. All rights reserved.</p>
         <div className="flex items-center justify-center gap-4">
@@ -18,6 +24,24 @@ export default function SiteFooter() {
           >
             Terms
           </Link>
+          <Link
+            href="/refunds"
+            className="hover:text-foreground transition-colors"
+          >
+            Refunds
+          </Link>
+          <Link
+            href="/pricing"
+            className="hover:text-foreground transition-colors"
+          >
+            Pricing
+          </Link>
+          <a
+            href="mailto:support@temar.app"
+            className="hover:text-foreground transition-colors"
+          >
+            Contact
+          </a>
         </div>
       </div>
     </footer>

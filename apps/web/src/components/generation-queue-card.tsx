@@ -1,0 +1,428 @@
+'use client';
+
+import { useEffect, useState, useTransition, useCallback } from 'react';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  RefreshCw,
+  Loader2,
+  AlertTriangle,
+  Clock,
+  Zap,
+  CheckCircle2,
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import type { TrackingItem } from '@/lib/actions/tracking';
+import {
+  getTrackingStatus,
+  retryFailedGeneration,
+  retryAllFailedGenerations,
+} from '@/lib/actions/tracking';
+import { cn } from '@/lib/utils';
+
+const STATUS_CONFIG: Record<
+  TrackingItem['status'],
+  {
+    label: string;
+    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    icon: React.ReactNode;
+  }
+> = {
+  pending: {
+    label: 'Pending',
+    variant: 'outline',
+    icon: <Clock className="h-3 w-3" />,
+  },
+  generating: {
+    label: 'Generating',
+    variant: 'default',
+    icon: <Zap className="h-3 w-3" />,
+  },
+  ready: {
+    label: 'Ready',
+    variant: 'secondary',
+    icon: <CheckCircle2 className="h-3 w-3" />,
+  },
+  failed: {
+    label: 'Failed',
+    variant: 'destructive',
+    icon: <AlertTriangle className="h-3 w-3" />,
+  },
+  untracked: {
+    label: 'Untracked',
+    variant: 'outline',
+    icon: <Clock className="h-3 w-3" />,
+  },
+};
+
+export default function GenerationQueueCard({
+  initialItems,
+  className,
+}: {
+  initialItems: TrackingItem[];
+  className?: string;
+}) {
+  const [items, setItems] = useState(initialItems);
+  const [isPending, startTransition] = useTransition();
+  const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
+  const [passError, setPassError] = useState<string | null>(null);
+  const [consentState, setConsentState] = useState<{
+    estimatedPassCost: number;
+    basePassCost: number;
+    onApprove: (cost: number) => void;
+  } | null>(null);
+
+  const counts = {
+    pending: items.filter((i) => i.status === 'pending').length,
+    generating: items.filter((i) => i.status === 'generating').length,
+    ready: items.filter((i) => i.status === 'ready').length,
+    failed: items.filter((i) => i.status === 'failed').length,
+  };
+
+  const nonReadyItems = items.filter((i) => i.status !== 'ready');
+  const hasActiveItems = counts.pending > 0 || counts.generating > 0;
+
+  const refreshStatus = useCallback(() => {
+    startTransition(async () => {
+      const updated = await getTrackingStatus();
+      setItems(updated);
+    });
+  }, []);
+
+  // Auto-poll while items are pending/generating
+  useEffect(() => {
+    if (!hasActiveItems) return;
+    const interval = setInterval(refreshStatus, 10_000);
+    return () => clearInterval(interval);
+  }, [hasActiveItems, refreshStatus]);
+
+  const handleRetry = (chunkId: string, consentedPassCost?: number) => {
+    setRetryingIds((prev) => new Set(prev).add(chunkId));
+    startTransition(async () => {
+      try {
+        const result = await retryFailedGeneration(chunkId, consentedPassCost);
+        if (result.status === 'consent_required') {
+          setConsentState({
+            estimatedPassCost: result.estimatedPassCost,
+            basePassCost: result.basePassCost,
+            onApprove: (cost) => handleRetry(chunkId, cost),
+          });
+          return;
+        }
+        if (result.status === 'insufficient_pass') {
+          setPassError(
+            `Not enough Pass (have ${result.balance}, need ${result.required}).`
+          );
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 1000));
+        const updated = await getTrackingStatus();
+        setItems(updated);
+      } finally {
+        setRetryingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(chunkId);
+          return next;
+        });
+      }
+    });
+  };
+
+  const handleRetryAll = (consentedPassCost?: number) => {
+    startTransition(async () => {
+      const result = await retryAllFailedGenerations(consentedPassCost);
+      if (result.status === 'consent_required') {
+        setConsentState({
+          estimatedPassCost: result.estimatedPassCost,
+          basePassCost: result.basePassCost,
+          onApprove: (cost) => handleRetryAll(cost),
+        });
+        return;
+      }
+      if (result.status === 'insufficient_pass') {
+        setPassError(
+          `Not enough Pass (have ${result.balance}, need ${result.required}).`
+        );
+        return;
+      }
+      await new Promise((r) => setTimeout(r, 1500));
+      const updated = await getTrackingStatus();
+      setItems(updated);
+    });
+  };
+
+  if (items.length === 0) {
+    return (
+      <Card
+        className={cn(
+          'shadow-none flex-1 h-full min-h-0 overflow-hidden col-span-2',
+          className
+        )}
+      >
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Zap className="h-4 w-4" />
+            Question Generation
+          </CardTitle>
+          <CardDescription>Getting Started</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              No chunks are being tracked yet.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Navigate to a topic, note, or chunk and click{' '}
+              <span className="font-medium">&ldquo;Track&rdquo;</span> to start
+              generating recall questions.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card
+        className={cn(
+          'shadow-none flex-1 h-full min-h-0 overflow-hidden col-span-2',
+          className
+        )}
+      >
+        <CardHeader className="border-b">
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Question Generation
+          </CardTitle>
+          <CardAction className="flex items-center gap-2">
+            {counts.failed > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleRetryAll()}
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                Retry All Failed
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshStatus}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </CardAction>
+          <CardDescription>
+            <div className="flex gap-3 mt-1">
+              {counts.pending > 0 && (
+                <span className="flex items-center gap-1 text-xs">
+                  <Clock className="h-3 w-3" />
+                  {counts.pending} pending
+                </span>
+              )}
+              {counts.generating > 0 && (
+                <span className="flex items-center gap-1 text-xs text-blue-500">
+                  <Zap className="h-3 w-3" />
+                  {counts.generating} generating
+                </span>
+              )}
+              {counts.ready > 0 && (
+                <span className="flex items-center gap-1 text-xs text-green-500">
+                  <CheckCircle2 className="h-3 w-3" />
+                  {counts.ready} ready
+                </span>
+              )}
+              {counts.failed > 0 && (
+                <span className="flex items-center gap-1 text-xs text-destructive">
+                  <AlertTriangle className="h-3 w-3" />
+                  {counts.failed} failed
+                </span>
+              )}
+            </div>
+          </CardDescription>
+        </CardHeader>
+        {nonReadyItems.length > 0 && (
+          <CardContent className="overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Chunk</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Error</TableHead>
+                  <TableHead className="text-center">Retries</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {nonReadyItems.map((item) => {
+                  const cfg = STATUS_CONFIG[item.status];
+                  const isRetrying = retryingIds.has(item.chunkId);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <span className="font-medium text-sm">
+                          {item.chunkName}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={cfg.variant} className="gap-1">
+                          {cfg.icon}
+                          {cfg.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {item.errorMessage ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="text-xs text-destructive max-w-[200px] truncate block cursor-help">
+                                  {item.errorMessage}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                                className="max-w-sm break-words"
+                              >
+                                {item.errorMessage}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-xs text-muted-foreground">
+                          {item.retryCount}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.status === 'failed' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRetry(item.chunkId)}
+                            disabled={isPending || isRetrying}
+                          >
+                            {isRetrying ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        )}
+                        {(item.status === 'pending' ||
+                          item.status === 'generating') && (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground mx-auto" />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        )}
+      </Card>
+      {/* Pass consent dialog */}
+      <Dialog
+        open={!!consentState}
+        onOpenChange={(open) => {
+          if (!open) setConsentState(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Extra Pass required</DialogTitle>
+            <DialogDescription>
+              This content exceeds the standard token budget. The operation will
+              cost <strong>{consentState?.estimatedPassCost} Pass</strong>{' '}
+              instead of the base {consentState?.basePassCost} Pass.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConsentState(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                consentState?.onApprove(consentState.estimatedPassCost);
+                setConsentState(null);
+              }}
+            >
+              Approve &amp; Retry
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pass error dialog */}
+      <Dialog
+        open={!!passError}
+        onOpenChange={(open) => {
+          if (!open) setPassError(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Not enough Pass</DialogTitle>
+            <DialogDescription>
+              {passError} Top up at billing.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPassError(null)}>
+              Close
+            </Button>
+            <Button asChild>
+              <a href="/dashboard/billing">Top up Pass</a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

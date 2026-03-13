@@ -1,0 +1,46 @@
+{
+  "name": "@temar/fsrs-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/fsrs-service/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/fsrs-service"],
+      "options": {
+        "command": "webpack-cli build --config apps/fsrs-service/webpack.config.js --output-path=dist/apps/fsrs-service",
+        "args": ["--node-env=production"],
+        "cwd": "."
+      },
+      "configurations": {
+        "development": {
+          "args": ["--node-env=development"]
+        }
+      }
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "@temar/fsrs-service:build",
+        "runBuildTargetDependencies": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "@temar/fsrs-service:build:development"
+        },
+        "production": {
+          "buildTarget": "@temar/fsrs-service:build:production"
+        }
+      }
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

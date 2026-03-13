@@ -4,116 +4,193 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+  ============================================================
+  RECALL APP — BOTANICAL STUDY PALETTE (v9)
+  ============================================================
+  Vibe: Modern Sunlit Coffee Shop + Vintage Library.
+  
+  Light mode: Warm parchment base. Deep charcoal text.
+  Dark mode: Subtly lightened graphite with barely-there warmth.
+             Text is dimmed to a soft ash to prevent heading glare.
+  ============================================================
+*/
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(61% 42% 253deg);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.81 0.1 252);
-  --chart-2: oklch(0.62 0.19 260);
-  --chart-3: oklch(0.55 0.22 263);
-  --chart-4: oklch(0.49 0.22 264);
-  --chart-5: oklch(0.42 0.18 266);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    'Liberation Mono', 'Courier New', monospace;
-  --radius: 0.625rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1),
-    0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1),
-    0 2px 4px -1px hsl(0 0% 0% / 0.1);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1),
-    0 4px 6px -1px hsl(0 0% 0% / 0.1);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1),
-    0 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-  --tracking-normal: 0em;
-  --spacing: 0.25rem;
+  /* ── Canvas ── */
+  --background: oklch(0.97 0.01 86);
+  --foreground: oklch(0.2 0.01 75);
+
+  /* ── Surfaces ── */
+  --card: oklch(0.99 0.005 86);
+  --card-foreground: oklch(0.2 0.01 75);
+
+  --popover: oklch(0.99 0.005 86);
+  --popover-foreground: oklch(0.2 0.01 75);
+
+  /* ── Primary — Vintage Library Green ── */
+  --primary: oklch(0.45 0.08 150);
+  --primary-foreground: oklch(0.99 0.005 86);
+
+  /* ── Secondary & Muted ── */
+  --secondary: oklch(0.92 0.02 86);
+  --secondary-foreground: oklch(0.35 0.01 75);
+
+  --muted: oklch(0.94 0.015 86);
+  --muted-foreground: oklch(0.45 0.01 75);
+
+  /* ── Accent ── */
+  --accent: oklch(0.9 0.04 75);
+  --accent-foreground: oklch(0.3 0.02 75);
+
+  /* ── Destructive ── */
+  --destructive: oklch(0.58 0.1 20);
+  --destructive-foreground: oklch(0.99 0.005 86);
+
+  /* ── Structure ── */
+  --border: oklch(0.88 0.015 86);
+  --input: oklch(0.88 0.015 86);
+  --ring: oklch(0.45 0.08 150);
+
+  /* ── Sidebar ── */
+  --sidebar: oklch(0.95 0.015 86);
+  --sidebar-foreground: oklch(0.35 0.01 75);
+  --sidebar-primary: oklch(0.45 0.08 150);
+  --sidebar-primary-foreground: oklch(0.99 0.005 86);
+  --sidebar-accent: oklch(0.9 0.04 75);
+  --sidebar-accent-foreground: oklch(0.2 0.01 75);
+  --sidebar-border: oklch(0.88 0.015 86);
+  --sidebar-ring: oklch(0.45 0.08 150);
+
+  /* ── Charts ── */
+  --chart-1: oklch(0.45 0.08 150);
+  --chart-2: oklch(0.7 0.12 70);
+  --chart-3: oklch(0.6 0.06 240);
+  --chart-4: oklch(0.55 0.08 25);
+  --chart-5: oklch(0.65 0.05 100);
+
+  /* ── SR Semantic Tokens ── */
+  --sr-recalled: oklch(0.55 0.09 150);
+  --sr-recalled-bg: oklch(0.95 0.03 150);
+
+  --sr-due: oklch(0.7 0.12 70);
+  --sr-due-bg: oklch(0.95 0.03 70);
+
+  --sr-lapsed: oklch(0.6 0.1 20);
+  --sr-lapsed-bg: oklch(0.96 0.02 20);
+
+  --sr-new: oklch(0.6 0.06 240);
+  --sr-new-bg: oklch(0.96 0.02 240);
+
+  /* ── FSRS Semantic Tokens (Light Mode) ──  */
+  --fsrs-again: oklch(0.58 0.1 20); /* Muted Rose */
+  --fsrs-again-bg: oklch(0.96 0.02 20); /* Rose Wash */
+  --fsrs-again-foreground: oklch(0.99 0.005 86);
+
+  --fsrs-hard: oklch(0.65 0.12 70); /* Sunlit Ochre */
+  --fsrs-hard-bg: oklch(0.95 0.03 70); /* Ochre Wash */
+  --fsrs-hard-foreground: oklch(0.99 0.005 86);
+
+  --fsrs-good: oklch(0.55 0.09 150); /* Library Green */
+  --fsrs-good-bg: oklch(0.95 0.03 150); /* Green Wash */
+  --fsrs-good-foreground: oklch(0.99 0.005 86);
+
+  --fsrs-easy: oklch(0.6 0.06 240); /* Soft Slate */
+  --fsrs-easy-bg: oklch(0.96 0.02 240); /* Slate Wash */
+  --fsrs-easy-foreground: oklch(0.99 0.005 86);
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui;
+  --font-serif: 'Lora', 'Georgia', ui-serif, serif;
+
+  --radius: 0.125rem;
 }
 
+/* ============================================================
+   DARK MODE — Soft Studio Graphite
+   ============================================================ */
 .dark {
-  --background: oklch(21% 0% 68deg);
-  --foreground: oklch(98.5% 0% 68deg);
-  --card: oklch(20.5% 0% 68deg);
-  --card-foreground: oklch(98.5% 0% 68deg);
-  --popover: oklch(26.9% 0% 68deg);
-  --popover-foreground: oklch(98.5% 0% 68deg);
-  --primary: oklch(61% 42% 253deg);
-  --primary-foreground: oklch(20.5% 0% 68deg);
-  --secondary: oklch(26.9% 0% 68deg);
-  --secondary-foreground: oklch(98.5% 0% 68deg);
-  --muted: oklch(26.9% 0% 68deg);
-  --muted-foreground: oklch(70.8% 0% 68deg);
-  --accent: oklch(37.1% 0% 68deg);
-  --accent-foreground: oklch(98.5% 0% 68deg);
-  --destructive: oklch(70.4% 19.1% 22.216);
-  --destructive-foreground: oklch(98.5% 0% 68deg);
-  --border: oklch(27.5% 0% 68deg);
-  --input: oklch(32.5% 0% 68deg);
-  --ring: oklch(55.6% 0% 68deg);
-  --chart-1: oklch(81% 1% 252deg);
-  --chart-2: oklch(62% 19% 260deg);
-  --chart-3: oklch(55% 22% 263deg);
-  --chart-4: oklch(49% 22% 264deg);
-  --chart-5: oklch(42% 18% 266deg);
-  --sidebar: oklch(24% 0% 68deg);
-  --sidebar-foreground: oklch(98.5% 0% 68deg);
-  --sidebar-primary: oklch(24% 0% 68deg);
-  --sidebar-primary-foreground: oklch(98.5% 0% 68deg);
-  --sidebar-accent: oklch(26.9% 0% 68deg);
-  --sidebar-accent-foreground: oklch(98.5% 0% 68deg);
-  --sidebar-border: oklch(27.5% 0% 68deg);
-  --sidebar-ring: oklch(43.9% 0% 68deg);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    'Liberation Mono', 'Courier New', monospace;
-  --radius: 0.625rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1),
-    0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1),
-    0 2px 4px -1px hsl(0 0% 0% / 0.1);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1),
-    0 4px 6px -1px hsl(0 0% 0% / 0.1);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1),
-    0 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  /* Cooled down: Chroma reduced to 0.002. Just barely warm. */
+  --background: oklch(0.2 0.002 80);
+
+  /* Dimmed Text: Lightness dropped to 0.84 to tame bold headings. */
+  --foreground: oklch(0.84 0.008 80);
+
+  /* Cards sit slightly higher */
+  --card: oklch(0.23 0.002 80);
+  --card-foreground: oklch(0.84 0.008 80);
+
+  --popover: oklch(0.23 0.002 80);
+  --popover-foreground: oklch(0.84 0.008 80);
+
+  --primary: oklch(0.65 0.1 150);
+  --primary-foreground: oklch(0.2 0.002 80);
+
+  --secondary: oklch(0.28 0.004 80);
+  --secondary-foreground: oklch(0.78 0.008 80);
+
+  --muted: oklch(0.26 0.004 80);
+  --muted-foreground: oklch(0.65 0.006 80);
+
+  --accent: oklch(0.28 0.004 80);
+  --accent-foreground: oklch(0.84 0.008 80);
+
+  --destructive: oklch(0.65 0.1 20);
+  --destructive-foreground: oklch(0.2 0.002 80);
+
+  --border: oklch(0.28 0.004 80);
+  --input: oklch(0.28 0.004 80);
+  --ring: oklch(0.65 0.1 150);
+
+  --sidebar: oklch(0.18 0.002 80);
+  --sidebar-foreground: oklch(0.78 0.008 80);
+  --sidebar-primary: oklch(0.65 0.1 150);
+  --sidebar-primary-foreground: oklch(0.2 0.002 80);
+  --sidebar-accent: oklch(0.26 0.004 80);
+  --sidebar-accent-foreground: oklch(0.84 0.008 80);
+  --sidebar-border: oklch(0.26 0.004 80);
+  --sidebar-ring: oklch(0.65 0.1 150);
+
+  /* Charts */
+  --chart-1: oklch(0.65 0.1 150);
+  --chart-2: oklch(0.75 0.14 70);
+  --chart-3: oklch(0.7 0.08 240);
+  --chart-4: oklch(0.65 0.1 25);
+  --chart-5: oklch(0.75 0.08 100);
+
+  /* SR Semantic Tokens */
+  --sr-recalled: oklch(0.7 0.1 150);
+  --sr-recalled-bg: oklch(0.26 0.01 150);
+
+  --sr-due: oklch(0.75 0.14 70);
+  --sr-due-bg: oklch(0.26 0.01 70);
+
+  --sr-lapsed: oklch(0.68 0.1 20);
+  --sr-lapsed-bg: oklch(0.26 0.01 20);
+
+  --sr-new: oklch(0.7 0.08 240);
+  --sr-new-bg: oklch(0.26 0.01 240);
+
+  /* ── FSRS Semantic Tokens (Dark Mode) ── */
+  --fsrs-again: oklch(0.65 0.1 20);
+  --fsrs-again-bg: oklch(0.26 0.01 20);
+  --fsrs-again-foreground: oklch(0.2 0.002 80);
+
+  --fsrs-hard: oklch(0.7 0.12 70);
+  --fsrs-hard-bg: oklch(0.26 0.01 70);
+  --fsrs-hard-foreground: oklch(0.2 0.002 80);
+
+  --fsrs-good: oklch(0.65 0.1 150);
+  --fsrs-good-bg: oklch(0.26 0.01 150);
+  --fsrs-good-foreground: oklch(0.2 0.002 80);
+
+  --fsrs-easy: oklch(0.7 0.08 240);
+  --fsrs-easy-bg: oklch(0.26 0.01 240);
+  --fsrs-easy-foreground: oklch(0.2 0.002 80);
 }
 
+/* ============================================================
+   THEME MAPPING — Tailwind v4 @theme inline
+   ============================================================ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -148,6 +225,31 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --color-sr-recalled: var(--sr-recalled);
+  --color-sr-recalled-bg: var(--sr-recalled-bg);
+  --color-sr-due: var(--sr-due);
+  --color-sr-due-bg: var(--sr-due-bg);
+  --color-sr-lapsed: var(--sr-lapsed);
+  --color-sr-lapsed-bg: var(--sr-lapsed-bg);
+  --color-sr-new: var(--sr-new);
+  --color-sr-new-bg: var(--sr-new-bg);
+
+  --color-fsrs-again: var(--fsrs-again);
+  --color-fsrs-again-bg: var(--fsrs-again-bg);
+  --color-fsrs-again-foreground: var(--fsrs-again-foreground);
+
+  --color-fsrs-hard: var(--fsrs-hard);
+  --color-fsrs-hard-bg: var(--fsrs-hard-bg);
+  --color-fsrs-hard-foreground: var(--fsrs-hard-foreground);
+
+  --color-fsrs-good: var(--fsrs-good);
+  --color-fsrs-good-bg: var(--fsrs-good-bg);
+  --color-fsrs-good-foreground: var(--fsrs-good-foreground);
+
+  --color-fsrs-easy: var(--fsrs-easy);
+  --color-fsrs-easy-bg: var(--fsrs-easy-bg);
+  --color-fsrs-easy-foreground: var(--fsrs-easy-foreground);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
@@ -173,5 +275,8 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  html {
+    scroll-behavior: smooth;
   }
 }

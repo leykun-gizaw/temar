@@ -2,7 +2,6 @@
 
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { NavUser } from '@/components/nav-user';
 import { Fragment } from 'react';
 import {
@@ -18,22 +17,32 @@ import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
+import { PassBalanceChip } from './pass-balance-chip';
 
 export function SiteHeader() {
   const pathname = usePathname() ?? '/';
   const segments = pathname.split('/').filter(Boolean);
 
-  const items = segments.map((seg, idx) => {
-    const href = '/' + segments.slice(0, idx + 1).join('/');
-    const label = seg.length > 9 ? seg.slice(0, 4) + '...' : seg;
-    const isLast = idx === segments.length - 1;
-    return { href, label, isLast };
-  });
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  const items: { href: string; label: string; isLast: boolean }[] = [];
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    if (seg === 'dashboard' || UUID_RE.test(seg)) continue;
+
+    const href = '/' + segments.slice(0, i + 1).join('/');
+    const label = seg.charAt(0).toUpperCase() + seg.slice(1);
+    items.push({ href, label, isLast: false });
+  }
+  if (items.length > 0) {
+    items[items.length - 1].isLast = true;
+  }
 
   const router = useRouter();
 
   return (
-    <header className="bg-background/70 sticky top-0 z-50 h-12 flex shrink-0 items-center backdrop-blur-lg">
+    <header className="sticky top-0 z-50 h-12 flex shrink-0 items-center backdrop-blur-lg border-b">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <div className="flex items-center">
           <SidebarTrigger className="-ml-1" />
@@ -81,7 +90,7 @@ export function SiteHeader() {
           </Breadcrumb>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <ThemeToggle />
+          <PassBalanceChip />
           <NavUser />
         </div>
       </div>

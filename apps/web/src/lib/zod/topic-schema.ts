@@ -14,7 +14,6 @@ export const TopicSchema = z.object({
 
 export const TopicInputSchema = TopicSchema.omit({
   id: true,
-  slug: true,
   createdAt: true,
   updatedAt: true,
   userId: true,

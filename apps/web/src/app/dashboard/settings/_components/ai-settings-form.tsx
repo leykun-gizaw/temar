@@ -1,0 +1,401 @@
+'use client';
+
+import { useState, useTransition } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Loader2,
+  Key,
+  Sparkles,
+  Trash2,
+  Shield,
+  Coins,
+  Info,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import type { AiSettings, AiProvider } from '@/lib/actions/ai-settings';
+import {
+  MODEL_CONFIGS,
+  OPERATION_CONFIGS,
+  type OperationType,
+} from '@/lib/config/ai-operations';
+import {
+  saveAiSettings,
+  clearAiApiKey,
+  saveMaxQuestionReviews,
+} from '@/lib/actions/ai-settings';
+
+const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
+  {
+    value: 'google',
+    label: 'Google Gemini',
+    description: 'Gemini 2.0 Flash, Pro, etc.',
+  },
+  {
+    value: 'openai',
+    label: 'OpenAI',
+    description: 'GPT-4o, GPT-4o Mini, etc.',
+  },
+  {
+    value: 'anthropic',
+    label: 'Anthropic',
+    description: 'Claude Sonnet, Haiku, etc.',
+  },
+];
+
+const MODEL_OPTIONS: Record<AiProvider, string[]> = {
+  google: ['gemini-2.0-flash', 'gemini-2.5-pro', 'gemini-2.5-flash'],
+  openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1-nano'],
+  anthropic: ['claude-sonnet-4-20250514', 'claude-haiku-4-20250414'],
+};
+
+export function AiSettingsForm({
+  initialSettings,
+}: {
+  initialSettings: AiSettings;
+}) {
+  const [provider, setProvider] = useState<AiProvider | ''>(
+    initialSettings.provider ?? ''
+  );
+  const [model, setModel] = useState(initialSettings.model ?? '');
+  const [apiKey, setApiKey] = useState('');
+  const [hasExistingKey, setHasExistingKey] = useState(
+    initialSettings.hasApiKey
+  );
+  const [maxReviews, setMaxReviews] = useState(
+    initialSettings.maxQuestionReviews
+  );
+  const [isPending, startTransition] = useTransition();
+
+  const modelConfig = MODEL_CONFIGS.find((m) => m.modelId === model);
+  const isByok = !!(provider && (hasExistingKey || apiKey));
+
+  const CURRENT_OPS: OperationType[] = [
+    'question_generation',
+    'answer_analysis',
+  ];
+  const FUTURE_OPS: OperationType[] = [
+    'chunk_enhancement',
+    'content_generation',
+  ];
+
+  const handleProviderChange = (value: string) => {
+    if (value === 'system') {
+      setProvider('');
+      setModel('');
+      return;
+    }
+    const p = value as AiProvider;
+    setProvider(p);
+    setModel(MODEL_OPTIONS[p]?.[0] ?? '');
+  };
+
+  const handleSave = () => {
+    startTransition(async () => {
+      const result = await saveAiSettings(
+        provider || null,
+        model || null,
+        apiKey || undefined
+      );
+      if (result.success) {
+        toast.success('AI settings saved');
+        if (apiKey) {
+          setHasExistingKey(true);
+          setApiKey('');
+        }
+      } else {
+        toast.error(result.error ?? 'Failed to save');
+      }
+    });
+  };
+
+  const handleClearKey = () => {
+    startTransition(async () => {
+      const result = await clearAiApiKey();
+      if (result.success) {
+        toast.success('API key removed');
+        setHasExistingKey(false);
+        setApiKey('');
+      } else {
+        toast.error(result.error ?? 'Failed to clear key');
+      }
+    });
+  };
+
+  const handleUseDefault = () => {
+    startTransition(async () => {
+      const result = await saveAiSettings(null, null, '');
+      if (result.success) {
+        toast.success('Switched to system default');
+        setProvider('');
+        setModel('');
+        setApiKey('');
+        setHasExistingKey(false);
+      } else {
+        toast.error(result.error ?? 'Failed to reset');
+      }
+    });
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            AI Model Configuration
+          </CardTitle>
+          <CardDescription>
+            Choose your preferred AI provider and model for question generation.
+            If left as system default, the platform&apos;s built-in model will
+            be used.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Provider</label>
+            <Select
+              value={provider || 'system'}
+              onValueChange={handleProviderChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a provider" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="system">System Default</SelectItem>
+                {PROVIDERS.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    <div className="flex flex-col">
+                      <span>{p.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {p.description}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {provider && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Model</label>
+                <Select value={model} onValueChange={setModel}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MODEL_OPTIONS[provider]?.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  You can also type a custom model ID if it&apos;s not listed.
+                </p>
+                <Input
+                  placeholder="Or enter a custom model ID..."
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-1.5">
+                  <Key className="h-3.5 w-3.5" />
+                  API Key
+                </label>
+                {hasExistingKey && !apiKey && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Shield className="h-3.5 w-3.5 text-green-500" />
+                    <span>API key is saved and encrypted</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearKey}
+                      disabled={isPending}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Remove
+                    </Button>
+                  </div>
+                )}
+                <Input
+                  type="password"
+                  placeholder={
+                    hasExistingKey
+                      ? 'Enter new key to replace existing...'
+                      : 'Enter your API key...'
+                  }
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  autoComplete="off"
+                />
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  Your API key is encrypted at rest using AES-256-GCM.
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Pass cost preview */}
+          {model && provider && (
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium flex items-center gap-1.5">
+                  <Coins className="h-4 w-4 text-primary" />
+                  Pass Cost Preview
+                </span>
+                {modelConfig && (
+                  <span className="text-xs rounded-full px-2 py-0.5 font-semibold bg-primary/10 text-primary capitalize">
+                    {modelConfig.tier}
+                  </span>
+                )}
+              </div>
+              {isByok ? (
+                <div className="flex items-start gap-2 text-sm text-green-600 dark:text-green-400">
+                  <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>
+                    BYOK — current AI features (question generation &amp; answer
+                    analysis) are
+                    <strong> free</strong> with your own API key.
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {CURRENT_OPS.map((op) => {
+                    const cfg = OPERATION_CONFIGS[op];
+                    const tier = modelConfig?.tier ?? 'economy';
+                    return (
+                      <div key={op} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {cfg.label}
+                        </span>
+                        <span className="font-medium tabular-nums">
+                          {cfg.passCost[tier]} Pass
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <div className="border-t pt-2 mt-2">
+                    {FUTURE_OPS.map((op) => {
+                      const cfg = OPERATION_CONFIGS[op];
+                      const tier = modelConfig?.tier ?? 'economy';
+                      return (
+                        <div
+                          key={op}
+                          className="flex justify-between text-sm opacity-50"
+                        >
+                          <span className="text-muted-foreground">
+                            {cfg.label} (coming soon)
+                          </span>
+                          <span className="font-medium tabular-nums">
+                            {cfg.passCost[tier]} Pass
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {!isByok && (
+                <p className="text-xs text-muted-foreground flex items-start gap-1">
+                  <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  No API key set — uses your Pass balance. Add a BYOK key above
+                  for free current-feature access.
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button onClick={handleSave} disabled={isPending}>
+              {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Save Settings
+            </Button>
+            {(provider || hasExistingKey) && (
+              <Button
+                variant="outline"
+                onClick={handleUseDefault}
+                disabled={isPending}
+              >
+                Use System Default
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            Question Rotation
+          </CardTitle>
+          <CardDescription>
+            After a question has been reviewed this many times, it will be
+            retired and you&apos;ll be notified to regenerate fresh questions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Max reviews per question
+            </label>
+            <Input
+              type="number"
+              min={1}
+              max={100}
+              step={1}
+              value={maxReviews}
+              onChange={(e) =>
+                setMaxReviews(Math.max(1, parseInt(e.target.value) || 1))
+              }
+              className="w-32"
+            />
+            <p className="text-xs text-muted-foreground">
+              Questions will be retired after {maxReviews} review
+              {maxReviews !== 1 ? 's' : ''}. Default is 5.
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              startTransition(async () => {
+                const result = await saveMaxQuestionReviews(maxReviews);
+                if (result.success) {
+                  toast.success('Question rotation setting saved');
+                } else {
+                  toast.error(result.error ?? 'Failed to save');
+                }
+              });
+            }}
+            disabled={isPending}
+          >
+            {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            Save
+          </Button>
+        </CardContent>
+      </Card>
+    </>
+  );
+}

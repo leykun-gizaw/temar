@@ -24,6 +24,7 @@ apps/**/.vscode/*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+.windsurf/
 
 # misc
 /.sass-cache
@@ -52,6 +53,8 @@ test-output
 
 # Variables
 .env
+.env.docker
 
 # miscellaneous scripts
 sync-deps.js
+.nx/polygraph

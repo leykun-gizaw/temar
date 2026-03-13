@@ -24,8 +24,6 @@ services:
     restart: "no"
     env_file:
       - .env
-    command: >
-      sh -c "pnpm nx run db-client:generate && pnpm nx run db-client:migrate"
     depends_on:
       db:
         condition: service_healthy
@@ -33,7 +31,7 @@ services:
       - temar-network
 
   web:
-    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-web:${IMAGE_TAG:-latest}
+    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-web-app:${IMAGE_TAG:-latest}
     restart: unless-stopped
     env_file:
       - .env
@@ -43,14 +41,33 @@ services:
     networks:
       - temar-network
 
-  notion_sync-service:
-    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-notion-sync:${IMAGE_TAG:-latest}
+  fsrs-service:
+    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-fsrs:${IMAGE_TAG:-latest}
     restart: unless-stopped
     env_file:
       - .env
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - temar-network
+
+  question-gen-service:
+    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-question-gen:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - temar-network
+
+  answer-analysis-service:
+    image: ${IMAGE_PREFIX:-ghcr.io/OWNER/temar}-answer-analysis:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
     networks:
       - temar-network
 
@@ -69,7 +86,19 @@ services:
       - caddy_config:/config
     depends_on:
       - web
-      - notion_sync-service
+      - fsrs-service
+    networks:
+      - temar-network
+
+  appsmith:
+    image: index.docker.io/appsmith/appsmith-ee
+    container_name: appsmith
+    ports:
+      - "${APPSMITH_HTTP_PORT}:8081"
+      - "${APPSMITH_HTTPS_PORT}:4443"
+    volumes:
+      - ./stacks:/appsmith-stacks
+    restart: unless-stopped
     networks:
       - temar-network
 

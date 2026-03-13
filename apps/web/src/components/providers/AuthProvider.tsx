@@ -20,8 +20,11 @@ export function BetterAuthProvider({ children }: { children: ReactNode }) {
         router.refresh();
       }}
       redirectTo="/dashboard"
-      social={{ providers: ['google', 'github'] }}
+      social={{ providers: ['google'] }}
       Link={Link}
+      account={{
+        basePath: '/dashboard',
+      }}
     >
       {children}
     </AuthUIProvider>

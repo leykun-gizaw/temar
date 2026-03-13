@@ -1,0 +1,1 @@
+ALTER TABLE "recall_item" ADD COLUMN "question_title" text;

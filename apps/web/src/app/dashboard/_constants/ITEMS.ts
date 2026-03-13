@@ -2,14 +2,16 @@ import {
   BinocularsIcon,
   CalendarDaysIcon,
   ChartNoAxesCombinedIcon,
+  Coins,
   LibraryBig,
+  Settings,
   Trash2,
 } from 'lucide-react';
 
 export const NAV_ITEMS = [
   {
-    title: 'Topics',
-    url: '/dashboard/topics',
+    title: 'Materials',
+    url: '/dashboard/materials',
     icon: LibraryBig,
     isActive: false,
   },
@@ -29,6 +31,18 @@ export const NAV_ITEMS = [
     title: 'Analytics',
     url: '#',
     icon: ChartNoAxesCombinedIcon,
+    isActive: false,
+  },
+  {
+    title: 'Billing',
+    url: '/dashboard/billing',
+    icon: Coins,
+    isActive: false,
+  },
+  {
+    title: 'Settings',
+    url: '/dashboard/settings',
+    icon: Settings,
     isActive: false,
   },
   {

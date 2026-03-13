@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   uuid,
+  integer,
   index,
 } from 'drizzle-orm/pg-core';
 
@@ -22,6 +23,19 @@ export const user = pgTable('user', {
     .$onUpdate(() => new Date())
     .notNull(),
   notionPageId: uuid('notion_page_id').unique(),
+  notionAccessToken: text('notion_access_token'),
+  notionRefreshToken: text('notion_refresh_token'),
+  notionBotId: text('notion_bot_id'),
+  notionWorkspaceId: text('notion_workspace_id'),
+  notionTokenExpiresAt: timestamp('notion_token_expires_at'),
+  aiProvider: text('ai_provider'),
+  aiModel: text('ai_model'),
+  aiApiKeyEncrypted: text('ai_api_key_encrypted'),
+  maxQuestionReviews: integer('max_question_reviews').notNull().default(5),
+  paddleCustomerId: text('paddle_customer_id').unique(),
+  plan: text('plan').notNull().default('free'),
+  paddleSubscriptionId: text('paddle_subscription_id'),
+  passResetAt: timestamp('pass_reset_at', { withTimezone: true }),
 });
 
 export const session = pgTable(

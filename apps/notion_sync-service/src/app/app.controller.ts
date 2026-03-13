@@ -1,143 +1,651 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   Post,
   Body,
   Patch,
+  Headers,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { AppService } from './app.service';
-import { isFullDatabase } from '@notionhq/client';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiHeader,
+  ApiBody,
+  ApiSecurity,
+} from '@nestjs/swagger';
+import { Client, CreatePageResponse } from '@notionhq/client';
+import { NotionAuthService } from './services/notion-auth.service';
+import { NotionApiService } from './services/notion-api.service';
+import {
+  NotionContentService,
+  CascadeResult,
+  NoteCascadeResult,
+} from './services/notion-content.service';
+import { UserRepository } from './services/user.repository';
 
+const USER_ID_HEADER = {
+  name: 'x-user-id',
+  description: 'ID of the authenticated user',
+  required: true,
+} as const;
+
+const ENTITY_BODY = {
+  schema: {
+    properties: {
+      datasourceId: { type: 'string' },
+      name: { type: 'string' },
+      description: { type: 'string' },
+    },
+  },
+} as const;
+
+@ApiTags('Notion Sync')
+@ApiSecurity('api-key')
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly notionAuth: NotionAuthService,
+    private readonly notionApi: NotionApiService,
+    private readonly notionContent: NotionContentService,
+    private readonly userRepository: UserRepository
+  ) {}
 
-  @Get()
-  getGreeting() {
-    return this.appService.getGreeting();
-  }
-
+  @ApiOperation({ summary: 'List all users' })
   @Get('/users')
-  async getUsers() {
-    return await this.appService.getUsersList();
+  async listUsers() {
+    return this.userRepository.findAll();
   }
 
-  @Get('/user/:id')
-  async getUserById(@Param('id') id: string) {
-    return await this.appService.getUserById(id);
+  @ApiOperation({ summary: 'Find user by ID' })
+  @ApiParam({ name: 'userId', description: 'User UUID' })
+  @Get('/user/:userId')
+  async findUser(@Param('userId') userId: string) {
+    return this.userRepository.findById(userId);
   }
 
-  @Post('/user/:id/notion_page')
+  @ApiOperation({ summary: 'Set Notion master page ID for a user' })
+  @ApiParam({ name: 'userId', description: 'User UUID' })
+  @ApiBody({ schema: { properties: { notionPageId: { type: 'string' } } } })
+  @Post('/user/:userId/notion_page')
   async updateUserNotionPageId(
-    @Param('id') id: string,
+    @Param('userId') userId: string,
     @Body('notionPageId') notionPageId: string
   ) {
-    return await this.appService.updateUserNotionPageId(id, notionPageId);
+    return this.userRepository.updateNotionPageId(userId, notionPageId);
   }
 
-  @Get('/block/:id')
-  async getBlock(@Param('id') id: string) {
-    return await this.appService.getBlock(id);
+  @ApiOperation({ summary: 'Retrieve a Notion block' })
+  @ApiParam({ name: 'blockId', description: 'Notion block UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('/block/:blockId')
+  async retrieveBlock(
+    @Param('blockId') blockId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.retrieveBlock(client, blockId);
   }
 
-  @Get('/block/:id/children')
-  async getBlockChildren(@Param('id') id: string) {
-    return await this.appService.getBlockChildren(id);
+  @ApiOperation({ summary: 'List child blocks of a Notion block' })
+  @ApiParam({ name: 'blockId', description: 'Notion block UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('/block/:blockId/children')
+  async listBlockChildren(
+    @Param('blockId') blockId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.listBlockChildren(client, blockId);
   }
 
-  @Patch('/block/:id/appendChildren')
-  async appendBlockChildren(@Param('id') id: string) {
-    return await this.appService.appendBlockChildren(id);
+  @ApiOperation({ summary: 'Append children to a Notion block' })
+  @ApiParam({ name: 'blockId', description: 'Notion block UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Patch('/block/:blockId/appendChildren')
+  async appendBlockChildren(
+    @Param('blockId') blockId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.appendBlockChildren(client, blockId);
   }
 
-  @Get('/page/:id')
-  async getPage(@Param('id') id: string) {
-    return await this.appService.getPage(id);
+  @ApiOperation({ summary: 'Retrieve a Notion page' })
+  @ApiParam({ name: 'pageId', description: 'Notion page UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('/page/:pageId')
+  async retrievePage(
+    @Param('pageId') pageId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.retrievePage(client, pageId);
   }
 
-  @Get('/page/:id/get_datasource_list')
-  async getPageDatasourceList(@Param('id') id: string) {
-    return await this.appService.getPageDatasourceList(id);
+  @ApiOperation({ summary: 'Update Name and Description on a Notion page' })
+  @ApiParam({ name: 'pageId', description: 'Notion page UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @ApiBody({
+    schema: {
+      properties: { name: { type: 'string' }, description: { type: 'string' } },
+    },
+  })
+  @Patch('page/:pageId/properties')
+  async updatePageProperties(
+    @Param('pageId') pageId: string,
+    @Headers('x-user-id') userId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.updatePageProperties(client, pageId, {
+      name,
+      description,
+    });
   }
 
-  @Get('database/:id')
-  async getDatabase(@Param('id') id: string) {
-    return await this.appService.getDatabase(id);
+  @ApiOperation({ summary: 'List datasource pages under a Notion page' })
+  @ApiParam({ name: 'pageId', description: 'Notion page UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('/page/:pageId/get_datasource_list')
+  async listChildDatasourcePages(
+    @Param('pageId') pageId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.listChildDatasourcePages(client, pageId);
   }
 
-  @Post('page/:id/create_page_database')
+  @ApiOperation({ summary: 'Retrieve a Notion database' })
+  @ApiParam({ name: 'databaseId', description: 'Notion database UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('database/:databaseId')
+  async retrieveDatabase(
+    @Param('databaseId') databaseId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.retrieveDatabase(client, databaseId);
+  }
+
+  @ApiOperation({ summary: 'Create an inline database under a Notion page' })
+  @ApiParam({ name: 'pageId', description: 'Parent Notion page UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @ApiBody({ schema: { properties: { title: { type: 'string' } } } })
+  @Post('page/:pageId/create_page_database')
   async createPageDatabase(
-    @Param('id') id: string,
+    @Param('pageId') pageId: string,
+    @Headers('x-user-id') userId: string,
     @Body('title') title: string
   ) {
-    return await this.appService.createPageDatabase(id, title);
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.createPageDatabase(client, pageId, title);
   }
 
-  @Get('datasource/:id')
-  async getDataSource(@Param('id') id: string) {
-    return await this.appService.getDataSource(id);
+  @ApiOperation({ summary: 'Retrieve a Notion datasource' })
+  @ApiParam({ name: 'datasourceId', description: 'Notion datasource UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('datasource/:datasourceId')
+  async retrieveDataSource(
+    @Param('datasourceId') datasourceId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.retrieveDataSource(client, datasourceId);
   }
 
-  @Post('datasource/:id/create_topics')
-  async createTopics(@Param('id') datasourceId: string) {
-    return await this.appService.createTopic(datasourceId);
+  @ApiOperation({ summary: 'Create a sample topic page in a datasource' })
+  @ApiParam({ name: 'datasourceId', description: 'Notion datasource UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Post('datasource/:datasourceId/create_topics')
+  async createSampleTopic(
+    @Param('datasourceId') datasourceId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.createDatabasePage(client, {
+      datasourceId,
+      name: 'Sample Topic',
+      description: 'Sample topics demo description',
+      emoji: '📚',
+    });
   }
 
-  @Get('datasource/:id/pages')
-  async getDataSourcePages(@Param('id') id: string) {
-    return await this.appService.queryDataSource(id);
+  @ApiOperation({ summary: 'List all pages in a datasource' })
+  @ApiParam({ name: 'datasourceId', description: 'Notion datasource UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('datasource/:datasourceId/pages')
+  async listDatasourcePages(
+    @Param('datasourceId') datasourceId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionApi.queryDataSource(client, datasourceId);
   }
 
-  @Post('page/:id/prep_notion')
-  async createTopicsPage(@Param('id') id: string) {
-    const topicsDatabase = await this.appService.createTopicsPage(id);
+  @ApiOperation({
+    summary: 'Scaffold master page with topic/note/chunk cascade',
+  })
+  @ApiParam({ name: 'pageId', description: 'Master Notion page UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Post('page/:pageId/prep_notion')
+  async scaffoldMasterPage(
+    @Param('pageId') pageId: string,
+    @Headers('x-user-id') userId: string
+  ): Promise<CascadeResult> {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionContent.scaffoldMasterPage(client, pageId);
+  }
 
-    if (!isFullDatabase(topicsDatabase))
-      throw new HttpException(
-        'Failed to create topics database',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    if (!topicsDatabase.data_sources?.length)
-      throw new HttpException(
-        'Topics database has no data sources',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    const topicPage = await this.appService.createTopic(
-      topicsDatabase.data_sources[0].id
+  @ApiOperation({
+    summary: 'Create a topic with note + chunk cascade in Notion',
+  })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @ApiBody(ENTITY_BODY)
+  @Post('topic/create')
+  async createTopicCascade(
+    @Headers('x-user-id') userId: string,
+    @Body('datasourceId') datasourceId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ): Promise<CascadeResult> {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionContent.createTopicFromDatasource(client, {
+      datasourceId,
+      name,
+      description,
+    });
+  }
+
+  @ApiOperation({ summary: 'Create a note with chunk cascade in Notion' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @ApiBody(ENTITY_BODY)
+  @Post('note/create')
+  async createNoteCascade(
+    @Headers('x-user-id') userId: string,
+    @Body('datasourceId') datasourceId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ): Promise<NoteCascadeResult> {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionContent.createNoteFromDatasource(client, {
+      datasourceId,
+      name,
+      description,
+    });
+  }
+
+  @ApiOperation({ summary: 'Create a single chunk page in Notion' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @ApiBody(ENTITY_BODY)
+  @Post('chunk/create')
+  async createChunk(
+    @Headers('x-user-id') userId: string,
+    @Body('datasourceId') datasourceId: string,
+    @Body('name') name: string,
+    @Body('description') description: string
+  ): Promise<CreatePageResponse> {
+    const client = await this.resolveNotionClient(userId);
+    return this.notionContent.createChunkFromDatasource(client, {
+      datasourceId,
+      name,
+      description,
+    });
+  }
+
+  @ApiOperation({ summary: 'List block children with markdown conversion' })
+  @ApiParam({ name: 'blockId', description: 'Notion block UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('/block/:blockId/children_with_md')
+  async listBlockChildrenWithMarkdown(
+    @Param('blockId') blockId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    const children = await this.notionApi.listBlockChildrenRecursive(
+      client,
+      blockId
     );
+    const contentMd = this.blocksToMarkdown(children);
+    return { children, contentMd };
+  }
 
-    const notesDatabase = await this.appService.createNotesPage(topicPage.id);
-    if (!isFullDatabase(notesDatabase))
-      throw new HttpException(
-        'Failed to create notes database',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    if (!notesDatabase.data_sources?.length)
-      throw new HttpException(
-        'Notes database has no data sources',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    const notePage = await this.appService.createNote(
-      notesDatabase.data_sources[0].id
+  @ApiOperation({ summary: 'Retrieve a Notion page as markdown' })
+  @ApiParam({ name: 'pageId', description: 'Notion page UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Get('/page/:pageId/markdown')
+  async retrievePageMarkdown(
+    @Param('pageId') pageId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    const children = await this.notionApi.listBlockChildrenRecursive(
+      client,
+      pageId
     );
+    const markdown = this.blocksToMarkdown(children);
+    return { pageId, markdown };
+  }
 
-    const chunksDatabase = await this.appService.createChunksPage(notePage.id);
-    if (!isFullDatabase(chunksDatabase))
+  @ApiOperation({ summary: 'Archive a page and all its descendants in Notion' })
+  @ApiParam({ name: 'pageId', description: 'Notion page UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Delete('page/:pageId/cascade')
+  async cascadeArchivePage(
+    @Param('pageId') pageId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    const pageIds = await this.collectDescendantPageIds(pageId);
+    for (const id of pageIds) {
+      await this.notionApi.archivePage(client, id);
+    }
+    await this.notionApi.archivePage(client, pageId);
+    return { archived: [pageId, ...pageIds] };
+  }
+
+  @ApiOperation({ summary: 'Archive a single page in Notion' })
+  @ApiParam({ name: 'pageId', description: 'Notion page UUID' })
+  @ApiHeader(USER_ID_HEADER)
+  @ApiSecurity('user-id')
+  @Delete('page/:pageId')
+  async archiveSinglePage(
+    @Param('pageId') pageId: string,
+    @Headers('x-user-id') userId: string
+  ) {
+    const client = await this.resolveNotionClient(userId);
+    await this.notionApi.archivePage(client, pageId);
+    return { archived: [pageId] };
+  }
+
+  private async collectDescendantPageIds(pageId: string): Promise<string[]> {
+    const entity = await this.userRepository.identifyEntity(pageId);
+    if (!entity) return [];
+
+    if (entity.type === 'topic') {
+      const noteIds = await this.userRepository.findNoteIdsByTopic(pageId);
+      const chunkIds: string[] = [];
+      for (const noteId of noteIds) {
+        const chunks = await this.userRepository.findChunkIdsByNote(noteId);
+        chunkIds.push(...chunks);
+      }
+      return [...chunkIds, ...noteIds];
+    }
+
+    if (entity.type === 'note') {
+      return this.userRepository.findChunkIdsByNote(pageId);
+    }
+
+    return [];
+  }
+
+  private richTextToMarkdown(
+    richText: Array<{
+      plain_text?: string;
+      annotations?: {
+        bold?: boolean;
+        italic?: boolean;
+        strikethrough?: boolean;
+        code?: boolean;
+      };
+      href?: string | null;
+    }>
+  ): string {
+    return richText
+      .map((rt) => {
+        let text = rt.plain_text ?? '';
+        if (!text) return '';
+
+        if (rt.annotations?.code) text = `\`${text}\``;
+        if (rt.annotations?.bold) text = `**${text}**`;
+        if (rt.annotations?.italic) text = `*${text}*`;
+        if (rt.annotations?.strikethrough) text = `~~${text}~~`;
+        if (rt.href) text = `[${text}](${rt.href})`;
+
+        return text;
+      })
+      .join('');
+  }
+  private normalizeLanguage(lang: string): string {
+    const map: Record<string, string> = {
+      'c++': 'cpp',
+      'c#': 'csharp',
+      'plain text': 'text',
+      plain_text: 'text',
+      shell: 'bash',
+    };
+    return map[lang.toLowerCase()] ?? lang;
+  }
+
+  private blocksToMarkdown(blocks: unknown[], depth = 0): string {
+    const indent = '  '.repeat(depth);
+
+    return blocks
+      .map((block) => {
+        const b = block as Record<string, unknown>;
+        const type = b['type'] as string | undefined;
+        if (!type) return '';
+
+        const children = b['children'] as unknown[] | undefined;
+        const content = b[type] as
+          | {
+              rich_text?: Array<{
+                plain_text?: string;
+                annotations?: {
+                  bold?: boolean;
+                  italic?: boolean;
+                  strikethrough?: boolean;
+                  code?: boolean;
+                };
+                href?: string | null;
+              }>;
+            }
+          | undefined;
+
+        const text = content?.rich_text
+          ? this.richTextToMarkdown(content.rich_text)
+          : '';
+
+        if (type === 'column_list' || type === 'column') {
+          return children?.length ? this.blocksToMarkdown(children, depth) : '';
+        }
+
+        let line = '';
+        switch (type) {
+          case 'heading_1':
+            line = `# ${text}`;
+            break;
+          case 'heading_2':
+            line = `## ${text}`;
+            break;
+          case 'heading_3':
+            line = `### ${text}`;
+            break;
+          case 'paragraph':
+            line = text;
+            break;
+          case 'bulleted_list_item':
+            line = `${indent}- ${text}`;
+            break;
+          case 'numbered_list_item':
+            line = `${indent}1. ${text}`;
+            break;
+          case 'to_do': {
+            const checked = (b[type] as { checked?: boolean })?.checked;
+            line = `${indent}- [${checked ? 'x' : ' '}] ${text}`;
+            break;
+          }
+          case 'code': {
+            const rawLang = (b[type] as { language?: string })?.language ?? '';
+            const lang = this.normalizeLanguage(rawLang);
+            line = `\`\`\`${lang}\n${text}\n\`\`\``;
+            break;
+          }
+          case 'quote':
+            line = `> ${text}`;
+            break;
+          case 'callout': {
+            const icon =
+              (b[type] as { icon?: { emoji?: string } })?.icon?.emoji ?? '';
+            line = `> ${icon} ${text}`;
+            break;
+          }
+          case 'toggle':
+            line = `**${text}**`;
+            break;
+          case 'divider':
+            line = '---';
+            break;
+          case 'table_of_contents':
+            line = '';
+            break;
+          case 'image': {
+            const img = b[type] as Record<string, unknown> | undefined;
+            const imgType = img?.['type'] as string | undefined;
+            const file = img?.['file'] as { url?: string } | undefined;
+            const external = img?.['external'] as { url?: string } | undefined;
+            const url = imgType === 'file' ? file?.url : external?.url;
+            const caption = (
+              img?.['caption'] as Array<{ plain_text?: string }> | undefined
+            )
+              ?.map((c) => c.plain_text ?? '')
+              .join('');
+            line = url ? `![${caption ?? ''}](${url})` : '';
+            break;
+          }
+          case 'video':
+          case 'file':
+          case 'pdf': {
+            const asset = b[type] as Record<string, unknown> | undefined;
+            const assetType = asset?.['type'] as string | undefined;
+            const file = asset?.['file'] as { url?: string } | undefined;
+            const external = asset?.['external'] as
+              | { url?: string }
+              | undefined;
+            const url = assetType === 'file' ? file?.url : external?.url;
+            const caption =
+              (asset?.['caption'] as Array<{ plain_text?: string }> | undefined)
+                ?.map((c) => c.plain_text ?? '')
+                .join('') ?? type;
+            line = url ? `[${caption}](${url})` : '';
+            break;
+          }
+          case 'bookmark':
+          case 'link_preview': {
+            const bm = b[type] as
+              | { url?: string; caption?: Array<{ plain_text?: string }> }
+              | undefined;
+            const url = bm?.url ?? '';
+            const caption =
+              bm?.caption?.map((c) => c.plain_text ?? '').join('') || url;
+            line = url ? `[${caption}](${url})` : '';
+            break;
+          }
+          case 'equation': {
+            const expression =
+              (b[type] as { expression?: string })?.expression ?? '';
+            line = `$$\n${expression}\n$$`;
+            break;
+          }
+          case 'table': {
+            if (!children?.length) break;
+
+            const rows = children.map((row) => {
+              const r = row as Record<string, unknown>;
+              const cells =
+                (
+                  r['table_row'] as {
+                    cells?: Array<Array<{ plain_text?: string }>>;
+                  }
+                )?.cells ?? [];
+              return (
+                '| ' +
+                cells
+                  .map((cell) => cell.map((rt) => rt.plain_text ?? '').join(''))
+                  .join(' | ') +
+                ' |'
+              );
+            });
+
+            const colCount =
+              (
+                (children[0] as Record<string, unknown>)['table_row'] as {
+                  cells?: unknown[];
+                }
+              )?.cells?.length ?? 0;
+
+            if (rows.length > 0) {
+              rows.splice(
+                1,
+                0,
+                '| ' + Array(colCount).fill('---').join(' | ') + ' |'
+              );
+            }
+
+            line = rows.join('\n');
+            break;
+          }
+          case 'table_row':
+            // handled by parent table case
+            line = '';
+            break;
+          case 'child_page': {
+            const title = (b[type] as { title?: string })?.title ?? '';
+            line = `**📄 ${title}**`;
+            break;
+          }
+          case 'child_database': {
+            const title = (b[type] as { title?: string })?.title ?? '';
+            line = `**🗃️ ${title}**`;
+            break;
+          }
+          default:
+            line = text;
+        }
+
+        if (children?.length && type !== 'table') {
+          const childMd = this.blocksToMarkdown(children, depth + 1);
+          return childMd ? (line ? `${line}\n\n${childMd}` : childMd) : line;
+        }
+
+        return line;
+      })
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  private async resolveNotionClient(
+    userId: string | undefined
+  ): Promise<Client> {
+    if (!userId) {
       throw new HttpException(
-        'Failed to create chunks database',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        'X-User-Id header is required',
+        HttpStatus.BAD_REQUEST
       );
-    if (!chunksDatabase.data_sources?.length)
-      throw new HttpException(
-        'Chunks database has no data sources',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    const chunkPage = await this.appService.createChunk(
-      chunksDatabase.data_sources[0].id
-    );
-    return { topicPage, notePage, chunkPage };
+    }
+    return this.notionAuth.resolveClient(userId);
   }
 }

@@ -132,5 +132,26 @@
         "linter": "eslint"
       }
     }
+  },
+  "release": {
+    "changelog": {
+      "projectChangelogs": true
+    },
+    "groups": {
+      "services": {
+        "projects": [
+          "notion_sync-service",
+          "fsrs-service",
+          "question-gen-service",
+          "answer-analysis-service"
+        ],
+        "version": {
+          "conventionalCommits": true
+        }
+      },
+      "frontend": {
+        "projects": ["web"]
+      }
+    }
   }
 }

@@ -3,6 +3,7 @@ name: Deploy
 on:
   push:
     branches: [main, staging]
+  workflow_dispatch:
 
 concurrency:
   group: deploy-${{ github.ref_name }}
@@ -23,22 +24,26 @@ jobs:
     strategy:
       matrix:
         include:
-          - target: production
-            image_name: web
-          - target: notion_sync-service
-            image_name: notion-sync
-          - target: source
+          - target: web-app-service
+            image_name: web-app
+          - target: fsrs-service
+            image_name: fsrs
+          - target: question-gen-service
+            image_name: question-gen
+          - target: answer-analysis-service
+            image_name: answer-analysis
+          - target: migration
             image_name: migrate
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -53,7 +58,7 @@ jobs:
           echo "sha_tag=sha-${SHA_SHORT}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           target: ${{ matrix.target }}
@@ -71,6 +76,19 @@ jobs:
     if: github.ref_name == 'main'
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Copy latest Caddyfile and docker-compose.prod.yml to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "Caddyfile,docker-compose.prod.yml"
+          target: /opt/temar/
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -84,12 +102,12 @@ jobs:
             # Log in to GHCR
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-            # Pull latest images
-            docker compose -f docker-compose.prod.yml pull
+            # Pull latest images (--ignore-pull-failures so one missing image doesn't block others)
+            docker compose -f docker-compose.prod.yml pull --ignore-pull-failures
 
             # Run migrations then restart services
             docker compose -f docker-compose.prod.yml up migrate --abort-on-container-exit
-            docker compose -f docker-compose.prod.yml up -d web notion_sync-service caddy
+            docker compose -f docker-compose.prod.yml up -d web fsrs-service question-gen-service answer-analysis-service caddy appsmith
 
             # Clean up old images
             docker image prune -f
@@ -114,12 +132,12 @@ jobs:
             # Log in to GHCR
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-            # Pull staging images
-            docker compose -f docker-compose.prod.yml pull
+            # Pull staging images (--ignore-pull-failures so one missing image doesn't block others)
+            docker compose -f docker-compose.prod.yml pull --ignore-pull-failures
 
             # Run migrations then restart services
             docker compose -f docker-compose.prod.yml up migrate --abort-on-container-exit
-            docker compose -f docker-compose.prod.yml up -d web notion_sync-service caddy
+            docker compose -f docker-compose.prod.yml up -d web fsrs-service question-gen-service caddy
 
             # Clean up old images
             docker image prune -f

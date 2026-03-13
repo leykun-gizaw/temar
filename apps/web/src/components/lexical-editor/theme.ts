@@ -1,0 +1,87 @@
+import type { EditorThemeClasses } from 'lexical';
+
+const theme: EditorThemeClasses = {
+  heading: {
+    h1: 'text-3xl font-bold mt-4 mb-2',
+    h2: 'text-2xl font-semibold mt-3 mb-2',
+    h3: 'text-xl font-semibold mt-2 mb-1',
+    h4: 'text-lg font-medium mt-2 mb-1',
+    h5: 'text-base font-medium mt-1 mb-1',
+  },
+  paragraph: 'mb-2 leading-relaxed',
+  text: {
+    bold: 'font-bold',
+    italic: 'italic',
+    underline: 'underline',
+    strikethrough: 'line-through',
+    code: 'bg-muted px-1.5 py-0.5 rounded text-sm font-mono',
+    subscript: 'text-[0.8em] align-sub',
+    superscript: 'text-[0.8em] align-super',
+    highlight: 'bg-yellow-200 dark:bg-yellow-800/50',
+  },
+  list: {
+    ul: 'list-disc ml-6 mb-2',
+    ol: 'list-decimal ml-6 mb-2',
+    listitem: 'mb-1',
+    checklist: 'ml-0 list-none mb-2',
+    listitemChecked:
+      'relative pl-7 mb-1 line-through text-muted-foreground before:absolute before:left-0 before:top-0.5 before:w-4 before:h-4 before:border before:border-primary before:rounded-sm before:bg-primary before:content-["✓"] before:text-primary-foreground before:text-xs before:flex before:items-center before:justify-center before:cursor-pointer',
+    listitemUnchecked:
+      'relative pl-7 mb-1 before:absolute before:left-0 before:top-0.5 before:w-4 before:h-4 before:border before:border-muted-foreground before:rounded-sm before:content-[""] before:cursor-pointer',
+    nested: {
+      listitem: 'list-none',
+    },
+  },
+  link: 'text-primary underline cursor-pointer',
+  quote:
+    'border-l-4 border-muted-foreground/30 pl-4 italic text-muted-foreground mb-2',
+  code: 'bg-muted rounded-md p-4 font-mono text-sm mb-2 block overflow-x-auto relative',
+  table: 'border-collapse border border-border my-2 w-full',
+  tableCell: 'border border-border px-3 py-2 text-left min-w-[75px] align-top',
+  tableCellHeader:
+    'border border-border px-3 py-2 text-left font-bold bg-muted min-w-[75px] align-top',
+  tableRow: '',
+  tableScrollableWrapper: 'overflow-x-auto my-2',
+  image: 'inline-block max-w-full',
+  equation: '',
+  mermaid: '',
+  embedBlock: {
+    base: 'my-2',
+    focus: 'outline outline-2 outline-primary rounded-md',
+  },
+  indent: 'pl-8',
+  codeHighlight: {
+    atrule: 'text-blue-500',
+    attr: 'text-blue-500',
+    boolean: 'text-purple-500',
+    builtin: 'text-cyan-500',
+    cdata: 'text-gray-500',
+    char: 'text-green-500',
+    class: 'text-yellow-500',
+    'class-name': 'text-yellow-500',
+    comment: 'text-gray-500 italic',
+    constant: 'text-purple-500',
+    deleted: 'text-red-500',
+    doctype: 'text-gray-500',
+    entity: 'text-orange-500',
+    function: 'text-blue-400',
+    important: 'text-red-500 font-bold',
+    inserted: 'text-green-500',
+    keyword: 'text-purple-500',
+    namespace: 'text-orange-500',
+    number: 'text-green-400',
+    operator: 'text-muted-foreground',
+    prolog: 'text-gray-500',
+    property: 'text-blue-500',
+    punctuation: 'text-muted-foreground',
+    regex: 'text-orange-500',
+    selector: 'text-green-500',
+    string: 'text-green-500',
+    symbol: 'text-purple-500',
+    tag: 'text-red-400',
+    url: 'text-cyan-500 underline',
+    variable: 'text-orange-500',
+  },
+};
+
+export default theme;
