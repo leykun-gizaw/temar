@@ -37,7 +37,7 @@ export default function SiteFooter({ className }: { className?: string }) {
             Pricing
           </Link>
           <a
-            href="mailto:contact@temar.app"
+            href="mailto:support@temar.app"
             className="hover:text-foreground transition-colors"
           >
             Contact
