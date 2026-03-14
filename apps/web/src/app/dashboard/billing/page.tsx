@@ -1,4 +1,5 @@
-import { getPassBalance, getPassTransactions } from '@/lib/actions/pass';
+import { getPassTransactions } from '@/lib/actions/pass';
+import { syncPaddleSubscription } from '@/lib/actions/paddle-sync';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { redirect } from 'next/navigation';
 import { BillingClient } from './_components/billing-client';
@@ -11,13 +12,14 @@ export default async function BillingPage() {
   const sessionUser = await getLoggedInUser();
   if (!sessionUser) redirect('/auth/login');
 
-  const [{ balance, plan }, transactions] = await Promise.all([
-    getPassBalance(),
+  // Sync subscription status from Paddle API (handles the case where
+  // webhooks can't reach localhost during development).
+  const [subscriptionInfo, transactions] = await Promise.all([
+    syncPaddleSubscription(),
     getPassTransactions(20),
   ]);
 
   // Use bracket notation to prevent Next.js from inlining these at build time.
-  // This ensures they are read from the runtime environment (Docker env vars).
   const env = (key: string) => process.env[key] ?? '';
 
   const paddleConfig = {
@@ -52,8 +54,7 @@ export default async function BillingPage() {
 
   return (
     <BillingClient
-      balance={balance}
-      plan={plan}
+      subscriptionInfo={subscriptionInfo}
       userId={sessionUser.id}
       transactions={transactions}
       paddleConfig={paddleConfig}

@@ -14,6 +14,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -23,9 +24,13 @@ import {
   ArrowUpCircle,
   Zap,
   ExternalLink,
+  CalendarClock,
+  CheckCircle2,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PassTransaction } from '@/lib/actions/pass';
+import type { SubscriptionInfo } from '@/lib/actions/paddle-sync';
 
 interface TopupPack {
   id: string;
@@ -41,10 +46,10 @@ const PLAN_LABELS: Record<string, string> = {
   scholar: 'Scholar',
 };
 
-const PLAN_BADGE_VARIANT: Record<string, string> = {
-  free: 'secondary',
-  starter: 'default',
-  scholar: 'default',
+const PLAN_BADGE_COLORS: Record<string, string> = {
+  free: 'bg-muted text-muted-foreground',
+  starter: 'bg-primary text-primary-foreground',
+  scholar: 'bg-violet-600 text-white',
 };
 
 interface PaddleConfig {
@@ -56,16 +61,23 @@ interface PaddleConfig {
 }
 
 interface BillingClientProps {
-  balance: number;
-  plan: string;
+  subscriptionInfo: SubscriptionInfo;
   userId: string;
   transactions: PassTransaction[];
   paddleConfig: PaddleConfig;
 }
 
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export function BillingClient({
-  balance,
-  plan,
+  subscriptionInfo,
   userId,
   transactions,
   paddleConfig,
@@ -73,6 +85,9 @@ export function BillingClient({
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [paddle, setPaddle] = useState<Paddle | null>(null);
+
+  const { plan, status, nextBilledAt, balance } = subscriptionInfo;
+  const hasActiveSub = plan !== 'free' && !!status;
 
   useEffect(() => {
     if (paddle?.Initialized) return;
@@ -134,31 +149,43 @@ export function BillingClient({
         </p>
       </div>
 
-      {/* Balance card */}
+      {/* Current Plan card */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <Coins className="h-5 w-5 text-primary" />
-              Pass Balance
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Current Plan
             </span>
-            <Badge
-              variant={PLAN_BADGE_VARIANT[plan] as 'default' | 'secondary'}
-              className="capitalize"
-            >
+            <Badge className={cn('capitalize', PLAN_BADGE_COLORS[plan])}>
               {PLAN_LABELS[plan] ?? plan}
             </Badge>
           </CardTitle>
-          <CardDescription>
-            Pass is used for AI operations. Renews monthly with your plan.
-          </CardDescription>
+          {hasActiveSub ? (
+            <CardDescription className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              Active subscription
+            </CardDescription>
+          ) : (
+            <CardDescription>
+              You are on the free plan. Upgrade to get monthly Pass.
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-end gap-2">
-            <span className="text-5xl font-bold tabular-nums">{balance}</span>
-            <span className="mb-1 text-lg text-muted-foreground">Pass</span>
-          </div>
-          {plan !== 'free' && (
+          {hasActiveSub && nextBilledAt && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CalendarClock className="h-4 w-4" />
+              <span>
+                Next renewal:{' '}
+                <span className="font-medium text-foreground">
+                  {formatDate(nextBilledAt)}
+                </span>
+              </span>
+            </div>
+          )}
+
+          {hasActiveSub && (
             <Button
               variant="outline"
               size="sm"
@@ -171,7 +198,8 @@ export function BillingClient({
               <ExternalLink className="h-3.5 w-3.5 opacity-60" />
             </Button>
           )}
-          {plan === 'free' && (
+
+          {!hasActiveSub && (
             <div className="flex gap-3 flex-wrap">
               <Button
                 size="sm"
@@ -184,7 +212,9 @@ export function BillingClient({
                 }
                 disabled={!paddleReady || !!loading}
               >
-                Upgrade to Starter — $9.99/mo
+                {loading === 'starter'
+                  ? 'Opening…'
+                  : 'Upgrade to Starter — $9.99/mo'}
               </Button>
               <Button
                 size="sm"
@@ -198,11 +228,39 @@ export function BillingClient({
                 }
                 disabled={!paddleReady || !!loading}
               >
-                Go Scholar — $24.99/mo
+                {loading === 'scholar' ? 'Opening…' : 'Go Scholar — $24.99/mo'}
               </Button>
             </div>
           )}
         </CardContent>
+      </Card>
+
+      {/* Balance card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Coins className="h-5 w-5 text-primary" />
+            Pass Balance
+          </CardTitle>
+          <CardDescription>
+            Pass is used for AI operations.
+            {hasActiveSub
+              ? ' Renews monthly with your plan.'
+              : ' Purchase a plan or top-up pack to get Pass.'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-2">
+            <span className="text-5xl font-bold tabular-nums">{balance}</span>
+            <span className="mb-1 text-lg text-muted-foreground">Pass</span>
+          </div>
+        </CardContent>
+        {hasActiveSub && nextBilledAt && (
+          <CardFooter className="text-xs text-muted-foreground border-t pt-4">
+            Your balance will reset on {formatDate(nextBilledAt)} with your plan
+            renewal.
+          </CardFooter>
+        )}
       </Card>
 
       {/* Top-up packs */}
