@@ -136,6 +136,8 @@ export default function TrackingButton({
           setPassError(
             `Not enough Pass (have ${result.balance}, need ${result.required}). Top up at /dashboard/billing.`
           );
+        } else if (result.status === 'error') {
+          setPassError(result.message);
         }
       } catch (err) {
         console.error('Track failed:', err);

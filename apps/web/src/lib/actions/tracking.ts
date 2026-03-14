@@ -11,6 +11,7 @@ import { DEFAULT_MODEL_ID } from '@/lib/config/ai-operations';
 
 export type TrackResult<T = unknown> =
   | { status: 'success'; data: T; newBalance?: number }
+  | { status: 'error'; message: string }
   | { status: 'insufficient_pass'; balance: number; required: number }
   | {
       status: 'consent_required';
@@ -69,22 +70,29 @@ export async function trackTopic(
   if (questionTypes?.length) body.questionTypes = questionTypes;
   if (questionCount != null) body.questionCount = questionCount;
 
-  const data = await fsrsServiceFetch(`track/topic/${topicId}`, {
-    method: 'POST',
-    userId: loggedInUser.id,
-    headers: aiHeaders,
-    ...(Object.keys(body).length > 0 && { body }),
-  });
+  try {
+    const data = await fsrsServiceFetch(`track/topic/${topicId}`, {
+      method: 'POST',
+      userId: loggedInUser.id,
+      headers: aiHeaders,
+      ...(Object.keys(body).length > 0 && { body }),
+    });
 
-  // Deduct passes only after successful API call
-  const { newBalance } = await deductPass(
-    'question_generation',
-    passCheck.passToDeduct
-  );
+    const { newBalance } = await deductPass(
+      'question_generation',
+      passCheck.passToDeduct
+    );
 
-  revalidatePath('/dashboard');
-  revalidatePath('/dashboard/materials');
-  return { status: 'success', data, newBalance };
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/materials');
+    return { status: 'success', data, newBalance };
+  } catch (err) {
+    return {
+      status: 'error',
+      message:
+        err instanceof Error ? err.message : 'Question generation failed',
+    };
+  }
 }
 
 export async function trackNote(
@@ -105,21 +113,29 @@ export async function trackNote(
   if (questionTypes?.length) body.questionTypes = questionTypes;
   if (questionCount != null) body.questionCount = questionCount;
 
-  const data = await fsrsServiceFetch(`track/note/${noteId}`, {
-    method: 'POST',
-    userId: loggedInUser.id,
-    headers: aiHeaders,
-    ...(Object.keys(body).length > 0 && { body }),
-  });
+  try {
+    const data = await fsrsServiceFetch(`track/note/${noteId}`, {
+      method: 'POST',
+      userId: loggedInUser.id,
+      headers: aiHeaders,
+      ...(Object.keys(body).length > 0 && { body }),
+    });
 
-  const { newBalance } = await deductPass(
-    'question_generation',
-    passCheck.passToDeduct
-  );
+    const { newBalance } = await deductPass(
+      'question_generation',
+      passCheck.passToDeduct
+    );
 
-  revalidatePath('/dashboard');
-  revalidatePath('/dashboard/materials');
-  return { status: 'success', data, newBalance };
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/materials');
+    return { status: 'success', data, newBalance };
+  } catch (err) {
+    return {
+      status: 'error',
+      message:
+        err instanceof Error ? err.message : 'Question generation failed',
+    };
+  }
 }
 
 export async function trackChunk(
@@ -148,21 +164,29 @@ export async function trackChunk(
   if (questionTypes?.length) body.questionTypes = questionTypes;
   if (questionCount != null) body.questionCount = questionCount;
 
-  const data = await fsrsServiceFetch(`track/chunk/${chunkId}`, {
-    method: 'POST',
-    userId: loggedInUser.id,
-    headers: aiHeaders,
-    ...(Object.keys(body).length > 0 && { body }),
-  });
+  try {
+    const data = await fsrsServiceFetch(`track/chunk/${chunkId}`, {
+      method: 'POST',
+      userId: loggedInUser.id,
+      headers: aiHeaders,
+      ...(Object.keys(body).length > 0 && { body }),
+    });
 
-  const { newBalance } = await deductPass(
-    'question_generation',
-    passCheck.passToDeduct
-  );
+    const { newBalance } = await deductPass(
+      'question_generation',
+      passCheck.passToDeduct
+    );
 
-  revalidatePath('/dashboard');
-  revalidatePath('/dashboard/materials');
-  return { status: 'success', data, newBalance };
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/materials');
+    return { status: 'success', data, newBalance };
+  } catch (err) {
+    return {
+      status: 'error',
+      message:
+        err instanceof Error ? err.message : 'Question generation failed',
+    };
+  }
 }
 
 export async function untrackTopic(topicId: string) {
@@ -234,61 +258,51 @@ export async function getTrackingStatus(): Promise<TrackingItem[]> {
 }
 
 export async function retryFailedGeneration(
-  chunkId: string,
-  consentedPassCost?: number
+  chunkId: string
 ): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
-  const [chunkRow] = await dbClient
-    .select({ contentMd: chunk.contentMd })
-    .from(chunk)
-    .where(eq(chunk.id, chunkId))
-    .limit(1);
-  const inputText = chunkRow?.contentMd ?? '';
-
-  const passCheck = await passCheckForGeneration(inputText, consentedPassCost);
-  if (!passCheck.ok) return passCheck.result;
-
   const aiHeaders = await getAiHeaders();
-  const data = await fsrsServiceFetch(`track/retry/${chunkId}`, {
-    method: 'POST',
-    userId: loggedInUser.id,
-    headers: aiHeaders,
-  });
 
-  const { newBalance } = await deductPass(
-    'question_generation',
-    passCheck.passToDeduct
-  );
+  try {
+    const data = await fsrsServiceFetch(`track/retry/${chunkId}`, {
+      method: 'POST',
+      userId: loggedInUser.id,
+      headers: aiHeaders,
+    });
 
-  revalidatePath('/dashboard');
-  return { status: 'success', data, newBalance };
+    revalidatePath('/dashboard');
+    return { status: 'success', data };
+  } catch (err) {
+    return {
+      status: 'error',
+      message: err instanceof Error ? err.message : 'Retry failed',
+    };
+  }
 }
 
-export async function retryAllFailedGenerations(
-  consentedPassCost?: number
-): Promise<TrackResult> {
+export async function retryAllFailedGenerations(): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
-  const passCheck = await passCheckForGeneration('', consentedPassCost);
-  if (!passCheck.ok) return passCheck.result;
-
   const aiHeaders = await getAiHeaders();
-  const data = await fsrsServiceFetch('track/retry-all-failed', {
-    method: 'POST',
-    userId: loggedInUser.id,
-    headers: aiHeaders,
-  });
 
-  const { newBalance } = await deductPass(
-    'question_generation',
-    passCheck.passToDeduct
-  );
+  try {
+    const data = await fsrsServiceFetch('track/retry-all-failed', {
+      method: 'POST',
+      userId: loggedInUser.id,
+      headers: aiHeaders,
+    });
 
-  revalidatePath('/dashboard');
-  return { status: 'success', data, newBalance };
+    revalidatePath('/dashboard');
+    return { status: 'success', data };
+  } catch (err) {
+    return {
+      status: 'error',
+      message: err instanceof Error ? err.message : 'Retry all failed',
+    };
+  }
 }
 
 export interface OutdatedChunk {
@@ -332,19 +346,27 @@ export async function regenerateChunkQuestions(
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
-  const data = await fsrsServiceFetch(`track/regenerate/${chunkId}`, {
-    method: 'POST',
-    userId: loggedInUser.id,
-    headers: aiHeaders,
-  });
 
-  const { newBalance } = await deductPass(
-    'question_generation',
-    passCheck.passToDeduct
-  );
+  try {
+    const data = await fsrsServiceFetch(`track/regenerate/${chunkId}`, {
+      method: 'POST',
+      userId: loggedInUser.id,
+      headers: aiHeaders,
+    });
 
-  revalidatePath('/dashboard');
-  return { status: 'success', data, newBalance };
+    const { newBalance } = await deductPass(
+      'question_generation',
+      passCheck.passToDeduct
+    );
+
+    revalidatePath('/dashboard');
+    return { status: 'success', data, newBalance };
+  } catch (err) {
+    return {
+      status: 'error',
+      message: err instanceof Error ? err.message : 'Regeneration failed',
+    };
+  }
 }
 
 export interface UnderperformingChunk {

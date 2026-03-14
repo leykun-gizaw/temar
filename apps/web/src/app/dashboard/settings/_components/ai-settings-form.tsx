@@ -185,15 +185,6 @@ export function AiSettingsForm({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
-              You can also type a custom model ID if it&apos;s not listed.
-            </p>
-            <Input
-              placeholder="Or enter a custom model ID..."
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              className="mt-1"
-            />
           </div>
 
           {/* BYOK toggle + API key */}

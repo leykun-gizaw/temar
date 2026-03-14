@@ -115,6 +115,8 @@ export default function OutdatedQuestionsCard({
           setPassError(
             `Not enough Pass (have ${result.balance}, need ${result.required}).`
           );
+        } else if (result.status === 'error') {
+          setPassError(result.message);
         }
       } finally {
         setRegeneratingIds((prev) => {

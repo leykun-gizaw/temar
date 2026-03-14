@@ -33,14 +33,6 @@ import {
   Zap,
   CheckCircle2,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import type { TrackingItem } from '@/lib/actions/tracking';
 import {
   getTrackingStatus,
@@ -48,7 +40,7 @@ import {
   retryAllFailedGenerations,
 } from '@/lib/actions/tracking';
 import { cn } from '@/lib/utils';
-import { notifyPassBalanceChanged } from '@/lib/pass-events';
+import { toast } from 'sonner';
 
 const STATUS_CONFIG: Record<
   TrackingItem['status'],
@@ -95,12 +87,6 @@ export default function GenerationQueueCard({
   const [items, setItems] = useState(initialItems);
   const [isPending, startTransition] = useTransition();
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
-  const [passError, setPassError] = useState<string | null>(null);
-  const [consentState, setConsentState] = useState<{
-    estimatedPassCost: number;
-    basePassCost: number;
-    onApprove: (cost: number) => void;
-  } | null>(null);
 
   const counts = {
     pending: items.filter((i) => i.status === 'pending').length,
@@ -126,27 +112,14 @@ export default function GenerationQueueCard({
     return () => clearInterval(interval);
   }, [hasActiveItems, refreshStatus]);
 
-  const handleRetry = (chunkId: string, consentedPassCost?: number) => {
+  const handleRetry = (chunkId: string) => {
     setRetryingIds((prev) => new Set(prev).add(chunkId));
     startTransition(async () => {
       try {
-        const result = await retryFailedGeneration(chunkId, consentedPassCost);
-        if (result.status === 'consent_required') {
-          setConsentState({
-            estimatedPassCost: result.estimatedPassCost,
-            basePassCost: result.basePassCost,
-            onApprove: (cost) => handleRetry(chunkId, cost),
-          });
+        const result = await retryFailedGeneration(chunkId);
+        if (result.status === 'error') {
+          toast.error(result.message);
           return;
-        }
-        if (result.status === 'insufficient_pass') {
-          setPassError(
-            `Not enough Pass (have ${result.balance}, need ${result.required}).`
-          );
-          return;
-        }
-        if (result.status === 'success' && result.newBalance != null) {
-          notifyPassBalanceChanged(result.newBalance);
         }
         await new Promise((r) => setTimeout(r, 1000));
         const updated = await getTrackingStatus();
@@ -161,25 +134,12 @@ export default function GenerationQueueCard({
     });
   };
 
-  const handleRetryAll = (consentedPassCost?: number) => {
+  const handleRetryAll = () => {
     startTransition(async () => {
-      const result = await retryAllFailedGenerations(consentedPassCost);
-      if (result.status === 'consent_required') {
-        setConsentState({
-          estimatedPassCost: result.estimatedPassCost,
-          basePassCost: result.basePassCost,
-          onApprove: (cost) => handleRetryAll(cost),
-        });
+      const result = await retryAllFailedGenerations();
+      if (result.status === 'error') {
+        toast.error(result.message);
         return;
-      }
-      if (result.status === 'insufficient_pass') {
-        setPassError(
-          `Not enough Pass (have ${result.balance}, need ${result.required}).`
-        );
-        return;
-      }
-      if (result.status === 'success' && result.newBalance != null) {
-        notifyPassBalanceChanged(result.newBalance);
       }
       await new Promise((r) => setTimeout(r, 1500));
       const updated = await getTrackingStatus();
@@ -374,62 +334,6 @@ export default function GenerationQueueCard({
           </CardContent>
         )}
       </Card>
-      {/* Pass consent dialog */}
-      <Dialog
-        open={!!consentState}
-        onOpenChange={(open) => {
-          if (!open) setConsentState(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Extra Pass required</DialogTitle>
-            <DialogDescription>
-              This content exceeds the standard token budget. The operation will
-              cost <strong>{consentState?.estimatedPassCost} Pass</strong>{' '}
-              instead of the base {consentState?.basePassCost} Pass.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConsentState(null)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                consentState?.onApprove(consentState.estimatedPassCost);
-                setConsentState(null);
-              }}
-            >
-              Approve &amp; Retry
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Pass error dialog */}
-      <Dialog
-        open={!!passError}
-        onOpenChange={(open) => {
-          if (!open) setPassError(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Not enough Pass</DialogTitle>
-            <DialogDescription>
-              {passError} Top up at billing.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPassError(null)}>
-              Close
-            </Button>
-            <Button asChild>
-              <a href="/dashboard/billing">Top up Pass</a>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
