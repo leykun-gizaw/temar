@@ -15,6 +15,10 @@
     "migrate": {
       "command": "pnpm drizzle-kit migrate --config={projectRoot}/drizzle.config.ts",
       "options": { "cwd": "." }
+    },
+    "seed": {
+      "command": "pnpm tsx {projectRoot}/src/seed/seed-ai-pricing.ts",
+      "options": { "cwd": "." }
     }
   }
 }

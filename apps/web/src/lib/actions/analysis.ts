@@ -1,9 +1,9 @@
 'use server';
 
 import { getLoggedInUser } from '@/lib/fetchers/users';
-import { getUserAiConfig } from './ai-settings';
+import { getUserAiConfig, getAiSettings } from './ai-settings';
 import { analysisServiceFetch } from '../answer-analysis-service';
-import { checkPassAvailability, deductPass } from './pass';
+import { checkPassAvailability } from './pass';
 import {
   estimateInputTokens,
   DEFAULT_MODEL_ID,
@@ -12,11 +12,13 @@ import type { AiProvider } from '@/lib/config/ai-operations';
 
 async function getAiHeaders(): Promise<Record<string, string>> {
   const config = await getUserAiConfig();
-  if (!config) return {};
+  const settings = await getAiSettings();
+  const isByok = settings.useByok && settings.hasApiKey;
   return {
-    ...(config.provider && { 'x-ai-provider': config.provider }),
-    ...(config.model && { 'x-ai-model': config.model }),
-    ...(config.apiKey && { 'x-ai-api-key': config.apiKey }),
+    ...(config?.provider && { 'x-ai-provider': config.provider }),
+    ...(config?.model && { 'x-ai-model': config.model }),
+    ...(config?.apiKey && { 'x-ai-api-key': config.apiKey }),
+    'x-byok': isByok ? 'true' : 'false',
   };
 }
 
@@ -34,7 +36,6 @@ export type AnalyzeAnswerResult =
       status: 'success';
       data: AnalysisResult;
       passDeducted: number;
-      newBalance?: number;
     }
   | {
       status: 'consent_required';
@@ -100,17 +101,10 @@ export async function analyzeAnswer(
       },
     });
 
-    // Step 3: Deduct passes only after successful API call
-    const { newBalance } = await deductPass(
-      'answer_analysis',
-      passCheck.passToDeduct
-    );
-
     return {
       status: 'success',
       data,
       passDeducted: passCheck.passToDeduct,
-      newBalance,
     };
   } catch (err) {
     // API call failed — no passes deducted

@@ -23,7 +23,12 @@ export class RecallItemService {
   async trackChunk(
     chunkId: string,
     userId: string,
-    aiConfig?: { provider?: string; model?: string; apiKey?: string },
+    aiConfig?: {
+      provider?: string;
+      model?: string;
+      apiKey?: string;
+      byok?: boolean;
+    },
     questionTypes?: string[],
     questionCount?: number
   ) {
@@ -92,6 +97,7 @@ export class RecallItemService {
             ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
             ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
             ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
+            'x-byok': aiConfig?.byok ? 'true' : 'false',
           },
           ...(Object.keys(body).length > 0 && { body: JSON.stringify(body) }),
         }).catch((err) =>
@@ -117,7 +123,12 @@ export class RecallItemService {
   async trackNote(
     noteId: string,
     userId: string,
-    aiConfig?: { provider?: string; model?: string; apiKey?: string },
+    aiConfig?: {
+      provider?: string;
+      model?: string;
+      apiKey?: string;
+      byok?: boolean;
+    },
     questionTypes?: string[],
     questionCount?: number
   ) {
@@ -150,7 +161,12 @@ export class RecallItemService {
   async trackTopic(
     topicId: string,
     userId: string,
-    aiConfig?: { provider?: string; model?: string; apiKey?: string },
+    aiConfig?: {
+      provider?: string;
+      model?: string;
+      apiKey?: string;
+      byok?: boolean;
+    },
     questionTypes?: string[],
     questionCount?: number
   ) {
@@ -485,7 +501,12 @@ export class RecallItemService {
   async retryChunk(
     chunkId: string,
     userId: string,
-    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+    aiConfig?: {
+      provider?: string;
+      model?: string;
+      apiKey?: string;
+      byok?: boolean;
+    }
   ) {
     const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
     if (!qgenEndpoint) {
@@ -503,6 +524,7 @@ export class RecallItemService {
         ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
         ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
         ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
+        'x-byok': aiConfig?.byok ? 'true' : 'false',
       },
     }).catch((err) =>
       this.logger.error(
@@ -514,7 +536,12 @@ export class RecallItemService {
 
   async retryAllFailed(
     userId: string,
-    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+    aiConfig?: {
+      provider?: string;
+      model?: string;
+      apiKey?: string;
+      byok?: boolean;
+    }
   ) {
     const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
     if (!qgenEndpoint) {
@@ -531,6 +558,7 @@ export class RecallItemService {
         ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
         ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
         ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
+        'x-byok': aiConfig?.byok ? 'true' : 'false',
       },
     }).catch((err) =>
       this.logger.error(`Fire-and-forget retry-all-failed failed: ${err}`)
@@ -709,7 +737,12 @@ export class RecallItemService {
   async regenerateChunk(
     chunkId: string,
     userId: string,
-    aiConfig?: { provider?: string; model?: string; apiKey?: string }
+    aiConfig?: {
+      provider?: string;
+      model?: string;
+      apiKey?: string;
+      byok?: boolean;
+    }
   ) {
     // Retire ALL existing non-retired recall items for this chunk
     const now = new Date();
@@ -759,6 +792,7 @@ export class RecallItemService {
           ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
           ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
           ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
+          'x-byok': aiConfig?.byok ? 'true' : 'false',
         },
       }).catch((err) =>
         this.logger.error(

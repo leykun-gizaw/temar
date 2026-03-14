@@ -111,6 +111,12 @@ export type AiConfig = {
   provider?: string;
   model?: string;
   apiKey?: string;
+  byok?: boolean;
+};
+
+export type TokenUsage = {
+  inputTokens: number;
+  outputTokens: number;
 };
 
 const DEFAULT_MODELS: Record<string, string> = {
@@ -123,7 +129,10 @@ const DEFAULT_MODELS: Record<string, string> = {
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
 
-  private resolveModel(config?: AiConfig) {
+  private resolveModel(config?: AiConfig): {
+    model: ReturnType<ReturnType<typeof createGoogleGenerativeAI>>;
+    modelId: string;
+  } {
     const provider = config?.provider || process.env.AI_PROVIDER || 'google';
     const modelId =
       config?.model ||
@@ -136,20 +145,20 @@ export class LlmService {
         const openai = createOpenAI(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return openai(modelId);
+        return { model: openai(modelId) as any, modelId };
       }
       case 'anthropic': {
         const anthropic = createAnthropic(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return anthropic(modelId);
+        return { model: anthropic(modelId) as any, modelId };
       }
       case 'google':
       default: {
         const google = createGoogleGenerativeAI(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return google(modelId);
+        return { model: google(modelId), modelId };
       }
     }
   }
@@ -162,8 +171,12 @@ export class LlmService {
     aiConfig?: AiConfig,
     questionTypes?: QuestionType[],
     questionCount?: number
-  ): Promise<GeneratedQuestion[]> {
-    const llmModel = this.resolveModel(aiConfig);
+  ): Promise<{
+    questions: GeneratedQuestion[];
+    usage: TokenUsage;
+    modelId: string;
+  }> {
+    const { model: llmModel, modelId } = this.resolveModel(aiConfig);
     const types = questionTypes?.length ? questionTypes : ['open_ended'];
     const count =
       questionCount ??
@@ -244,7 +257,7 @@ Content:
 ${chunkContent}`;
 
     try {
-      const { output } = await generateText({
+      const { output, usage } = await generateText({
         model: llmModel as Parameters<typeof generateText>[0]['model'],
         maxRetries: 0,
         output: Output.object({
@@ -255,15 +268,20 @@ ${chunkContent}`;
         temperature: 0.5,
       });
 
+      const tokenUsage: TokenUsage = {
+        inputTokens: usage.inputTokens ?? 0,
+        outputTokens: usage.outputTokens ?? 0,
+      };
+
       if (output.questions.length === 0) {
         this.logger.error('LLM returned no questions');
-        return [];
+        return { questions: [], usage: tokenUsage, modelId };
       }
 
       this.logger.log(
         `Generated ${output.questions.length} questions for chunk "${chunkName}"`
       );
-      return output.questions;
+      return { questions: output.questions, usage: tokenUsage, modelId };
     } catch (err) {
       this.logger.error(`LLM generation failed: ${err}`);
       throw err;

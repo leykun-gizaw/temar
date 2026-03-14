@@ -30,17 +30,22 @@ import {
 import { toast } from 'sonner';
 import type { AiSettings, AiProvider } from '@/lib/actions/ai-settings';
 import {
-  MODEL_CONFIGS,
-  OPERATION_CONFIGS,
-  getPassCost,
   DEFAULT_MODEL_ID,
   type OperationType,
-} from '@/lib/config/ai-operations';
+  type ModelConfig,
+} from '@temar/shared-types';
 import {
   saveAiSettings,
   clearAiApiKey,
   saveMaxQuestionReviews,
 } from '@/lib/actions/ai-settings';
+
+const OP_LABELS: Record<string, string> = {
+  question_generation: 'Question Generation',
+  answer_analysis: 'Answer Analysis',
+  chunk_enhancement: 'Chunk Enhancement',
+  content_generation: 'Content Generation',
+};
 
 const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
   {
@@ -62,12 +67,14 @@ const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
 
 export function AiSettingsForm({
   initialSettings,
+  modelConfigs,
+  passCosts,
 }: {
   initialSettings: AiSettings;
+  modelConfigs: ModelConfig[];
+  passCosts: Record<string, Record<string, number>>;
 }) {
-  const defaultModel = MODEL_CONFIGS.find(
-    (m) => m.modelId === DEFAULT_MODEL_ID
-  );
+  const defaultModel = modelConfigs.find((m) => m.modelId === DEFAULT_MODEL_ID);
   const [provider, setProvider] = useState<AiProvider>(
     initialSettings.provider ?? defaultModel?.provider ?? 'google'
   );
@@ -82,7 +89,7 @@ export function AiSettingsForm({
   );
   const [isPending, startTransition] = useTransition();
 
-  const providerModels = MODEL_CONFIGS.filter((m) => m.provider === provider);
+  const providerModels = modelConfigs.filter((m) => m.provider === provider);
   const effectiveModel = model || DEFAULT_MODEL_ID;
   const isByokActive = useByok && (hasExistingKey || !!apiKey);
 
@@ -98,7 +105,7 @@ export function AiSettingsForm({
   const handleProviderChange = (value: string) => {
     const p = value as AiProvider;
     setProvider(p);
-    const firstModel = MODEL_CONFIGS.find((m) => m.provider === p);
+    const firstModel = modelConfigs.find((m) => m.provider === p);
     setModel(firstModel?.modelId ?? '');
   };
 
@@ -259,11 +266,11 @@ export function AiSettingsForm({
             ) : (
               <div className="space-y-1">
                 {CURRENT_OPS.map((op) => {
-                  const cfg = OPERATION_CONFIGS[op];
-                  const cost = getPassCost(op, effectiveModel);
+                  const cost = passCosts[effectiveModel]?.[op] ?? 1;
+                  const label = OP_LABELS[op];
                   return (
                     <div key={op} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{cfg.label}</span>
+                      <span className="text-muted-foreground">{label}</span>
                       <span className="font-medium tabular-nums">
                         {cost} Pass
                       </span>
@@ -272,15 +279,15 @@ export function AiSettingsForm({
                 })}
                 <div className="border-t pt-2 mt-2">
                   {FUTURE_OPS.map((op) => {
-                    const cfg = OPERATION_CONFIGS[op];
-                    const cost = getPassCost(op, effectiveModel);
+                    const cost = passCosts[effectiveModel]?.[op] ?? 1;
+                    const label = OP_LABELS[op];
                     return (
                       <div
                         key={op}
                         className="flex justify-between text-sm opacity-50"
                       >
                         <span className="text-muted-foreground">
-                          {cfg.label} (coming soon)
+                          {label} (coming soon)
                         </span>
                         <span className="font-medium tabular-nums">
                           {cost} Pass

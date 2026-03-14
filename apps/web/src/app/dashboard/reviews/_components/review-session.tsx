@@ -286,8 +286,7 @@ export default function ReviewSession({
       const result: AnalyzeAnswerResult = await analyzeAnswer(...baseArgs);
       if (result.status === 'success') {
         setAnalysis(result.data);
-        if (result.newBalance != null)
-          notifyPassBalanceChanged(result.newBalance);
+        notifyPassBalanceChanged();
       } else if (result.status === 'consent_required') {
         setAnalysisConsent({
           estimatedPassCost: result.estimatedPassCost,
@@ -325,8 +324,7 @@ export default function ReviewSession({
       );
       if (result.status === 'success') {
         setAnalysis(result.data);
-        if (result.newBalance != null)
-          notifyPassBalanceChanged(result.newBalance);
+        notifyPassBalanceChanged();
       } else if (result.status === 'insufficient_pass') {
         setAnalysisError(
           `Not enough Pass (have ${result.balance}, need ${result.required}). Top up in billing.`

@@ -6,11 +6,33 @@ import {
   SecuritySettings,
 } from './_components/account-settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  getActiveModels,
+  computePassCost,
+  type OperationType,
+} from '@/lib/config/ai-operations';
 
 export const dynamic = 'force-dynamic';
 
+const ALL_OPS: OperationType[] = [
+  'question_generation',
+  'answer_analysis',
+  'chunk_enhancement',
+  'content_generation',
+];
+
 export default async function SettingsPage() {
   const aiSettings = await getAiSettings();
+  const modelConfigs = await getActiveModels();
+
+  // Pre-compute pass costs for every model × operation
+  const passCosts: Record<string, Record<string, number>> = {};
+  for (const m of modelConfigs) {
+    passCosts[m.modelId] = {};
+    for (const op of ALL_OPS) {
+      passCosts[m.modelId][op] = await computePassCost(m.modelId, op);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6 max-w-2xl">
@@ -37,7 +59,11 @@ export default async function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="ai" className="mt-6 space-y-6">
-          <AiSettingsForm initialSettings={aiSettings} />
+          <AiSettingsForm
+            initialSettings={aiSettings}
+            modelConfigs={modelConfigs}
+            passCosts={passCosts}
+          />
           <DangerZone />
         </TabsContent>
       </Tabs>

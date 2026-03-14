@@ -34,12 +34,14 @@ export class GenerationController {
     provider?: string,
     model?: string,
     apiKey?: string,
+    byok?: string
   ): AiConfig | undefined {
     if (!provider && !model && !apiKey) return undefined;
     return {
       ...(provider && { provider }),
       ...(model && { model }),
       ...(apiKey && { apiKey }),
+      byok: byok === 'true',
     };
   }
 
@@ -54,16 +56,17 @@ export class GenerationController {
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
     @Headers('x-ai-api-key') aiApiKey?: string,
-    @Body() body?: { questionTypes?: string[]; questionCount?: number },
+    @Headers('x-byok') byok?: string,
+    @Body() body?: { questionTypes?: string[]; questionCount?: number }
   ) {
     this.requireUserId(userId);
-    const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey);
+    const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey, byok);
     return this.generationService.generateForChunk(
       chunkId,
       userId,
       aiConfig,
       body?.questionTypes as any,
-      body?.questionCount,
+      body?.questionCount
     );
   }
 
@@ -91,13 +94,13 @@ export class GenerationController {
       chunkIds: string[];
       questionTypes?: string[];
       questionCount?: number;
-    },
+    }
   ) {
     this.requireUserId(userId);
     if (!Array.isArray(body.chunkIds) || body.chunkIds.length === 0) {
       throw new HttpException(
         'chunkIds must be a non-empty array',
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST
       );
     }
     return this.generationService.generateBatch(
@@ -105,7 +108,7 @@ export class GenerationController {
       userId,
       undefined,
       body.questionTypes as any,
-      body.questionCount,
+      body.questionCount
     );
   }
 
@@ -120,16 +123,17 @@ export class GenerationController {
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
     @Headers('x-ai-api-key') aiApiKey?: string,
-    @Body() body?: { questionTypes?: string[]; questionCount?: number },
+    @Headers('x-byok') byok?: string,
+    @Body() body?: { questionTypes?: string[]; questionCount?: number }
   ) {
     this.requireUserId(userId);
-    const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey);
+    const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey, byok);
     return this.generationService.retryChunk(
       chunkId,
       userId,
       aiConfig,
       body?.questionTypes as any,
-      body?.questionCount,
+      body?.questionCount
     );
   }
 
@@ -142,15 +146,16 @@ export class GenerationController {
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
     @Headers('x-ai-api-key') aiApiKey?: string,
-    @Body() body?: { questionTypes?: string[]; questionCount?: number },
+    @Headers('x-byok') byok?: string,
+    @Body() body?: { questionTypes?: string[]; questionCount?: number }
   ) {
     this.requireUserId(userId);
-    const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey);
+    const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey, byok);
     return this.generationService.retryAllFailed(
       userId,
       aiConfig,
       body?.questionTypes as any,
-      body?.questionCount,
+      body?.questionCount
     );
   }
 
@@ -161,7 +166,7 @@ export class GenerationController {
   @Get('status/:chunkId')
   async getStatus(
     @Param('chunkId') chunkId: string,
-    @Headers('x-user-id') userId: string,
+    @Headers('x-user-id') userId: string
   ) {
     this.requireUserId(userId);
     return this.generationService.getStatus(chunkId, userId);
@@ -171,7 +176,7 @@ export class GenerationController {
     if (!userId) {
       throw new HttpException(
         'x-user-id header is required',
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST
       );
     }
   }

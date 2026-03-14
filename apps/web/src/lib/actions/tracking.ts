@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { fsrsServiceFetch } from '../fsrs-service';
-import { getUserAiConfig } from './ai-settings';
-import { checkPassAvailability, deductPass } from './pass';
+import { getUserAiConfig, getAiSettings } from './ai-settings';
+import { checkPassAvailability } from './pass';
 import { dbClient, chunk, eq } from '@temar/db-client';
 import type { AiProvider } from '@/lib/config/ai-operations';
 import { DEFAULT_MODEL_ID } from '@/lib/config/ai-operations';
@@ -21,11 +21,13 @@ export type TrackResult<T = unknown> =
 
 async function getAiHeaders(): Promise<Record<string, string>> {
   const config = await getUserAiConfig();
-  if (!config) return {};
+  const settings = await getAiSettings();
+  const isByok = settings.useByok && settings.hasApiKey;
   return {
-    ...(config.provider && { 'x-ai-provider': config.provider }),
-    ...(config.model && { 'x-ai-model': config.model }),
-    ...(config.apiKey && { 'x-ai-api-key': config.apiKey }),
+    ...(config?.provider && { 'x-ai-provider': config.provider }),
+    ...(config?.model && { 'x-ai-model': config.model }),
+    ...(config?.apiKey && { 'x-ai-api-key': config.apiKey }),
+    'x-byok': isByok ? 'true' : 'false',
   };
 }
 
@@ -78,14 +80,9 @@ export async function trackTopic(
       ...(Object.keys(body).length > 0 && { body }),
     });
 
-    const { newBalance } = await deductPass(
-      'question_generation',
-      passCheck.passToDeduct
-    );
-
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/materials');
-    return { status: 'success', data, newBalance };
+    return { status: 'success', data };
   } catch (err) {
     return {
       status: 'error',
@@ -121,14 +118,9 @@ export async function trackNote(
       ...(Object.keys(body).length > 0 && { body }),
     });
 
-    const { newBalance } = await deductPass(
-      'question_generation',
-      passCheck.passToDeduct
-    );
-
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/materials');
-    return { status: 'success', data, newBalance };
+    return { status: 'success', data };
   } catch (err) {
     return {
       status: 'error',
@@ -172,14 +164,9 @@ export async function trackChunk(
       ...(Object.keys(body).length > 0 && { body }),
     });
 
-    const { newBalance } = await deductPass(
-      'question_generation',
-      passCheck.passToDeduct
-    );
-
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/materials');
-    return { status: 'success', data, newBalance };
+    return { status: 'success', data };
   } catch (err) {
     return {
       status: 'error',
@@ -354,13 +341,8 @@ export async function regenerateChunkQuestions(
       headers: aiHeaders,
     });
 
-    const { newBalance } = await deductPass(
-      'question_generation',
-      passCheck.passToDeduct
-    );
-
     revalidatePath('/dashboard');
-    return { status: 'success', data, newBalance };
+    return { status: 'success', data };
   } catch (err) {
     return {
       status: 'error',

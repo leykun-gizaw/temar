@@ -11,6 +11,8 @@ import {
   sql,
 } from '@temar/db-client';
 import { LlmService, AiConfig, QuestionType } from './llm.service';
+export type { TokenUsage } from './llm.service';
+import { recordUsage } from '@temar/pricing-service';
 import { createEmptyCard } from 'ts-fsrs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -93,13 +95,17 @@ export class QuestionGenerationService {
       // Generate questions via LLM with exponential backoff + jitter
       const MAX_RETRIES = 5;
       const BASE_DELAY_MS = 5_000;
-      let questions: Awaited<
+      let llmResult: Awaited<
         ReturnType<typeof this.llmService.generateQuestions>
-      > = [];
+      > = {
+        questions: [],
+        usage: { inputTokens: 0, outputTokens: 0 },
+        modelId: '',
+      };
 
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
-          questions = await this.llmService.generateQuestions(
+          llmResult = await this.llmService.generateQuestions(
             content,
             chunkRow.name,
             chunkRow.noteName,
@@ -138,6 +144,8 @@ export class QuestionGenerationService {
         }
       }
 
+      const { questions, usage, modelId } = llmResult;
+
       if (questions.length === 0) {
         await dbClient
           .update(chunkTracking)
@@ -161,25 +169,27 @@ export class QuestionGenerationService {
       const card = createEmptyCard();
       const generatedAt = new Date();
 
-      const recallItemValues = questions.map((q) => ({
-        chunkId,
-        userId,
-        questionTitle: q.title,
-        questionText: q.question,
-        answerRubric: q.rubric,
-        questionType: q.questionType,
-        generationBatchId: batchId,
-        state: card.state,
-        due: card.due,
-        stability: card.stability,
-        difficulty: card.difficulty,
-        scheduledDays: card.scheduled_days,
-        reps: card.reps,
-        lapses: card.lapses,
-        learningSteps: card.learning_steps,
-        lastReview: card.last_review ?? null,
-        createdAt: generatedAt,
-      }));
+      const recallItemValues = questions.map(
+        (q: (typeof questions)[number]) => ({
+          chunkId,
+          userId,
+          questionTitle: q.title,
+          questionText: q.question,
+          answerRubric: q.rubric,
+          questionType: q.questionType,
+          generationBatchId: batchId,
+          state: card.state,
+          due: card.due,
+          stability: card.stability,
+          difficulty: card.difficulty,
+          scheduledDays: card.scheduled_days,
+          reps: card.reps,
+          lapses: card.lapses,
+          learningSteps: card.learning_steps,
+          lastReview: card.last_review ?? null,
+          createdAt: generatedAt,
+        })
+      );
 
       const inserted = await dbClient
         .insert(recallItem)
@@ -206,11 +216,25 @@ export class QuestionGenerationService {
         `Generated ${questions.length} questions for chunk ${chunkId} (batch ${batchId})`
       );
 
+      // Record usage and deduct passes (fire-and-forget, don't block response)
+      const isByok = aiConfig?.byok ?? false;
+      recordUsage({
+        userId,
+        modelId,
+        operationType: 'question_generation',
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        isByok,
+      }).catch((err: unknown) =>
+        this.logger.error(`recordUsage failed for chunk ${chunkId}: ${err}`)
+      );
+
       return {
         chunkId,
         batchId,
         questionsGenerated: questions.length,
         recallItemIds: inserted.map((r) => r.id),
+        usage,
       };
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);

@@ -17,9 +17,7 @@ const analysisSchema = z.object({
   weaknesses: z
     .array(z.string())
     .describe('Specific weaknesses or missing elements in the answer'),
-  reasoning: z
-    .string()
-    .describe('Brief explanation of the overall assessment'),
+  reasoning: z.string().describe('Brief explanation of the overall assessment'),
 });
 
 export type AnalysisOutput = z.infer<typeof analysisSchema>;
@@ -28,6 +26,12 @@ export type AiConfig = {
   provider?: string;
   model?: string;
   apiKey?: string;
+  byok?: boolean;
+};
+
+export type TokenUsage = {
+  inputTokens: number;
+  outputTokens: number;
 };
 
 const DEFAULT_MODELS: Record<string, string> = {
@@ -40,7 +44,10 @@ const DEFAULT_MODELS: Record<string, string> = {
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
 
-  private resolveModel(config?: AiConfig) {
+  private resolveModel(config?: AiConfig): {
+    model: ReturnType<ReturnType<typeof createGoogleGenerativeAI>>;
+    modelId: string;
+  } {
     const provider = config?.provider || process.env.AI_PROVIDER || 'google';
     const modelId =
       config?.model ||
@@ -53,20 +60,20 @@ export class LlmService {
         const openai = createOpenAI(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return openai(modelId);
+        return { model: openai(modelId) as any, modelId };
       }
       case 'anthropic': {
         const anthropic = createAnthropic(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return anthropic(modelId);
+        return { model: anthropic(modelId) as any, modelId };
       }
       case 'google':
       default: {
         const google = createGoogleGenerativeAI(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return google(modelId);
+        return { model: google(modelId), modelId };
       }
     }
   }
@@ -78,8 +85,8 @@ export class LlmService {
     criteria: string[],
     keyPoints: string[],
     aiConfig?: AiConfig
-  ): Promise<AnalysisOutput> {
-    const llmModel = this.resolveModel(aiConfig);
+  ): Promise<{ analysis: AnalysisOutput; usage: TokenUsage; modelId: string }> {
+    const { model: llmModel, modelId } = this.resolveModel(aiConfig);
 
     const systemPrompt = `You are a precise, fair grading assistant for a spaced-repetition study system.
 
@@ -113,7 +120,7 @@ ${keyPoints.map((k, i) => `${i + 1}. ${k}`).join('\n')}
 ${answer}`;
 
     try {
-      const { output } = await generateText({
+      const { output, usage } = await generateText({
         model: llmModel as Parameters<typeof generateText>[0]['model'],
         maxRetries: 0,
         output: Output.object({
@@ -127,7 +134,14 @@ ${answer}`;
       this.logger.log(
         `Analysis complete for "${questionTitle}": ${output.scorePercent}%`
       );
-      return output;
+      return {
+        analysis: output,
+        usage: {
+          inputTokens: usage.inputTokens ?? 0,
+          outputTokens: usage.outputTokens ?? 0,
+        },
+        modelId,
+      };
     } catch (err) {
       this.logger.error(`LLM analysis failed: ${err}`);
       throw err;

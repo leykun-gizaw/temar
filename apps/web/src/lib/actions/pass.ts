@@ -12,11 +12,12 @@ import { getLoggedInUser } from '@/lib/fetchers/users';
 import { revalidatePath } from 'next/cache';
 import type { OperationType } from '@/lib/config/ai-operations';
 import {
-  getPassCost,
   isByokFree,
   estimateInputTokens,
+  computePassCost,
   estimatedPassCostFromTokens,
-  OPERATION_CONFIGS,
+  getOperationConfig,
+  getActiveModels,
 } from '@/lib/config/ai-operations';
 
 // ---------------------------------------------------------------------------
@@ -155,19 +156,22 @@ export async function checkPassAvailability(
 
   const hasApiKey = !!userRow?.aiApiKeyEncrypted;
   const useByok = userRow?.useByok ?? false;
-  const byokFree = isByokFree(operationType, hasApiKey, useByok);
+  const byokFree = await isByokFree(operationType, hasApiKey, useByok);
 
   if (byokFree) {
     return { status: 'ok', passToDeduct: 0, isByok: true };
   }
 
-  const basePassCost = getPassCost(operationType, modelId);
+  const basePassCost = await computePassCost(modelId, operationType);
   const inputTokens = estimateInputTokens(inputText, provider);
-  const estimatedCost = estimatedPassCostFromTokens(
-    inputTokens,
-    operationType,
-    modelId
-  );
+
+  const models = await getActiveModels();
+  const modelCfg = models.find((m) => m.modelId === modelId);
+  const opCfg = await getOperationConfig(operationType);
+  const estimatedCost =
+    modelCfg && opCfg
+      ? estimatedPassCostFromTokens(inputTokens, operationType, modelCfg, opCfg)
+      : basePassCost;
 
   const requiredCost = consentedPassCost ?? estimatedCost;
 
@@ -229,9 +233,7 @@ export async function deductPass(
       userId: sessionUser.id,
       delta: -passToDeduct,
       operationType,
-      description: `Used for ${
-        OPERATION_CONFIGS[operationType]?.label ?? operationType
-      }`,
+      description: `Used for ${operationType.replace(/_/g, ' ')}`,
     });
   });
 

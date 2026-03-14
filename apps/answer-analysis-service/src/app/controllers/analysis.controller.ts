@@ -6,21 +6,14 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiHeader,
-  ApiSecurity,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiHeader, ApiSecurity } from '@nestjs/swagger';
 import { AnswerAnalysisService } from '../services/answer-analysis.service';
 import type { AiConfig } from '../services/llm.service';
 
 @ApiTags('Analysis')
 @Controller('analyze')
 export class AnalysisController {
-  constructor(
-    private readonly answerAnalysisService: AnswerAnalysisService
-  ) {}
+  constructor(private readonly answerAnalysisService: AnswerAnalysisService) {}
 
   @ApiOperation({ summary: 'Analyze a user answer against a question rubric' })
   @ApiHeader({
@@ -35,6 +28,7 @@ export class AnalysisController {
     @Headers('x-ai-provider') aiProvider?: string,
     @Headers('x-ai-model') aiModel?: string,
     @Headers('x-ai-api-key') aiApiKey?: string,
+    @Headers('x-byok') byok?: string,
     @Body()
     body?: {
       answer: string;
@@ -70,6 +64,7 @@ export class AnalysisController {
             ...(aiProvider && { provider: aiProvider }),
             ...(aiModel && { model: aiModel }),
             ...(aiApiKey && { apiKey: aiApiKey }),
+            byok: byok === 'true',
           }
         : undefined;
 
@@ -81,7 +76,8 @@ export class AnalysisController {
         criteria: body.criteria,
         keyPoints: body.keyPoints,
       },
-      aiConfig
+      aiConfig,
+      userId
     );
   }
 }
