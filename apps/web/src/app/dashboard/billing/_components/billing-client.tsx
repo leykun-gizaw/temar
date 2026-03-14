@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Script from 'next/script';
+import {
+  type Environments,
+  type Paddle,
+  initializePaddle,
+} from '@paddle/paddle-js';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,22 +26,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PassTransaction } from '@/lib/actions/pass';
-
-declare global {
-  interface Window {
-    Paddle?: {
-      Environment: { set: (env: string) => void };
-      Setup: (opts: { token: string }) => void;
-      Checkout: {
-        open: (opts: {
-          items: { priceId: string; quantity: number }[];
-          customData?: Record<string, string>;
-          settings?: { successUrl?: string };
-        }) => void;
-      };
-    };
-  }
-}
 
 interface TopupPack {
   id: string;
@@ -61,7 +49,7 @@ const PLAN_BADGE_VARIANT: Record<string, string> = {
 
 interface PaddleConfig {
   clientToken: string;
-  environment: string;
+  environment: Environments;
   starterPriceId: string;
   scholarPriceId: string;
   topupPacks: TopupPack[];
@@ -84,29 +72,32 @@ export function BillingClient({
 }: BillingClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
-  const [paddleReady, setPaddleReady] = useState(false);
-
-  const initPaddle = useCallback(() => {
-    if (!window.Paddle) return;
-    if (paddleConfig.environment === 'sandbox') {
-      window.Paddle.Environment.set('sandbox');
-    }
-    window.Paddle.Setup({ token: paddleConfig.clientToken });
-    setPaddleReady(true);
-  }, [paddleConfig.clientToken, paddleConfig.environment]);
+  const [paddle, setPaddle] = useState<Paddle | null>(null);
 
   useEffect(() => {
-    if (window.Paddle) initPaddle();
-  }, [initPaddle]);
+    if (paddle?.Initialized) return;
+    if (!paddleConfig.clientToken) return;
+
+    initializePaddle({
+      token: paddleConfig.clientToken,
+      environment: paddleConfig.environment,
+    }).then((instance) => {
+      if (instance) {
+        setPaddle(instance);
+      }
+    });
+  }, [paddle?.Initialized, paddleConfig.clientToken, paddleConfig.environment]);
+
+  const paddleReady = !!paddle?.Initialized;
 
   const openCheckout = (
     priceId: string,
     customData?: Record<string, string>,
     packId?: string
   ) => {
-    if (!window.Paddle || !paddleReady) return;
+    if (!paddle || !paddleReady) return;
     setLoading(packId ?? 'checkout');
-    window.Paddle.Checkout.open({
+    paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
       customData: { userId, ...customData },
       settings: {
@@ -136,11 +127,6 @@ export function BillingClient({
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
-      <Script
-        src="https://cdn.paddle.com/paddle/v2/paddle.js"
-        onLoad={initPaddle}
-      />
-
       <div>
         <h1 className="text-2xl font-bold">Billing &amp; Pass</h1>
         <p className="text-muted-foreground mt-1">

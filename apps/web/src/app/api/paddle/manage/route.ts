@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { paddle } from '@/lib/paddle';
+import { getPaddleInstance } from '@/lib/paddle';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { dbClient, user, eq } from '@temar/db-client';
 
@@ -23,6 +23,7 @@ export async function POST() {
   }
 
   try {
+    const paddle = getPaddleInstance();
     const subscription = await paddle.subscriptions.get(
       userRow.paddleSubscriptionId
     );
