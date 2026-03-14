@@ -48,6 +48,7 @@ import {
   retryAllFailedGenerations,
 } from '@/lib/actions/tracking';
 import { cn } from '@/lib/utils';
+import { notifyPassBalanceChanged } from '@/lib/pass-events';
 
 const STATUS_CONFIG: Record<
   TrackingItem['status'],
@@ -144,6 +145,9 @@ export default function GenerationQueueCard({
           );
           return;
         }
+        if (result.status === 'success' && result.newBalance != null) {
+          notifyPassBalanceChanged(result.newBalance);
+        }
         await new Promise((r) => setTimeout(r, 1000));
         const updated = await getTrackingStatus();
         setItems(updated);
@@ -173,6 +177,9 @@ export default function GenerationQueueCard({
           `Not enough Pass (have ${result.balance}, need ${result.required}).`
         );
         return;
+      }
+      if (result.status === 'success' && result.newBalance != null) {
+        notifyPassBalanceChanged(result.newBalance);
       }
       await new Promise((r) => setTimeout(r, 1500));
       const updated = await getTrackingStatus();

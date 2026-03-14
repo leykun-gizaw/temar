@@ -28,6 +28,7 @@ import {
   untrackNote,
   untrackChunk,
 } from '@/lib/actions/tracking';
+import { notifyPassBalanceChanged } from '@/lib/pass-events';
 
 const QUESTION_TYPES = [
   {
@@ -123,6 +124,8 @@ export default function TrackingButton({
         }
         if (result.status === 'success') {
           setTracked(true);
+          if (result.newBalance != null)
+            notifyPassBalanceChanged(result.newBalance);
         } else if (result.status === 'consent_required') {
           setConsentState({
             estimatedPassCost: result.estimatedPassCost,

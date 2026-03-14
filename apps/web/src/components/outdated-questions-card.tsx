@@ -35,6 +35,7 @@ import {
 import type { OutdatedChunk } from '@/lib/actions/tracking';
 import { regenerateChunkQuestions } from '@/lib/actions/tracking';
 import { cn } from '@/lib/utils';
+import { notifyPassBalanceChanged } from '@/lib/pass-events';
 import Link from 'next/link';
 
 export default function OutdatedQuestionsCard({
@@ -102,6 +103,8 @@ export default function OutdatedQuestionsCard({
         );
         if (result.status === 'success') {
           setChunks((prev) => prev.filter((c) => c.chunkId !== chunkId));
+          if (result.newBalance != null)
+            notifyPassBalanceChanged(result.newBalance);
         } else if (result.status === 'consent_required') {
           setConsentState({
             estimatedPassCost: result.estimatedPassCost,

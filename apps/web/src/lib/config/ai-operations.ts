@@ -4,74 +4,97 @@ export type OperationType =
   | 'chunk_enhancement'
   | 'content_generation';
 
-export type ModelTier = 'economy' | 'standard' | 'premium';
-
 export type AiProvider = 'google' | 'openai' | 'anthropic';
 
 export interface ModelConfig {
   provider: AiProvider;
   modelId: string;
   label: string;
-  tier: ModelTier;
+  inputPricePer1M: number; // USD per 1M input tokens
+  outputPricePer1M: number; // USD per 1M output tokens
 }
 
 export interface OperationConfig {
   label: string;
   maxInputTokens: number;
   maxOutputTokens: number;
-  passCost: Record<ModelTier, number>;
-  byokCurrentFeature: boolean;
+  isCurrentFeature: boolean;
 }
 
+// Cost basis per Pass (platform cost, not revenue).
+// Starter plan: $9.99 / 200 Pass ≈ $0.05 revenue per Pass.
+// We use ~$0.005 cost basis to allow a healthy margin.
+const COST_PER_PASS = 0.005;
+
+// Default model when user has no preference
+export const DEFAULT_MODEL_ID = 'gemini-3-flash';
+
 export const MODEL_CONFIGS: ModelConfig[] = [
+  // ── Google ──
   {
     provider: 'google',
-    modelId: 'gemini-2.0-flash',
-    label: 'Gemini 2.0 Flash',
-    tier: 'economy',
+    modelId: 'gemini-3-flash',
+    label: 'Gemini 3 Flash',
+    inputPricePer1M: 0.1,
+    outputPricePer1M: 0.4,
   },
   {
     provider: 'google',
     modelId: 'gemini-2.5-flash',
     label: 'Gemini 2.5 Flash',
-    tier: 'economy',
+    inputPricePer1M: 0.15,
+    outputPricePer1M: 0.6,
   },
   {
     provider: 'google',
     modelId: 'gemini-2.5-pro',
     label: 'Gemini 2.5 Pro',
-    tier: 'premium',
+    inputPricePer1M: 1.25,
+    outputPricePer1M: 10.0,
   },
+  // ── OpenAI ──
   {
     provider: 'openai',
     modelId: 'gpt-4.1-nano',
     label: 'GPT-4.1 Nano',
-    tier: 'economy',
-  },
-  {
-    provider: 'openai',
-    modelId: 'gpt-4o-mini',
-    label: 'GPT-4o Mini',
-    tier: 'economy',
+    inputPricePer1M: 0.1,
+    outputPricePer1M: 0.4,
   },
   {
     provider: 'openai',
     modelId: 'gpt-4.1-mini',
     label: 'GPT-4.1 Mini',
-    tier: 'standard',
+    inputPricePer1M: 0.4,
+    outputPricePer1M: 1.6,
   },
-  { provider: 'openai', modelId: 'gpt-4o', label: 'GPT-4o', tier: 'standard' },
+  {
+    provider: 'openai',
+    modelId: 'gpt-4.1',
+    label: 'GPT-4.1',
+    inputPricePer1M: 2.0,
+    outputPricePer1M: 8.0,
+  },
+  {
+    provider: 'openai',
+    modelId: 'o4-mini',
+    label: 'o4-mini',
+    inputPricePer1M: 1.1,
+    outputPricePer1M: 4.4,
+  },
+  // ── Anthropic ──
   {
     provider: 'anthropic',
     modelId: 'claude-haiku-4-20250414',
     label: 'Claude Haiku 4',
-    tier: 'standard',
+    inputPricePer1M: 0.8,
+    outputPricePer1M: 4.0,
   },
   {
     provider: 'anthropic',
     modelId: 'claude-sonnet-4-20250514',
     label: 'Claude Sonnet 4',
-    tier: 'premium',
+    inputPricePer1M: 3.0,
+    outputPricePer1M: 15.0,
   },
 ];
 
@@ -80,29 +103,25 @@ export const OPERATION_CONFIGS: Record<OperationType, OperationConfig> = {
     label: 'Question Generation',
     maxInputTokens: 4000,
     maxOutputTokens: 2000,
-    passCost: { economy: 3, standard: 6, premium: 12 },
-    byokCurrentFeature: true,
+    isCurrentFeature: true,
   },
   answer_analysis: {
     label: 'Answer Analysis',
     maxInputTokens: 2000,
     maxOutputTokens: 1000,
-    passCost: { economy: 1, standard: 2, premium: 5 },
-    byokCurrentFeature: true,
+    isCurrentFeature: true,
   },
   chunk_enhancement: {
     label: 'Chunk Enhancement',
     maxInputTokens: 2000,
     maxOutputTokens: 1000,
-    passCost: { economy: 2, standard: 4, premium: 8 },
-    byokCurrentFeature: false,
+    isCurrentFeature: false,
   },
   content_generation: {
     label: 'Content Generation',
     maxInputTokens: 8000,
     maxOutputTokens: 4000,
-    passCost: { economy: 5, standard: 10, premium: 20 },
-    byokCurrentFeature: false,
+    isCurrentFeature: false,
   },
 };
 
@@ -140,22 +159,44 @@ export function getModelConfig(modelId: string): ModelConfig | undefined {
   return MODEL_CONFIGS.find((m) => m.modelId === modelId);
 }
 
+/**
+ * Calculate Pass cost for an operation + model using per-model token pricing.
+ * Formula: (inputTokens * inputPrice + outputTokens * outputPrice) / COST_PER_PASS
+ * Minimum 1 Pass.
+ */
 export function getPassCost(
   operationType: OperationType,
   modelId: string
 ): number {
   const model = getModelConfig(modelId);
   const op = OPERATION_CONFIGS[operationType];
-  if (!model || !op) return op?.passCost.economy ?? 1;
-  return op.passCost[model.tier];
+  if (!op) return 1;
+  if (!model) {
+    // Unknown model — use the default model's pricing as fallback
+    const fallback = getModelConfig(DEFAULT_MODEL_ID);
+    if (!fallback) return 1;
+    return computePassCost(fallback, op);
+  }
+  return computePassCost(model, op);
 }
 
+function computePassCost(model: ModelConfig, op: OperationConfig): number {
+  const inputCost = (op.maxInputTokens / 1_000_000) * model.inputPricePer1M;
+  const outputCost = (op.maxOutputTokens / 1_000_000) * model.outputPricePer1M;
+  return Math.max(1, Math.ceil((inputCost + outputCost) / COST_PER_PASS));
+}
+
+/**
+ * Whether the operation is free when the user provides their own API key
+ * and has opted into BYOK mode.
+ */
 export function isByokFree(
   operationType: OperationType,
-  hasApiKey: boolean
+  hasApiKey: boolean,
+  useByok: boolean
 ): boolean {
-  if (!hasApiKey) return false;
-  return OPERATION_CONFIGS[operationType]?.byokCurrentFeature ?? false;
+  if (!hasApiKey || !useByok) return false;
+  return OPERATION_CONFIGS[operationType]?.isCurrentFeature ?? false;
 }
 
 export function estimateInputTokens(
@@ -168,6 +209,10 @@ export function estimateInputTokens(
   return Math.ceil(text.length / 4);
 }
 
+/**
+ * Estimate Pass cost for a specific amount of input tokens (may exceed the
+ * base budget defined in the operation config).
+ */
 export function estimatedPassCostFromTokens(
   inputTokens: number,
   operationType: OperationType,
@@ -175,9 +220,9 @@ export function estimatedPassCostFromTokens(
 ): number {
   const model = getModelConfig(modelId);
   const op = OPERATION_CONFIGS[operationType];
-  if (!model || !op) return op?.passCost.economy ?? 1;
+  if (!model || !op) return 1;
+  const baseCost = computePassCost(model, op);
   const baseTokenBudget = op.maxInputTokens;
-  const baseCost = op.passCost[model.tier];
   if (inputTokens <= baseTokenBudget) return baseCost;
   const overageRatio = inputTokens / baseTokenBudget;
   return Math.ceil(baseCost * overageRatio);

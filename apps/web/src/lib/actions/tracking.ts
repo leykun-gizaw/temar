@@ -4,12 +4,13 @@ import { revalidatePath } from 'next/cache';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { fsrsServiceFetch } from '../fsrs-service';
 import { getUserAiConfig } from './ai-settings';
-import { checkAndDeductPass } from './pass';
+import { checkPassAvailability, deductPass } from './pass';
 import { dbClient, chunk, eq } from '@temar/db-client';
 import type { AiProvider } from '@/lib/config/ai-operations';
+import { DEFAULT_MODEL_ID } from '@/lib/config/ai-operations';
 
 export type TrackResult<T = unknown> =
-  | { status: 'success'; data: T }
+  | { status: 'success'; data: T; newBalance?: number }
   | { status: 'insufficient_pass'; balance: number; required: number }
   | {
       status: 'consent_required';
@@ -31,13 +32,13 @@ async function passCheckForGeneration(
   inputText: string,
   consentedPassCost?: number
 ): Promise<
-  { ok: true; passDeducted: number } | { ok: false; result: TrackResult }
+  { ok: true; passToDeduct: number } | { ok: false; result: TrackResult }
 > {
   const aiConfig = await getUserAiConfig();
   const provider = (aiConfig?.provider ?? 'google') as AiProvider;
-  const modelId = aiConfig?.model ?? 'gemini-2.0-flash';
+  const modelId = aiConfig?.model ?? DEFAULT_MODEL_ID;
 
-  const passResult = await checkAndDeductPass(
+  const passResult = await checkPassAvailability(
     'question_generation',
     modelId,
     inputText,
@@ -46,7 +47,7 @@ async function passCheckForGeneration(
   );
 
   if (passResult.status === 'ok') {
-    return { ok: true, passDeducted: passResult.passDeducted };
+    return { ok: true, passToDeduct: passResult.passToDeduct };
   }
   return { ok: false, result: passResult as TrackResult };
 }
@@ -75,9 +76,15 @@ export async function trackTopic(
     ...(Object.keys(body).length > 0 && { body }),
   });
 
+  // Deduct passes only after successful API call
+  const { newBalance } = await deductPass(
+    'question_generation',
+    passCheck.passToDeduct
+  );
+
   revalidatePath('/dashboard');
   revalidatePath('/dashboard/materials');
-  return { status: 'success', data };
+  return { status: 'success', data, newBalance };
 }
 
 export async function trackNote(
@@ -105,9 +112,14 @@ export async function trackNote(
     ...(Object.keys(body).length > 0 && { body }),
   });
 
+  const { newBalance } = await deductPass(
+    'question_generation',
+    passCheck.passToDeduct
+  );
+
   revalidatePath('/dashboard');
   revalidatePath('/dashboard/materials');
-  return { status: 'success', data };
+  return { status: 'success', data, newBalance };
 }
 
 export async function trackChunk(
@@ -143,9 +155,14 @@ export async function trackChunk(
     ...(Object.keys(body).length > 0 && { body }),
   });
 
+  const { newBalance } = await deductPass(
+    'question_generation',
+    passCheck.passToDeduct
+  );
+
   revalidatePath('/dashboard');
   revalidatePath('/dashboard/materials');
-  return { status: 'success', data };
+  return { status: 'success', data, newBalance };
 }
 
 export async function untrackTopic(topicId: string) {
@@ -240,8 +257,13 @@ export async function retryFailedGeneration(
     headers: aiHeaders,
   });
 
+  const { newBalance } = await deductPass(
+    'question_generation',
+    passCheck.passToDeduct
+  );
+
   revalidatePath('/dashboard');
-  return { status: 'success', data };
+  return { status: 'success', data, newBalance };
 }
 
 export async function retryAllFailedGenerations(
@@ -260,8 +282,13 @@ export async function retryAllFailedGenerations(
     headers: aiHeaders,
   });
 
+  const { newBalance } = await deductPass(
+    'question_generation',
+    passCheck.passToDeduct
+  );
+
   revalidatePath('/dashboard');
-  return { status: 'success', data };
+  return { status: 'success', data, newBalance };
 }
 
 export interface OutdatedChunk {
@@ -311,8 +338,13 @@ export async function regenerateChunkQuestions(
     headers: aiHeaders,
   });
 
+  const { newBalance } = await deductPass(
+    'question_generation',
+    passCheck.passToDeduct
+  );
+
   revalidatePath('/dashboard');
-  return { status: 'success', data };
+  return { status: 'success', data, newBalance };
 }
 
 export interface UnderperformingChunk {
