@@ -4,12 +4,20 @@
     "default": {
       "runner": "nx/task-runners/default",
       "options": {
-        "cacheableOperations": ["build", "test", "lint", "e2e"]
+        "cacheableOperations": [
+          "build",
+          "test",
+          "lint",
+          "e2e"
+        ]
       }
     }
   },
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
     "production": [
       "default",
       "!{projectRoot}/cypress/**/*",
@@ -77,7 +85,10 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/api-e2e/**/*", "apps/notion_sync-service-e2e/**/*"]
+      "exclude": [
+        "apps/api-e2e/**/*",
+        "apps/notion_sync-service-e2e/**/*"
+      ]
     },
     {
       "plugin": "@nx/webpack/plugin",
@@ -117,12 +128,19 @@
   ],
   "targetDefaults": {
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     },
     "@nx/js:tsc": {
       "cache": true,
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
     }
   },
   "generators": {
@@ -150,7 +168,9 @@
         }
       },
       "frontend": {
-        "projects": ["web"]
+        "projects": [
+          "web"
+        ]
       }
     }
   }

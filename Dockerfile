@@ -18,6 +18,7 @@ COPY apps/notion_sync-service/package.json apps/notion_sync-service/
 COPY apps/fsrs-service/package.json apps/fsrs-service/
 COPY apps/question-gen-service/package.json apps/question-gen-service/
 COPY apps/answer-analysis-service/package.json apps/answer-analysis-service/
+COPY apps/admin/package.json apps/admin/
 COPY libs/db-client/package.json libs/db-client/
 COPY libs/pricing-service/package.json libs/pricing-service/
 COPY libs/shared-types/package.json libs/shared-types/
@@ -89,6 +90,16 @@ COPY libs/db-client ./libs/db-client
 RUN rm -rf node_modules/@temar libs/pricing-service/tsconfig*.json libs/shared-types/tsconfig*.json libs/db-client/tsconfig*.json
 # Build 'answer-analysis-service'
 RUN NX_DAEMON=false pnpm nx build answer-analysis-service --prod
+
+FROM deps AS admin-builder
+COPY apps/admin ./apps/admin
+COPY tsconfig.base.json ./
+COPY eslint.config.mjs ./
+COPY libs/db-client ./libs/db-client
+COPY libs/pricing-service ./libs/pricing-service
+COPY libs/shared-types ./libs/shared-types
+RUN rm -rf node_modules/@temar
+RUN NX_DAEMON=false pnpm nx build admin --prod --verbose
 
 # ----------------------------------------------
 
@@ -205,7 +216,29 @@ USER analysisuser
 EXPOSE 3336
 CMD [ "node", "main.js" ]
 
-# STAGE 10: Migration Service Runner
+# STAGE 10: Admin Panel Production Runner (Next.js)
+FROM base AS admin-service
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1006 nodejs && adduser --system --uid 1006 adminjs
+
+COPY --from=admin-builder --chown=adminjs:nodejs /app/dist/apps/admin/.next/standalone ./
+COPY --from=admin-builder --chown=adminjs:nodejs /app/dist/apps/admin/public ./apps/admin/public
+COPY --from=admin-builder --chown=adminjs:nodejs /app/dist/apps/admin/.next/static ./dist/apps/admin/.next/static
+
+USER adminjs
+
+EXPOSE 3000
+ENV PORT=3000
+
+WORKDIR /app/apps/admin
+
+CMD ["node", "server.js"]
+
+# ----------------------------------------------
+
+# STAGE 11: Migration Service Runner
 FROM base AS migration
 COPY libs/db-client/package.json ./
 RUN pnpm install
