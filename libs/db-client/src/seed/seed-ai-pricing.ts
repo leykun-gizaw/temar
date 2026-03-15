@@ -2,8 +2,9 @@
  * Idempotent seed script for AI pricing tables.
  * Run: pnpm nx run db-client:seed
  */
-import dotenv from 'dotenv';
-dotenv.config({ path: __dirname + '/../../../.env' });
+import { config } from 'dotenv';
+import path from 'path';
+config({ path: path.resolve(process.cwd(), '.env') });
 
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
@@ -36,8 +37,16 @@ const MODELS = [
   { id: 'gpt-4.1-mini', provider: 'openai', label: 'GPT-4.1 Mini' },
   { id: 'gpt-4.1', provider: 'openai', label: 'GPT-4.1' },
   { id: 'o4-mini', provider: 'openai', label: 'o4-mini' },
-  { id: 'claude-haiku-4-20250414', provider: 'anthropic', label: 'Claude Haiku 4' },
-  { id: 'claude-sonnet-4-20250514', provider: 'anthropic', label: 'Claude Sonnet 4' },
+  {
+    id: 'claude-haiku-4-20250414',
+    provider: 'anthropic',
+    label: 'Claude Haiku 4',
+  },
+  {
+    id: 'claude-sonnet-4-20250514',
+    provider: 'anthropic',
+    label: 'Claude Sonnet 4',
+  },
 ];
 
 const PRICING: Record<string, { input: number; output: number }> = {
@@ -59,10 +68,34 @@ const PRICING: Record<string, { input: number; output: number }> = {
 const DEFAULT_MARKUP = 1.0;
 
 const OPERATIONS = [
-  { operationType: 'question_generation', label: 'Question Generation', maxInputTokens: 4000, maxOutputTokens: 2000, isCurrentFeature: true },
-  { operationType: 'answer_analysis', label: 'Answer Analysis', maxInputTokens: 2000, maxOutputTokens: 1000, isCurrentFeature: true },
-  { operationType: 'chunk_enhancement', label: 'Chunk Enhancement', maxInputTokens: 2000, maxOutputTokens: 1000, isCurrentFeature: false },
-  { operationType: 'content_generation', label: 'Content Generation', maxInputTokens: 8000, maxOutputTokens: 4000, isCurrentFeature: false },
+  {
+    operationType: 'question_generation',
+    label: 'Question Generation',
+    maxInputTokens: 4000,
+    maxOutputTokens: 2000,
+    isCurrentFeature: true,
+  },
+  {
+    operationType: 'answer_analysis',
+    label: 'Answer Analysis',
+    maxInputTokens: 2000,
+    maxOutputTokens: 1000,
+    isCurrentFeature: true,
+  },
+  {
+    operationType: 'chunk_enhancement',
+    label: 'Chunk Enhancement',
+    maxInputTokens: 2000,
+    maxOutputTokens: 1000,
+    isCurrentFeature: false,
+  },
+  {
+    operationType: 'content_generation',
+    label: 'Content Generation',
+    maxInputTokens: 8000,
+    maxOutputTokens: 4000,
+    isCurrentFeature: false,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -74,10 +107,7 @@ async function seed() {
 
   // 1. Models
   for (const m of MODELS) {
-    await db
-      .insert(aiModel)
-      .values(m)
-      .onConflictDoNothing();
+    await db.insert(aiModel).values(m).onConflictDoNothing();
   }
   console.log(`  ✓ ${MODELS.length} models`);
 
@@ -111,10 +141,7 @@ async function seed() {
 
   // 4. Operation configs
   for (const op of OPERATIONS) {
-    await db
-      .insert(operationConfig)
-      .values(op)
-      .onConflictDoNothing();
+    await db.insert(operationConfig).values(op).onConflictDoNothing();
   }
   console.log(`  ✓ ${OPERATIONS.length} operation configs`);
 

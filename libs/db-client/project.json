@@ -17,7 +17,7 @@
       "options": { "cwd": "." }
     },
     "seed": {
-      "command": "pnpm tsx {projectRoot}/src/seed/seed-ai-pricing.ts",
+      "command": "pnpm exec tsx {projectRoot}/src/seed/seed-ai-pricing.ts",
       "options": { "cwd": "." }
     }
   }
