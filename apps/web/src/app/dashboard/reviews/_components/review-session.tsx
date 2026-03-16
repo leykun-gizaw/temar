@@ -410,6 +410,7 @@ export default function ReviewSession({
         removeFromLocalStorage(currentItem.id);
         answersRef.current.delete(currentItem.id);
         // Clear draft from DB (fire-and-forget)
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         saveAnswerDraft(currentItem.id, null).catch(() => {});
         setCompletedCount((c) => c + 1);
         setReviewedIds((prev) => new Set(prev).add(currentItem.id));
