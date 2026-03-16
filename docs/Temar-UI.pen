@@ -1,0 +1,1720 @@
+{
+  "version": "2.8",
+  "children": [
+    {
+      "type": "frame",
+      "id": "pg-home",
+      "x": 0,
+      "y": 0,
+      "name": "Homepage",
+      "clip": true,
+      "width": 1440,
+      "height": 2400,
+      "fill": "#09090B",
+      "layout": "vertical",
+      "gap": 0,
+      "children": [
+        {
+          "type": "frame",
+          "id": "home-nav",
+          "name": "SiteNavbar",
+          "width": 1440,
+          "height": 56,
+          "fill": "#09090B",
+          "layout": "horizontal",
+          "padding": 16,
+          "justifyContent": "space-between",
+          "alignItems": "center",
+          "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+          "children": [
+            {
+              "type": "text",
+              "id": "home-logo",
+              "content": "Temar",
+              "fontSize": 20,
+              "fontWeight": 700,
+              "textColor": "#FAFAFA"
+            },
+            {
+              "type": "frame",
+              "id": "home-nav-links",
+              "layout": "horizontal",
+              "gap": 24,
+              "fill": "transparent",
+              "children": [
+                { "type": "text", "id": "nav-feat", "content": "Features", "fontSize": 14, "textColor": "#A1A1AA" },
+                { "type": "text", "id": "nav-meth", "content": "Methodology", "fontSize": 14, "textColor": "#A1A1AA" },
+                { "type": "text", "id": "nav-price", "content": "Pricing", "fontSize": 14, "textColor": "#A1A1AA" }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "home-nav-auth",
+              "layout": "horizontal",
+              "gap": 12,
+              "fill": "transparent",
+              "children": [
+                { "type": "text", "id": "nav-signin", "content": "Sign In", "fontSize": 14, "textColor": "#A1A1AA" },
+                {
+                  "type": "frame",
+                  "id": "nav-signup-btn",
+                  "width": 90,
+                  "height": 32,
+                  "fill": "#6366F1",
+                  "cornerRadius": 6,
+                  "layout": "none",
+                  "children": [
+                    { "type": "text", "id": "nav-signup-txt", "content": "Sign Up", "fontSize": 13, "fontWeight": 600, "textColor": "#FFFFFF", "x": 18, "y": 7 }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "home-hero",
+          "name": "Hero Section",
+          "width": 1440,
+          "height": 700,
+          "fill": "#09090B",
+          "layout": "none",
+          "children": [
+            {
+              "type": "rectangle",
+              "id": "hero-3d-bg",
+              "name": "3D Knowledge Network BG",
+              "x": 600,
+              "y": 0,
+              "width": 840,
+              "height": 700,
+              "fill": "#1a1a2e",
+              "cornerRadius": 0,
+              "opacity": 0.4
+            },
+            {
+              "type": "rectangle",
+              "id": "hero-gradient",
+              "name": "Gradient Overlay",
+              "x": 0,
+              "y": 0,
+              "width": 1440,
+              "height": 700,
+              "fill": "#09090B",
+              "opacity": 0.6
+            },
+            {
+              "type": "frame",
+              "id": "hero-badge",
+              "x": 120,
+              "y": 180,
+              "width": 220,
+              "height": 28,
+              "fill": "#6366F120",
+              "cornerRadius": 14,
+              "layout": "none",
+              "children": [
+                { "type": "text", "id": "hero-badge-txt", "content": "AI-Powered Learning", "fontSize": 12, "fontWeight": 500, "textColor": "#818CF8", "x": 16, "y": 5 }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "hero-h1-1",
+              "x": 120,
+              "y": 230,
+              "content": "Master Anything",
+              "fontSize": 64,
+              "fontWeight": 700,
+              "textColor": "#FAFAFA"
+            },
+            {
+              "type": "text",
+              "id": "hero-h1-2",
+              "x": 120,
+              "y": 310,
+              "content": "with Temar",
+              "fontSize": 64,
+              "fontWeight": 700,
+              "textColor": "#6366F1"
+            },
+            {
+              "type": "text",
+              "id": "hero-sub",
+              "x": 120,
+              "y": 400,
+              "width": 500,
+              "content": "Organize your knowledge, generate AI questions, and review with spaced repetition — all in one place.",
+              "fontSize": 18,
+              "textColor": "#A1A1AA"
+            },
+            {
+              "type": "frame",
+              "id": "hero-ctas",
+              "x": 120,
+              "y": 500,
+              "layout": "horizontal",
+              "gap": 16,
+              "fill": "transparent",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "hero-cta1",
+                  "width": 160,
+                  "height": 44,
+                  "fill": "#6366F1",
+                  "cornerRadius": 8,
+                  "layout": "none",
+                  "children": [
+                    { "type": "text", "id": "cta1-txt", "content": "Get Started", "fontSize": 15, "fontWeight": 600, "textColor": "#FFFFFF", "x": 34, "y": 12 }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "hero-cta2",
+                  "width": 140,
+                  "height": 44,
+                  "fill": "transparent",
+                  "cornerRadius": 8,
+                  "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+                  "layout": "none",
+                  "children": [
+                    { "type": "text", "id": "cta2-txt", "content": "Learn More", "fontSize": 15, "fontWeight": 600, "textColor": "#FAFAFA", "x": 28, "y": 12 }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "home-pillars",
+          "name": "Core Pillars (3-col)",
+          "width": 1440,
+          "height": 320,
+          "fill": "#09090B",
+          "layout": "horizontal",
+          "gap": 24,
+          "padding": 80,
+          "justifyContent": "center",
+          "alignItems": "flex-start",
+          "children": [
+            {
+              "type": "frame",
+              "id": "pillar-1",
+              "width": 380,
+              "height": 200,
+              "fill": "#18181B",
+              "cornerRadius": 12,
+              "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+              "layout": "vertical",
+              "padding": 24,
+              "gap": 12,
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "p1-icon",
+                  "width": 40,
+                  "height": 40,
+                  "fill": "#6366F120",
+                  "cornerRadius": 8
+                },
+                { "type": "text", "id": "p1-title", "content": "Active Recall", "fontSize": 18, "fontWeight": 600, "textColor": "#FAFAFA" },
+                { "type": "text", "id": "p1-desc", "content": "AI generates questions from your notes to test understanding", "fontSize": 14, "textColor": "#A1A1AA", "width": 320 }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "pillar-2",
+              "width": 380,
+              "height": 200,
+              "fill": "#18181B",
+              "cornerRadius": 12,
+              "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+              "layout": "vertical",
+              "padding": 24,
+              "gap": 12,
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "p2-icon",
+                  "width": 40,
+                  "height": 40,
+                  "fill": "#6366F120",
+                  "cornerRadius": 8
+                },
+                { "type": "text", "id": "p2-title", "content": "Spaced Repetition", "fontSize": 18, "fontWeight": 600, "textColor": "#FAFAFA" },
+                { "type": "text", "id": "p2-desc", "content": "FSRS algorithm schedules reviews at optimal intervals", "fontSize": 14, "textColor": "#A1A1AA", "width": 320 }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "pillar-3",
+              "width": 380,
+              "height": 200,
+              "fill": "#18181B",
+              "cornerRadius": 12,
+              "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+              "layout": "vertical",
+              "padding": 24,
+              "gap": 12,
+              "children": [
+                {
+                  "type": "rectangle",
+                  "id": "p3-icon",
+                  "width": 40,
+                  "height": 40,
+                  "fill": "#6366F120",
+                  "cornerRadius": 8
+                },
+                { "type": "text", "id": "p3-title", "content": "Elaborative Encoding", "fontSize": 18, "fontWeight": 600, "textColor": "#FAFAFA" },
+                { "type": "text", "id": "p3-desc", "content": "Rich-text editor for deep, structured note-taking", "fontSize": 14, "textColor": "#A1A1AA", "width": 320 }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "home-features",
+          "name": "Feature Deep-Dives",
+          "width": 1440,
+          "height": 900,
+          "fill": "#09090B",
+          "layout": "vertical",
+          "gap": 64,
+          "padding": 80,
+          "children": [
+            {
+              "type": "frame",
+              "id": "feat-row1",
+              "name": "Feature: Hierarchy + Editor",
+              "layout": "horizontal",
+              "gap": 64,
+              "fill": "transparent",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "feat1-text",
+                  "width": 500,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "fill": "transparent",
+                  "children": [
+                    { "type": "text", "id": "f1-h2", "content": "Organize Your Knowledge", "fontSize": 32, "fontWeight": 700, "textColor": "#FAFAFA" },
+                    { "type": "text", "id": "f1-p", "content": "Structure material as Topics > Notes > Chunks. Rich-text editor with markdown, code blocks, math, diagrams.", "fontSize": 16, "textColor": "#A1A1AA", "width": 460 }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "feat1-mock",
+                  "name": "Mock Editor UI",
+                  "width": 600,
+                  "height": 350,
+                  "fill": "#18181B",
+                  "cornerRadius": 12,
+                  "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+                  "layout": "vertical",
+                  "gap": 0,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "mock-toolbar",
+                      "width": 600,
+                      "height": 40,
+                      "fill": "#27272A",
+                      "layout": "horizontal",
+                      "padding": 8,
+                      "gap": 8,
+                      "children": [
+                        { "type": "text", "id": "tb-b", "content": "B", "fontSize": 13, "fontWeight": 700, "textColor": "#A1A1AA" },
+                        { "type": "text", "id": "tb-i", "content": "I", "fontSize": 13, "textColor": "#A1A1AA" },
+                        { "type": "text", "id": "tb-u", "content": "U", "fontSize": 13, "textColor": "#A1A1AA" },
+                        { "type": "text", "id": "tb-sep", "content": "|", "fontSize": 13, "textColor": "#3F3F46" },
+                        { "type": "text", "id": "tb-h1", "content": "H1", "fontSize": 12, "textColor": "#A1A1AA" },
+                        { "type": "text", "id": "tb-h2", "content": "H2", "fontSize": 12, "textColor": "#A1A1AA" },
+                        { "type": "text", "id": "tb-code", "content": "</>", "fontSize": 12, "textColor": "#A1A1AA" }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mock-content",
+                      "width": 600,
+                      "height": 310,
+                      "fill": "#18181B",
+                      "layout": "vertical",
+                      "padding": 20,
+                      "gap": 12,
+                      "children": [
+                        { "type": "text", "id": "mc-h", "content": "Chapter 3: Neural Networks", "fontSize": 20, "fontWeight": 600, "textColor": "#FAFAFA" },
+                        { "type": "text", "id": "mc-p", "content": "A neural network consists of layers of interconnected nodes...", "fontSize": 14, "textColor": "#A1A1AA", "width": 540 },
+                        {
+                          "type": "rectangle",
+                          "id": "mc-code",
+                          "width": 540,
+                          "height": 60,
+                          "fill": "#0D0D0D",
+                          "cornerRadius": 6
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "feat-row2",
+              "name": "Feature: AI Questions",
+              "layout": "horizontal",
+              "gap": 64,
+              "fill": "transparent",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "feat2-mock",
+                  "name": "Mock Question UI",
+                  "width": 600,
+                  "height": 300,
+                  "fill": "#18181B",
+                  "cornerRadius": 12,
+                  "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+                  "layout": "vertical",
+                  "padding": 24,
+                  "gap": 16,
+                  "children": [
+                    { "type": "text", "id": "mq-label", "content": "Generated Question", "fontSize": 12, "fontWeight": 500, "textColor": "#6366F1" },
+                    { "type": "text", "id": "mq-q", "content": "Explain the role of activation functions in neural networks.", "fontSize": 16, "fontWeight": 500, "textColor": "#FAFAFA", "width": 540 },
+                    {
+                      "type": "rectangle",
+                      "id": "mq-input",
+                      "name": "Answer Input",
+                      "width": 540,
+                      "height": 100,
+                      "fill": "#0D0D0D",
+                      "cornerRadius": 8,
+                      "stroke": { "type": "solid", "color": "#27272A", "width": 1 }
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mq-btns",
+                      "layout": "horizontal",
+                      "gap": 8,
+                      "fill": "transparent",
+                      "children": [
+                        { "type": "frame", "id": "mq-analyze", "width": 90, "height": 32, "fill": "#0EA5E9", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "mqa-t", "content": "Analyze", "fontSize": 12, "fontWeight": 600, "textColor": "#FFF", "x": 18, "y": 8 }] }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "feat2-text",
+                  "width": 500,
+                  "layout": "vertical",
+                  "gap": 16,
+                  "fill": "transparent",
+                  "children": [
+                    { "type": "text", "id": "f2-h2", "content": "AI-Powered Questions", "fontSize": 32, "fontWeight": 700, "textColor": "#FAFAFA" },
+                    { "type": "text", "id": "f2-p", "content": "Generate targeted questions from your chunks. AI analyzes your answers and maps them to FSRS ratings.", "fontSize": 16, "textColor": "#A1A1AA", "width": 460 }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "home-stats",
+          "name": "Stats Grid",
+          "width": 1440,
+          "height": 200,
+          "fill": "#0D0D12",
+          "layout": "horizontal",
+          "gap": 24,
+          "padding": 80,
+          "justifyContent": "center",
+          "children": [
+            {
+              "type": "frame", "id": "stat1", "width": 250, "height": 100, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 20, "gap": 4, "alignItems": "center",
+              "children": [
+                { "type": "text", "id": "s1-val", "content": "98%", "fontSize": 28, "fontWeight": 800, "textColor": "#6366F1" },
+                { "type": "text", "id": "s1-lbl", "content": "Precision", "fontSize": 13, "textColor": "#A1A1AA" }
+              ]
+            },
+            {
+              "type": "frame", "id": "stat2", "width": 250, "height": 100, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 20, "gap": 4, "alignItems": "center",
+              "children": [
+                { "type": "text", "id": "s2-val", "content": "Fluid", "fontSize": 28, "fontWeight": 800, "textColor": "#6366F1" },
+                { "type": "text", "id": "s2-lbl", "content": "Scheduling", "fontSize": 13, "textColor": "#A1A1AA" }
+              ]
+            },
+            {
+              "type": "frame", "id": "stat3", "width": 250, "height": 100, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 20, "gap": 4, "alignItems": "center",
+              "children": [
+                { "type": "text", "id": "s3-val", "content": "Deep", "fontSize": 28, "fontWeight": 800, "textColor": "#6366F1" },
+                { "type": "text", "id": "s3-lbl", "content": "Understanding", "fontSize": 13, "textColor": "#A1A1AA" }
+              ]
+            },
+            {
+              "type": "frame", "id": "stat4", "width": 250, "height": 100, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 20, "gap": 4, "alignItems": "center",
+              "children": [
+                { "type": "text", "id": "s4-val", "content": "Clear", "fontSize": 28, "fontWeight": 800, "textColor": "#6366F1" },
+                { "type": "text", "id": "s4-lbl", "content": "Feedback", "fontSize": 13, "textColor": "#A1A1AA" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "home-footer",
+          "name": "SiteFooter",
+          "width": 1440,
+          "height": 80,
+          "fill": "#09090B",
+          "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+          "layout": "horizontal",
+          "padding": 24,
+          "justifyContent": "space-between",
+          "alignItems": "center",
+          "children": [
+            { "type": "text", "id": "ft-copy", "content": "© 2026 Temar. All rights reserved.", "fontSize": 13, "textColor": "#71717A" },
+            {
+              "type": "frame", "id": "ft-links", "layout": "horizontal", "gap": 20, "fill": "transparent",
+              "children": [
+                { "type": "text", "id": "ft-priv", "content": "Privacy", "fontSize": 13, "textColor": "#71717A" },
+                { "type": "text", "id": "ft-terms", "content": "Terms", "fontSize": 13, "textColor": "#71717A" },
+                { "type": "text", "id": "ft-refund", "content": "Refunds", "fontSize": 13, "textColor": "#71717A" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "type": "frame",
+      "id": "pg-dashboard",
+      "x": 1520,
+      "y": 0,
+      "name": "Dashboard Overview",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "#FAFAF9",
+      "layout": "horizontal",
+      "gap": 0,
+      "children": [
+        {
+          "type": "frame",
+          "id": "dash-sidebar",
+          "name": "AppSidebar (collapsed icon-only)",
+          "width": 48,
+          "height": 900,
+          "fill": "#FAFAF9",
+          "layout": "vertical",
+          "gap": 0,
+          "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 },
+          "padding": 8,
+          "alignItems": "center",
+          "children": [
+            { "type": "rectangle", "id": "sb-logo", "width": 24, "height": 24, "fill": "#18181B", "cornerRadius": 6 },
+            {
+              "type": "frame", "id": "sb-icons", "layout": "vertical", "gap": 4, "fill": "transparent", "alignItems": "center", "padding": 8,
+              "children": [
+                { "type": "rectangle", "id": "sb-i1", "name": "Home", "width": 28, "height": 28, "fill": "transparent", "cornerRadius": 6 },
+                { "type": "rectangle", "id": "sb-i2", "name": "Materials", "width": 28, "height": 28, "fill": "#F0F0F0", "cornerRadius": 6 },
+                { "type": "rectangle", "id": "sb-i3", "name": "Reviews", "width": 28, "height": 28, "fill": "transparent", "cornerRadius": 6 },
+                { "type": "rectangle", "id": "sb-i4", "name": "Schedules", "width": 28, "height": 28, "fill": "transparent", "cornerRadius": 6 },
+                { "type": "rectangle", "id": "sb-i5", "name": "Analytics", "width": 28, "height": 28, "fill": "transparent", "cornerRadius": 6 },
+                { "type": "rectangle", "id": "sb-i6", "name": "Billing", "width": 28, "height": 28, "fill": "transparent", "cornerRadius": 6 },
+                { "type": "rectangle", "id": "sb-i7", "name": "Settings", "width": 28, "height": 28, "fill": "transparent", "cornerRadius": 6 },
+                { "type": "rectangle", "id": "sb-i8", "name": "Trash", "width": 28, "height": 28, "fill": "transparent", "cornerRadius": 6 }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "dash-main",
+          "name": "Main Content Area",
+          "width": 1392,
+          "height": 900,
+          "fill": "#FAFAF9",
+          "layout": "vertical",
+          "gap": 0,
+          "children": [
+            {
+              "type": "frame",
+              "id": "dash-header",
+              "name": "SiteHeader",
+              "width": 1392,
+              "height": 48,
+              "fill": "#FAFAF9",
+              "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 },
+              "layout": "horizontal",
+              "padding": 12,
+              "justifyContent": "space-between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame", "id": "dh-left", "layout": "horizontal", "gap": 8, "fill": "transparent", "alignItems": "center",
+                  "children": [
+                    { "type": "rectangle", "id": "dh-trigger", "name": "Sidebar Toggle", "width": 20, "height": 20, "fill": "#D4D4D8", "cornerRadius": 4 },
+                    { "type": "text", "id": "dh-sep", "content": "|", "fontSize": 16, "textColor": "#D4D4D8" },
+                    { "type": "rectangle", "id": "dh-back", "name": "Back Arrow", "width": 20, "height": 20, "fill": "#D4D4D8", "cornerRadius": 4 },
+                    { "type": "rectangle", "id": "dh-fwd", "name": "Forward Arrow", "width": 20, "height": 20, "fill": "#D4D4D8", "cornerRadius": 4 }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "dh-right", "layout": "horizontal", "gap": 12, "fill": "transparent", "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame", "id": "dh-pass", "width": 80, "height": 28, "fill": "#F0F0F0", "cornerRadius": 14, "layout": "none",
+                      "children": [
+                        { "type": "text", "id": "dh-pass-t", "content": "200", "fontSize": 12, "fontWeight": 500, "textColor": "#52525B", "x": 30, "y": 6 }
+                      ]
+                    },
+                    { "type": "ellipse", "id": "dh-avatar", "width": 28, "height": 28, "fill": "#D4D4D8" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "dash-grid",
+              "name": "Overview Grid (5col x 5row)",
+              "width": 1392,
+              "height": 852,
+              "fill": "#FAFAF9",
+              "layout": "none",
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame", "id": "due-items", "name": "Due Items Card", "x": 16, "y": 16, "width": 200, "height": 100, "fill": "transparent", "layout": "vertical", "gap": 8,
+                  "children": [
+                    { "type": "text", "id": "di-title", "content": "Due Items", "fontSize": 18, "fontWeight": 700, "textColor": "#18181B" },
+                    { "type": "text", "id": "di-sub", "content": "Recall items for you to review now", "fontSize": 12, "textColor": "#71717A" },
+                    {
+                      "type": "frame", "id": "di-chip", "width": 130, "height": 32, "fill": "#F0F0F0", "cornerRadius": 16, "layout": "horizontal", "padding": 8, "gap": 6, "alignItems": "center",
+                      "children": [
+                        { "type": "ellipse", "id": "di-chip-ico", "width": 16, "height": 16, "fill": "#D4D4D8" },
+                        { "type": "text", "id": "di-chip-txt", "content": "Introduction", "fontSize": 12, "textColor": "#52525B" }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "stat-topics", "name": "Topics Stat", "x": 228, "y": 16, "width": 170, "height": 80, "fill": "#FFFFFF", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 }, "layout": "none", "padding": 14,
+                  "children": [
+                    { "type": "text", "id": "st-ico-lbl", "content": "Topics", "fontSize": 13, "textColor": "#52525B", "x": 30, "y": 12 },
+                    { "type": "text", "id": "st-val", "content": "1", "fontSize": 28, "fontWeight": 700, "textColor": "#18181B", "x": 130, "y": 6 },
+                    { "type": "text", "id": "st-sub", "content": "1 chunk tracked", "fontSize": 11, "textColor": "#A1A1AA", "x": 14, "y": 52 }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "stat-notes", "name": "Notes Stat", "x": 410, "y": 16, "width": 170, "height": 80, "fill": "#FFFFFF", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 }, "layout": "none", "padding": 14,
+                  "children": [
+                    { "type": "text", "id": "sn-ico-lbl", "content": "Notes", "fontSize": 13, "textColor": "#52525B", "x": 30, "y": 12 },
+                    { "type": "text", "id": "sn-val", "content": "1", "fontSize": 28, "fontWeight": 700, "textColor": "#18181B", "x": 130, "y": 6 },
+                    { "type": "text", "id": "sn-sub", "content": "1 total", "fontSize": 11, "textColor": "#A1A1AA", "x": 14, "y": 52 }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "stat-chunks", "name": "Chunks Stat", "x": 592, "y": 16, "width": 170, "height": 80, "fill": "#FFFFFF", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 }, "layout": "none", "padding": 14,
+                  "children": [
+                    { "type": "text", "id": "sc-ico-lbl", "content": "Chunks", "fontSize": 13, "textColor": "#52525B", "x": 30, "y": 12 },
+                    { "type": "text", "id": "sc-val", "content": "1", "fontSize": 28, "fontWeight": 700, "textColor": "#18181B", "x": 130, "y": 6 },
+                    { "type": "text", "id": "sc-sub", "content": "1 due for review", "fontSize": 11, "textColor": "#A1A1AA", "x": 14, "y": 52 }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "stat-reviews", "name": "Reviews Stat", "x": 774, "y": 16, "width": 170, "height": 80, "fill": "#FFFFFF", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 }, "layout": "none", "padding": 14,
+                  "children": [
+                    { "type": "text", "id": "sr-ico-lbl", "content": "Reviews", "fontSize": 13, "textColor": "#52525B", "x": 30, "y": 12 },
+                    { "type": "text", "id": "sr-val", "content": "1", "fontSize": 28, "fontWeight": 700, "textColor": "#18181B", "x": 130, "y": 6 },
+                    { "type": "text", "id": "sr-sub", "content": "1 due for review", "fontSize": 11, "textColor": "#A1A1AA", "x": 14, "y": 52 }
+                  ]
+                },
+
+                {
+                  "type": "frame", "id": "card-outdated", "name": "Outdated Chunks", "x": 16, "y": 112, "width": 470, "height": 200, "fill": "#FFFFFF", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 }, "layout": "vertical", "gap": 0,
+                  "children": [
+                    {
+                      "type": "frame", "id": "co-hdr", "width": 470, "height": 40, "fill": "transparent", "layout": "horizontal", "padding": 14, "gap": 8, "alignItems": "center",
+                      "children": [
+                        { "type": "text", "id": "co-warn", "content": "⚠", "fontSize": 14, "textColor": "#EAB308" },
+                        { "type": "text", "id": "co-title", "content": "Outdated Chunks", "fontSize": 15, "fontWeight": 600, "textColor": "#18181B" }
+                      ]
+                    },
+                    {
+                      "type": "frame", "id": "co-body", "width": 470, "fill": "transparent", "layout": "vertical", "padding": 14, "gap": 6,
+                      "children": [
+                        { "type": "text", "id": "co-empty", "content": "No outdated chunks found", "fontSize": 13, "fontWeight": 500, "textColor": "#52525B" },
+                        { "type": "text", "id": "co-info1", "content": "No chunks outdated or associated recall items outdated", "fontSize": 12, "textColor": "#A1A1AA" },
+                        { "type": "text", "id": "co-info2", "content": "To learn more about outdated chunks and retired recall items,", "fontSize": 12, "textColor": "#A1A1AA" },
+                        { "type": "text", "id": "co-link", "content": "click here ↗", "fontSize": 12, "textColor": "#6366F1" }
+                      ]
+                    }
+                  ]
+                },
+
+                {
+                  "type": "frame", "id": "card-underperf", "name": "Underperforming Chunks", "x": 498, "y": 112, "width": 470, "height": 200, "fill": "#FFFFFF", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 }, "layout": "vertical", "gap": 0,
+                  "children": [
+                    {
+                      "type": "frame", "id": "cu-hdr", "width": 470, "height": 40, "fill": "transparent", "layout": "horizontal", "padding": 14, "gap": 8, "alignItems": "center",
+                      "children": [
+                        { "type": "text", "id": "cu-warn", "content": "⚠", "fontSize": 14, "textColor": "#EAB308" },
+                        { "type": "text", "id": "cu-title", "content": "Underperforming Chunks", "fontSize": 15, "fontWeight": 600, "textColor": "#18181B" }
+                      ]
+                    },
+                    { "type": "text", "id": "cu-desc", "content": "Chunks you struggle with most.", "fontSize": 12, "textColor": "#71717A", "x": 14, "y": 42 },
+                    {
+                      "type": "frame", "id": "cu-filters", "width": 470, "fill": "transparent", "layout": "horizontal", "padding": 14, "gap": 16,
+                      "children": [
+                        {
+                          "type": "frame", "id": "cu-lapse", "layout": "vertical", "fill": "transparent", "gap": 4,
+                          "children": [
+                            {
+                              "type": "frame", "id": "cu-lapse-lbl", "layout": "horizontal", "fill": "transparent", "gap": 4, "alignItems": "center",
+                              "children": [
+                                { "type": "text", "id": "cu-ll", "content": "Lapse threshold", "fontSize": 12, "fontWeight": 500, "textColor": "#52525B" },
+                                { "type": "ellipse", "id": "cu-li", "width": 14, "height": 14, "fill": "#E5E5E5" }
+                              ]
+                            },
+                            {
+                              "type": "frame", "id": "cu-lapse-input", "width": 180, "height": 32, "fill": "#FFFFFF", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#D4D4D8", "width": 1 }, "layout": "none",
+                              "children": [
+                                { "type": "text", "id": "cu-lv", "content": "2", "fontSize": 13, "textColor": "#18181B", "x": 10, "y": 7 }
+                              ]
+                            },
+                            { "type": "text", "id": "cu-lh", "content": "Show chunks with ≥ 2 lapses", "fontSize": 11, "textColor": "#A1A1AA" }
+                          ]
+                        },
+                        {
+                          "type": "frame", "id": "cu-stab", "layout": "vertical", "fill": "transparent", "gap": 4,
+                          "children": [
+                            {
+                              "type": "frame", "id": "cu-stab-lbl", "layout": "horizontal", "fill": "transparent", "gap": 4, "alignItems": "center",
+                              "children": [
+                                { "type": "text", "id": "cu-sl", "content": "Stability threshold", "fontSize": 12, "fontWeight": 500, "textColor": "#52525B" },
+                                { "type": "ellipse", "id": "cu-si", "width": 14, "height": 14, "fill": "#E5E5E5" }
+                              ]
+                            },
+                            {
+                              "type": "frame", "id": "cu-stab-input", "width": 180, "height": 32, "fill": "#FFFFFF", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#D4D4D8", "width": 1 }, "layout": "none",
+                              "children": [
+                                { "type": "text", "id": "cu-sv", "content": "1", "fontSize": 13, "textColor": "#18181B", "x": 10, "y": 7 }
+                              ]
+                            },
+                            { "type": "text", "id": "cu-sh", "content": "Show chunks with stability < 1 days", "fontSize": 11, "textColor": "#A1A1AA" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+
+                {
+                  "type": "frame", "id": "card-recall-items", "name": "Recall Items Table", "x": 16, "y": 328, "width": 952, "height": 508, "fill": "#FFFFFF", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 }, "layout": "vertical", "gap": 0,
+                  "children": [
+                    {
+                      "type": "frame", "id": "ri-hdr", "width": 952, "height": 44, "fill": "transparent", "layout": "horizontal", "padding": 14, "justifyContent": "space-between", "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame", "id": "ri-hdr-left", "layout": "vertical", "fill": "transparent", "gap": 2,
+                          "children": [
+                            { "type": "text", "id": "ri-title", "content": "Recall Items", "fontSize": 15, "fontWeight": 600, "textColor": "#18181B" },
+                            { "type": "text", "id": "ri-count", "content": "4 tracked items", "fontSize": 12, "textColor": "#71717A" }
+                          ]
+                        },
+                        {
+                          "type": "frame", "id": "ri-hdr-right", "layout": "horizontal", "fill": "transparent", "gap": 8, "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame", "id": "ri-search", "width": 220, "height": 32, "fill": "#FFFFFF", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#D4D4D8", "width": 1 }, "layout": "none",
+                              "children": [
+                                { "type": "text", "id": "ri-search-ph", "content": "Search all recall items...", "fontSize": 12, "textColor": "#A1A1AA", "x": 10, "y": 8 }
+                              ]
+                            },
+                            { "type": "rectangle", "id": "ri-ai-btn", "name": "AI Button", "width": 32, "height": 32, "fill": "#18181B", "cornerRadius": 6 }
+                          ]
+                        }
+                      ]
+                    },
+
+                    {
+                      "type": "frame", "id": "ri-cols", "width": 952, "height": 36, "fill": "#F9F9F9", "layout": "horizontal", "padding": 14, "gap": 0, "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 },
+                      "children": [
+                        { "type": "text", "id": "ri-c1", "content": "Item", "fontSize": 12, "fontWeight": 500, "textColor": "#71717A", "x": 0 },
+                        { "type": "text", "id": "ri-c2", "content": "State", "fontSize": 12, "fontWeight": 500, "textColor": "#71717A", "x": 320 },
+                        { "type": "text", "id": "ri-c3", "content": "Reps", "fontSize": 12, "fontWeight": 500, "textColor": "#71717A", "x": 390 },
+                        { "type": "text", "id": "ri-c4", "content": "Retrievability", "fontSize": 12, "fontWeight": 500, "textColor": "#71717A", "x": 440 },
+                        { "type": "text", "id": "ri-c5", "content": "Due", "fontSize": 12, "fontWeight": 500, "textColor": "#71717A", "x": 610 },
+                        { "type": "text", "id": "ri-c6", "content": "Actions", "fontSize": 12, "fontWeight": 500, "textColor": "#71717A", "x": 810 }
+                      ]
+                    },
+
+                    {
+                      "type": "frame", "id": "ri-row1", "width": 952, "height": 56, "fill": "transparent", "layout": "none", "padding": 14, "stroke": { "type": "solid", "color": "#F0F0F0", "width": 1 },
+                      "children": [
+                        { "type": "text", "id": "r1-name", "content": "Implement Queue with Two Stacks", "fontSize": 13, "textColor": "#18181B", "x": 14, "y": 8 },
+                        { "type": "text", "id": "r1-path", "content": "Data Structures & Algorithms > ADTs & Data Structures", "fontSize": 11, "textColor": "#A1A1AA", "x": 14, "y": 28 },
+                        {
+                          "type": "frame", "id": "r1-state", "x": 334, "y": 14, "width": 40, "height": 22, "fill": "#DBEAFE", "cornerRadius": 4, "layout": "none",
+                          "children": [
+                            { "type": "text", "id": "r1-st", "content": "New", "fontSize": 11, "fontWeight": 500, "textColor": "#3B82F6", "x": 8, "y": 4 }
+                          ]
+                        },
+                        { "type": "text", "id": "r1-reps", "content": "0", "fontSize": 13, "textColor": "#52525B", "x": 404, "y": 14 },
+                        {
+                          "type": "frame", "id": "r1-retbar", "x": 454, "y": 18, "width": 120, "height": 6, "fill": "#E5E5E5", "cornerRadius": 3, "layout": "none",
+                          "children": [
+                            { "type": "rectangle", "id": "r1-retfill", "width": 0, "height": 6, "fill": "#22C55E", "cornerRadius": 3 }
+                          ]
+                        },
+                        { "type": "text", "id": "r1-retpct", "content": "0%", "fontSize": 12, "textColor": "#A1A1AA", "x": 580, "y": 14 },
+                        { "type": "text", "id": "r1-due", "content": "3/16/2026, 1:59:46 PM", "fontSize": 12, "textColor": "#EF4444", "x": 624, "y": 14 },
+                        { "type": "rectangle", "id": "r1-play", "name": "Play Button", "x": 824, "y": 12, "width": 28, "height": 28, "fill": "#F0F0F0", "cornerRadius": 6 }
+                      ]
+                    },
+
+                    {
+                      "type": "frame", "id": "ri-row2", "width": 952, "height": 56, "fill": "transparent", "layout": "none", "padding": 14, "stroke": { "type": "solid", "color": "#F0F0F0", "width": 1 },
+                      "children": [
+                        { "type": "text", "id": "r2-name", "content": "Stack ADT Axioms", "fontSize": 13, "textColor": "#18181B", "x": 14, "y": 8 },
+                        { "type": "text", "id": "r2-path", "content": "Data Structures & Algorithms > ADTs & Data Structures", "fontSize": 11, "textColor": "#A1A1AA", "x": 14, "y": 28 },
+                        {
+                          "type": "frame", "id": "r2-state", "x": 334, "y": 14, "width": 55, "height": 22, "fill": "#FEF9C3", "cornerRadius": 4, "layout": "none",
+                          "children": [
+                            { "type": "text", "id": "r2-st", "content": "Review", "fontSize": 11, "fontWeight": 500, "textColor": "#CA8A04", "x": 6, "y": 4 }
+                          ]
+                        },
+                        { "type": "text", "id": "r2-reps", "content": "2", "fontSize": 13, "textColor": "#52525B", "x": 404, "y": 14 },
+                        {
+                          "type": "frame", "id": "r2-retbar", "x": 454, "y": 18, "width": 120, "height": 6, "fill": "#E5E5E5", "cornerRadius": 3, "layout": "none",
+                          "children": [
+                            { "type": "rectangle", "id": "r2-retfill", "width": 84, "height": 6, "fill": "#22C55E", "cornerRadius": 3 }
+                          ]
+                        },
+                        { "type": "text", "id": "r2-retpct", "content": "70%", "fontSize": 12, "textColor": "#A1A1AA", "x": 580, "y": 14 },
+                        { "type": "text", "id": "r2-due", "content": "3/18/2026, 2:28:53 PM", "fontSize": 12, "textColor": "#52525B", "x": 624, "y": 14 },
+                        { "type": "rectangle", "id": "r2-play", "name": "Play Button", "x": 824, "y": 12, "width": 28, "height": 28, "fill": "#F0F0F0", "cornerRadius": 6 }
+                      ]
+                    },
+
+                    {
+                      "type": "frame", "id": "ri-row3", "width": 952, "height": 56, "fill": "transparent", "layout": "none", "padding": 14, "stroke": { "type": "solid", "color": "#F0F0F0", "width": 1 },
+                      "children": [
+                        { "type": "text", "id": "r3-name", "content": "ADT vs Data Structure Explanation", "fontSize": 13, "textColor": "#18181B", "x": 14, "y": 8 },
+                        { "type": "text", "id": "r3-path", "content": "Data Structures & Algorithms > ADTs & Data Structures", "fontSize": 11, "textColor": "#A1A1AA", "x": 14, "y": 28 },
+                        {
+                          "type": "frame", "id": "r3-state", "x": 334, "y": 14, "width": 55, "height": 22, "fill": "#FEF9C3", "cornerRadius": 4, "layout": "none",
+                          "children": [
+                            { "type": "text", "id": "r3-st", "content": "Review", "fontSize": 11, "fontWeight": 500, "textColor": "#CA8A04", "x": 6, "y": 4 }
+                          ]
+                        },
+                        { "type": "text", "id": "r3-reps", "content": "1", "fontSize": 13, "textColor": "#52525B", "x": 404, "y": 14 },
+                        {
+                          "type": "frame", "id": "r3-retbar", "x": 454, "y": 18, "width": 120, "height": 6, "fill": "#E5E5E5", "cornerRadius": 3, "layout": "none",
+                          "children": [
+                            { "type": "rectangle", "id": "r3-retfill", "width": 107, "height": 6, "fill": "#22C55E", "cornerRadius": 3 }
+                          ]
+                        },
+                        { "type": "text", "id": "r3-retpct", "content": "89%", "fontSize": 12, "textColor": "#A1A1AA", "x": 580, "y": 14 },
+                        { "type": "text", "id": "r3-due", "content": "3/24/2026, 2:02:15 PM", "fontSize": 12, "textColor": "#52525B", "x": 624, "y": 14 },
+                        { "type": "rectangle", "id": "r3-play", "name": "Play Button", "x": 824, "y": 12, "width": 28, "height": 28, "fill": "#F0F0F0", "cornerRadius": 6 }
+                      ]
+                    },
+
+                    {
+                      "type": "frame", "id": "ri-row4", "width": 952, "height": 56, "fill": "transparent", "layout": "none", "padding": 14, "stroke": { "type": "solid", "color": "#F0F0F0", "width": 1 },
+                      "children": [
+                        { "type": "text", "id": "r4-name", "content": "ADT Implementation Choice", "fontSize": 13, "textColor": "#18181B", "x": 14, "y": 8 },
+                        { "type": "text", "id": "r4-path", "content": "Data Structures & Algorithms > ADTs & Data Structures", "fontSize": 11, "textColor": "#A1A1AA", "x": 14, "y": 28 },
+                        {
+                          "type": "frame", "id": "r4-state", "x": 334, "y": 14, "width": 55, "height": 22, "fill": "#FEF9C3", "cornerRadius": 4, "layout": "none",
+                          "children": [
+                            { "type": "text", "id": "r4-st", "content": "Review", "fontSize": 11, "fontWeight": 500, "textColor": "#CA8A04", "x": 6, "y": 4 }
+                          ]
+                        },
+                        { "type": "text", "id": "r4-reps", "content": "1", "fontSize": 13, "textColor": "#52525B", "x": 404, "y": 14 },
+                        {
+                          "type": "frame", "id": "r4-retbar", "x": 454, "y": 18, "width": 120, "height": 6, "fill": "#E5E5E5", "cornerRadius": 3, "layout": "none",
+                          "children": [
+                            { "type": "rectangle", "id": "r4-retfill", "width": 107, "height": 6, "fill": "#22C55E", "cornerRadius": 3 }
+                          ]
+                        },
+                        { "type": "text", "id": "r4-retpct", "content": "89%", "fontSize": 12, "textColor": "#A1A1AA", "x": 580, "y": 14 },
+                        { "type": "text", "id": "r4-due", "content": "3/24/2026, 2:04:50 PM", "fontSize": 12, "textColor": "#52525B", "x": 624, "y": 14 },
+                        { "type": "rectangle", "id": "r4-play", "name": "Play Button", "x": 824, "y": 12, "width": 28, "height": 28, "fill": "#F0F0F0", "cornerRadius": 6 }
+                      ]
+                    }
+                  ]
+                },
+
+                {
+                  "type": "frame", "id": "card-schedule", "name": "Reviews Schedule", "x": 984, "y": 16, "width": 376, "height": 540, "fill": "#FFFFFF", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 }, "layout": "vertical", "gap": 0,
+                  "children": [
+                    {
+                      "type": "frame", "id": "sch-hdr", "width": 376, "height": 50, "fill": "transparent", "layout": "horizontal", "padding": 14, "justifyContent": "space-between", "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame", "id": "sch-hdr-left", "layout": "vertical", "fill": "transparent", "gap": 2,
+                          "children": [
+                            { "type": "text", "id": "sch-title", "content": "Reviews Schedule", "fontSize": 15, "fontWeight": 600, "textColor": "#18181B" },
+                            { "type": "text", "id": "sch-sub", "content": "1 review due", "fontSize": 12, "textColor": "#71717A" }
+                          ]
+                        },
+                        { "type": "rectangle", "id": "sch-cal-btn", "name": "Calendar Icon", "width": 28, "height": 28, "fill": "#F0F0F0", "cornerRadius": 6 }
+                      ]
+                    },
+                    {
+                      "type": "frame", "id": "sch-week", "name": "Week Strip", "width": 376, "fill": "transparent", "layout": "vertical", "padding": 14, "gap": 8,
+                      "children": [
+                        { "type": "text", "id": "sch-month", "content": "Mar 2026", "fontSize": 14, "fontWeight": 600, "textColor": "#18181B" },
+                        {
+                          "type": "frame", "id": "sch-days", "layout": "horizontal", "fill": "transparent", "gap": 4, "justifyContent": "center",
+                          "children": [
+                            {
+                              "type": "frame", "id": "sch-d1", "width": 44, "height": 52, "fill": "#166534", "cornerRadius": 8, "layout": "vertical", "alignItems": "center", "justifyContent": "center", "gap": 2,
+                              "children": [
+                                { "type": "text", "id": "sd1-n", "content": "16", "fontSize": 16, "fontWeight": 700, "textColor": "#FFFFFF" },
+                                { "type": "text", "id": "sd1-d", "content": "Mon", "fontSize": 10, "textColor": "#FFFFFF" }
+                              ]
+                            },
+                            {
+                              "type": "frame", "id": "sch-d2", "width": 44, "height": 52, "fill": "transparent", "cornerRadius": 8, "layout": "vertical", "alignItems": "center", "justifyContent": "center", "gap": 2,
+                              "children": [
+                                { "type": "text", "id": "sd2-n", "content": "17", "fontSize": 16, "fontWeight": 600, "textColor": "#52525B" },
+                                { "type": "text", "id": "sd2-d", "content": "Tue", "fontSize": 10, "textColor": "#A1A1AA" }
+                              ]
+                            },
+                            {
+                              "type": "frame", "id": "sch-d3", "width": 44, "height": 52, "fill": "transparent", "cornerRadius": 8, "layout": "vertical", "alignItems": "center", "justifyContent": "center", "gap": 2,
+                              "children": [
+                                { "type": "text", "id": "sd3-n", "content": "18", "fontSize": 16, "fontWeight": 600, "textColor": "#52525B" },
+                                { "type": "text", "id": "sd3-d", "content": "Wed", "fontSize": 10, "textColor": "#A1A1AA" }
+                              ]
+                            },
+                            {
+                              "type": "frame", "id": "sch-d4", "width": 44, "height": 52, "fill": "transparent", "cornerRadius": 8, "layout": "vertical", "alignItems": "center", "justifyContent": "center", "gap": 2,
+                              "children": [
+                                { "type": "text", "id": "sd4-n", "content": "19", "fontSize": 16, "fontWeight": 600, "textColor": "#52525B" },
+                                { "type": "text", "id": "sd4-d", "content": "Thu", "fontSize": 10, "textColor": "#A1A1AA" }
+                              ]
+                            },
+                            {
+                              "type": "frame", "id": "sch-d5", "width": 44, "height": 52, "fill": "transparent", "cornerRadius": 8, "layout": "vertical", "alignItems": "center", "justifyContent": "center", "gap": 2,
+                              "children": [
+                                { "type": "text", "id": "sd5-n", "content": "20", "fontSize": 16, "fontWeight": 600, "textColor": "#52525B" },
+                                { "type": "text", "id": "sd5-d", "content": "Fri", "fontSize": 10, "textColor": "#A1A1AA" }
+                              ]
+                            },
+                            {
+                              "type": "frame", "id": "sch-d6", "width": 44, "height": 52, "fill": "transparent", "cornerRadius": 8, "layout": "vertical", "alignItems": "center", "justifyContent": "center", "gap": 2,
+                              "children": [
+                                { "type": "text", "id": "sd6-n", "content": "21", "fontSize": 16, "fontWeight": 600, "textColor": "#D4D4D8" },
+                                { "type": "text", "id": "sd6-d", "content": "Sat", "fontSize": 10, "textColor": "#D4D4D8" }
+                              ]
+                            },
+                            {
+                              "type": "frame", "id": "sch-d7", "width": 44, "height": 52, "fill": "transparent", "cornerRadius": 8, "layout": "vertical", "alignItems": "center", "justifyContent": "center", "gap": 2,
+                              "children": [
+                                { "type": "text", "id": "sd7-n", "content": "22", "fontSize": 16, "fontWeight": 600, "textColor": "#D4D4D8" },
+                                { "type": "text", "id": "sd7-d", "content": "Sun", "fontSize": 10, "textColor": "#D4D4D8" }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame", "id": "sch-timeline", "name": "Day Timeline", "width": 376, "fill": "transparent", "layout": "vertical", "padding": 14, "gap": 4,
+                      "children": [
+                        { "type": "text", "id": "sch-t1", "content": "14:00", "fontSize": 11, "textColor": "#A1A1AA" },
+                        {
+                          "type": "frame", "id": "sch-ev1", "width": 340, "height": 60, "fill": "#DCFCE7", "cornerRadius": 6, "layout": "vertical", "padding": 8, "gap": 2, "stroke": { "type": "solid", "color": "#22C55E", "width": 2 },
+                          "children": [
+                            { "type": "text", "id": "sche1-t", "content": "Implement Queue with Two Stacks", "fontSize": 12, "fontWeight": 500, "textColor": "#166534" },
+                            { "type": "text", "id": "sche1-r1", "content": "Reviewed (Easy)", "fontSize": 11, "textColor": "#22C55E" },
+                            { "type": "text", "id": "sche1-r2", "content": "Reviewed (Good)", "fontSize": 11, "fontWeight": 600, "textColor": "#166534" },
+                            { "type": "text", "id": "sche1-r3", "content": "Reviewed (Easy)", "fontSize": 11, "textColor": "#22C55E" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+
+                {
+                  "type": "frame", "id": "card-genqueue", "name": "Question Generation", "x": 984, "y": 572, "width": 376, "height": 264, "fill": "#FFFFFF", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#E5E5E5", "width": 1 }, "layout": "vertical", "gap": 0,
+                  "children": [
+                    {
+                      "type": "frame", "id": "gq-hdr", "width": 376, "height": 44, "fill": "transparent", "layout": "horizontal", "padding": 14, "justifyContent": "space-between", "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame", "id": "gq-hdr-left", "layout": "horizontal", "fill": "transparent", "gap": 6, "alignItems": "center",
+                          "children": [
+                            { "type": "text", "id": "gq-ico", "content": "✧", "fontSize": 16, "textColor": "#18181B" },
+                            { "type": "text", "id": "gq-title", "content": "Question Generation", "fontSize": 15, "fontWeight": 600, "textColor": "#18181B" }
+                          ]
+                        },
+                        { "type": "rectangle", "id": "gq-refresh", "name": "Refresh", "width": 24, "height": 24, "fill": "#F0F0F0", "cornerRadius": 4 }
+                      ]
+                    },
+                    {
+                      "type": "frame", "id": "gq-status", "width": 376, "fill": "transparent", "layout": "horizontal", "padding": 14, "gap": 8,
+                      "children": [
+                        { "type": "text", "id": "gq-ready", "content": "1 ready", "fontSize": 12, "textColor": "#22C55E" }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "type": "frame",
+      "id": "pg-materials",
+      "x": 0,
+      "y": 2500,
+      "name": "Dashboard Materials",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "#09090B",
+      "layout": "horizontal",
+      "gap": 0,
+      "children": [
+        {
+          "type": "frame",
+          "id": "mat-sidebar-nav",
+          "name": "AppSidebar (collapsed indicator)",
+          "width": 48,
+          "height": 900,
+          "fill": "#0D0D12",
+          "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+          "layout": "vertical",
+          "padding": 8,
+          "gap": 8,
+          "alignItems": "center",
+          "children": [
+            { "type": "rectangle", "id": "ms-logo", "width": 28, "height": 28, "fill": "#6366F1", "cornerRadius": 6 }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "mat-tree",
+          "name": "Tree Sidebar (280px)",
+          "width": 280,
+          "height": 900,
+          "fill": "#18181B",
+          "cornerRadius": 12,
+          "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+          "layout": "vertical",
+          "gap": 0,
+          "children": [
+            {
+              "type": "frame", "id": "mt-hdr", "width": 280, "height": 40, "fill": "#27272A30", "layout": "horizontal", "padding": 12, "justifyContent": "space-between", "alignItems": "center", "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+              "children": [
+                { "type": "text", "id": "mt-lbl", "content": "MATERIALS", "fontSize": 11, "fontWeight": 600, "textColor": "#71717A" },
+                {
+                  "type": "frame", "id": "mt-actions", "layout": "horizontal", "gap": 4, "fill": "transparent",
+                  "children": [
+                    { "type": "rectangle", "id": "mt-plus", "width": 24, "height": 24, "fill": "#3F3F46", "cornerRadius": 4 },
+                    { "type": "rectangle", "id": "mt-collapse", "width": 24, "height": 24, "fill": "#3F3F46", "cornerRadius": 4 }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame", "id": "mt-tree", "width": 280, "fill": "transparent", "layout": "vertical", "padding": 4, "gap": 1,
+              "children": [
+                {
+                  "type": "frame", "id": "tree-t1", "width": 272, "height": 32, "fill": "transparent", "layout": "horizontal", "padding": 8, "gap": 6, "alignItems": "center",
+                  "children": [
+                    { "type": "text", "id": "t1-chev", "content": "v", "fontSize": 10, "textColor": "#71717A" },
+                    { "type": "text", "id": "t1-name", "content": "Machine Learning", "fontSize": 13, "fontWeight": 500, "textColor": "#FAFAFA" }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "tree-n1", "width": 272, "height": 32, "fill": "transparent", "layout": "horizontal", "padding": 8, "gap": 6, "alignItems": "center",
+                  "children": [
+                    { "type": "rectangle", "id": "n1-indent", "width": 16, "height": 1, "fill": "transparent" },
+                    { "type": "text", "id": "n1-chev", "content": "v", "fontSize": 10, "textColor": "#71717A" },
+                    { "type": "text", "id": "n1-name", "content": "Neural Networks", "fontSize": 13, "textColor": "#A1A1AA" }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "tree-c1", "width": 272, "height": 28, "fill": "#6366F115", "cornerRadius": 4, "layout": "horizontal", "padding": 8, "gap": 6, "alignItems": "center",
+                  "children": [
+                    { "type": "rectangle", "id": "c1-indent", "width": 32, "height": 1, "fill": "transparent" },
+                    { "type": "ellipse", "id": "c1-dot", "width": 6, "height": 6, "fill": "#6366F1" },
+                    { "type": "text", "id": "c1-name", "content": "Backpropagation", "fontSize": 13, "fontWeight": 500, "textColor": "#6366F1" }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "tree-c2", "width": 272, "height": 28, "fill": "transparent", "layout": "horizontal", "padding": 8, "gap": 6, "alignItems": "center",
+                  "children": [
+                    { "type": "rectangle", "id": "c2-indent", "width": 32, "height": 1, "fill": "transparent" },
+                    { "type": "ellipse", "id": "c2-dot", "width": 6, "height": 6, "fill": "#3F3F46" },
+                    { "type": "text", "id": "c2-name", "content": "Gradient Descent", "fontSize": 13, "textColor": "#A1A1AA" }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "tree-c3", "width": 272, "height": 28, "fill": "transparent", "layout": "horizontal", "padding": 8, "gap": 6, "alignItems": "center",
+                  "children": [
+                    { "type": "rectangle", "id": "c3-indent", "width": 32, "height": 1, "fill": "transparent" },
+                    { "type": "ellipse", "id": "c3-dot", "width": 6, "height": 6, "fill": "#3F3F46" },
+                    { "type": "text", "id": "c3-name", "content": "Activation Functions", "fontSize": 13, "textColor": "#A1A1AA" }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "tree-t2", "width": 272, "height": 32, "fill": "transparent", "layout": "horizontal", "padding": 8, "gap": 6, "alignItems": "center",
+                  "children": [
+                    { "type": "text", "id": "t2-chev", "content": ">", "fontSize": 10, "textColor": "#71717A" },
+                    { "type": "text", "id": "t2-name", "content": "Data Structures", "fontSize": 13, "fontWeight": 500, "textColor": "#FAFAFA" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "mat-editor",
+          "name": "Editor Panel",
+          "width": 1100,
+          "height": 900,
+          "fill": "#09090B",
+          "layout": "vertical",
+          "gap": 0,
+          "children": [
+            {
+              "type": "frame", "id": "me-header", "name": "SiteHeader", "width": 1100, "height": 48, "fill": "#09090B", "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "horizontal", "padding": 12, "justifyContent": "space-between", "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame", "id": "meh-left", "layout": "horizontal", "gap": 8, "fill": "transparent", "alignItems": "center",
+                  "children": [
+                    { "type": "text", "id": "meh-bc", "content": "Materials > Machine Learning > Neural Networks > Backpropagation", "fontSize": 13, "textColor": "#A1A1AA" }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "meh-right", "layout": "horizontal", "gap": 8, "fill": "transparent", "alignItems": "center",
+                  "children": [
+                    { "type": "frame", "id": "meh-pass", "width": 70, "height": 24, "fill": "#27272A", "cornerRadius": 12, "layout": "none", "children": [{ "type": "text", "id": "meh-pt", "content": "42 Pass", "fontSize": 11, "textColor": "#A1A1AA", "x": 12, "y": 4 }] },
+                    { "type": "ellipse", "id": "meh-av", "width": 26, "height": 26, "fill": "#6366F1" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "me-content",
+              "name": "Editor Card",
+              "width": 1100,
+              "height": 852,
+              "fill": "#18181B",
+              "cornerRadius": 12,
+              "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+              "layout": "vertical",
+              "gap": 0,
+              "children": [
+                {
+                  "type": "frame", "id": "me-bar", "name": "Chunk Header", "width": 1100, "height": 40, "fill": "#27272A30", "layout": "horizontal", "padding": 12, "justifyContent": "space-between", "alignItems": "center", "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+                  "children": [
+                    { "type": "text", "id": "meb-name", "content": "Backpropagation", "fontSize": 14, "fontWeight": 500, "textColor": "#FAFAFA" },
+                    {
+                      "type": "frame", "id": "meb-btns", "layout": "horizontal", "gap": 8, "fill": "transparent",
+                      "children": [
+                        { "type": "frame", "id": "meb-track", "width": 70, "height": 28, "fill": "#6366F1", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "meb-tt", "content": "Track", "fontSize": 12, "fontWeight": 500, "textColor": "#FFF", "x": 18, "y": 6 }] },
+                        { "type": "frame", "id": "meb-save", "width": 60, "height": 28, "fill": "#27272A", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "meb-st", "content": "Save", "fontSize": 12, "fontWeight": 500, "textColor": "#A1A1AA", "x": 16, "y": 6 }] }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "me-toolbar", "name": "Lexical Toolbar", "width": 1100, "height": 40, "fill": "#18181B", "layout": "horizontal", "padding": 8, "gap": 6, "alignItems": "center", "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+                  "children": [
+                    { "type": "text", "id": "tb2-undo", "content": "↶", "fontSize": 14, "textColor": "#71717A" },
+                    { "type": "text", "id": "tb2-redo", "content": "↷", "fontSize": 14, "textColor": "#71717A" },
+                    { "type": "text", "id": "tb2-s1", "content": "|", "fontSize": 14, "textColor": "#27272A" },
+                    { "type": "text", "id": "tb2-para", "content": "Paragraph  v", "fontSize": 12, "textColor": "#A1A1AA" },
+                    { "type": "text", "id": "tb2-s2", "content": "|", "fontSize": 14, "textColor": "#27272A" },
+                    { "type": "text", "id": "tb2-font", "content": "Default  v", "fontSize": 12, "textColor": "#A1A1AA" },
+                    { "type": "text", "id": "tb2-size", "content": "16  v", "fontSize": 12, "textColor": "#A1A1AA" },
+                    { "type": "text", "id": "tb2-s3", "content": "|", "fontSize": 14, "textColor": "#27272A" },
+                    { "type": "text", "id": "tb2-b", "content": "B", "fontSize": 13, "fontWeight": 700, "textColor": "#A1A1AA" },
+                    { "type": "text", "id": "tb2-i", "content": "I", "fontSize": 13, "textColor": "#A1A1AA" },
+                    { "type": "text", "id": "tb2-u", "content": "U", "fontSize": 13, "textColor": "#A1A1AA" },
+                    { "type": "text", "id": "tb2-s", "content": "S", "fontSize": 13, "textColor": "#A1A1AA" },
+                    { "type": "text", "id": "tb2-code2", "content": "<>", "fontSize": 12, "textColor": "#A1A1AA" },
+                    { "type": "text", "id": "tb2-link", "content": "🔗", "fontSize": 12, "textColor": "#A1A1AA" },
+                    { "type": "text", "id": "tb2-s4", "content": "|", "fontSize": 14, "textColor": "#27272A" },
+                    { "type": "rectangle", "id": "tb2-fontclr", "width": 16, "height": 16, "fill": "#FAFAFA", "cornerRadius": 2, "stroke": { "type": "solid", "color": "#3F3F46", "width": 1 } },
+                    { "type": "rectangle", "id": "tb2-bgclr", "width": 16, "height": 16, "fill": "#FEF08A", "cornerRadius": 2, "stroke": { "type": "solid", "color": "#3F3F46", "width": 1 } },
+                    { "type": "text", "id": "tb2-s5", "content": "|", "fontSize": 14, "textColor": "#27272A" },
+                    { "type": "text", "id": "tb2-align", "content": "≡", "fontSize": 14, "textColor": "#A1A1AA" },
+                    { "type": "text", "id": "tb2-s6", "content": "|", "fontSize": 14, "textColor": "#27272A" },
+                    { "type": "text", "id": "tb2-insert", "content": "+ Insert  v", "fontSize": 12, "textColor": "#A1A1AA" }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "me-editor-area", "name": "Editor Content", "width": 1100, "height": 772, "fill": "#18181B", "layout": "vertical", "padding": 24, "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame", "id": "me-drag", "name": "Drag Handle + Content", "layout": "horizontal", "gap": 8, "fill": "transparent", "alignItems": "flex-start",
+                      "children": [
+                        {
+                          "type": "frame", "id": "me-grip", "width": 20, "height": 20, "fill": "#27272A", "cornerRadius": 4, "layout": "none",
+                          "children": [{ "type": "text", "id": "grip-ico", "content": "⠿", "fontSize": 12, "textColor": "#71717A", "x": 4, "y": 2 }]
+                        },
+                        {
+                          "type": "frame", "id": "me-block", "layout": "vertical", "gap": 8, "fill": "transparent",
+                          "children": [
+                            { "type": "text", "id": "ed-h1", "content": "Backpropagation Algorithm", "fontSize": 24, "fontWeight": 700, "textColor": "#FAFAFA" },
+                            { "type": "text", "id": "ed-p1", "content": "Backpropagation is the primary algorithm used to train neural networks. It computes gradients of the loss function with respect to each weight by applying the chain rule.", "fontSize": 15, "textColor": "#D4D4D8", "width": 900 },
+                            {
+                              "type": "frame", "id": "ed-code", "width": 900, "height": 80, "fill": "#0D0D0D", "cornerRadius": 8, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 12,
+                              "children": [
+                                { "type": "text", "id": "ec-lang", "content": "python", "fontSize": 11, "textColor": "#71717A" },
+                                { "type": "text", "id": "ec-code", "content": "loss.backward()\noptimizer.step()", "fontSize": 13, "textColor": "#A5F3FC", "fontFamily": "monospace" }
+                              ]
+                            },
+                            { "type": "text", "id": "ed-p2", "content": "The key insight is that the gradient at each layer depends on the gradients of subsequent layers, hence the name \"back\" propagation.", "fontSize": 15, "textColor": "#D4D4D8", "width": 900 }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "type": "frame",
+      "id": "pg-reviews",
+      "x": 1520,
+      "y": 1000,
+      "name": "Review Session",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "#09090B",
+      "layout": "vertical",
+      "gap": 0,
+      "children": [
+        {
+          "type": "frame", "id": "rv-topbar", "name": "Status Bar", "width": 1440, "height": 40, "fill": "#6366F108", "layout": "horizontal", "padding": 10, "justifyContent": "space-between", "alignItems": "center", "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+          "children": [
+            {
+              "type": "frame", "id": "rv-left", "layout": "horizontal", "gap": 8, "fill": "transparent", "alignItems": "center",
+              "children": [
+                { "type": "text", "id": "rv-prev", "content": "<", "fontSize": 14, "textColor": "#71717A" },
+                { "type": "text", "id": "rv-counter", "content": "3 / 12", "fontSize": 12, "textColor": "#A1A1AA", "fontFamily": "monospace" },
+                { "type": "text", "id": "rv-next", "content": ">", "fontSize": 14, "textColor": "#71717A" }
+              ]
+            },
+            {
+              "type": "frame", "id": "rv-center", "layout": "horizontal", "gap": 8, "fill": "transparent", "alignItems": "center",
+              "children": [
+                { "type": "text", "id": "rv-bc", "content": "Machine Learning > Neural Networks", "fontSize": 12, "textColor": "#A1A1AA" },
+                { "type": "frame", "id": "rv-badge", "width": 50, "height": 20, "fill": "#22C55E20", "cornerRadius": 10, "layout": "none", "children": [{ "type": "text", "id": "rv-badge-t", "content": "Good", "fontSize": 10, "fontWeight": 500, "textColor": "#22C55E", "x": 12, "y": 3 }] }
+              ]
+            },
+            {
+              "type": "frame", "id": "rv-right", "layout": "horizontal", "gap": 8, "fill": "transparent", "alignItems": "center",
+              "children": [
+                { "type": "text", "id": "rv-progress", "content": "2/12 completed", "fontSize": 12, "textColor": "#71717A" },
+                { "type": "frame", "id": "rv-skip", "width": 50, "height": 24, "fill": "#27272A", "cornerRadius": 4, "layout": "none", "children": [{ "type": "text", "id": "rv-skip-t", "content": "Skip", "fontSize": 11, "textColor": "#A1A1AA", "x": 14, "y": 5 }] }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame", "id": "rv-panels", "name": "Resizable Panels", "width": 1440, "height": 820, "fill": "#09090B", "layout": "horizontal", "gap": 0,
+          "children": [
+            {
+              "type": "frame", "id": "rv-question", "name": "Question Panel (Left)", "width": 700, "height": 820, "fill": "#09090B", "layout": "vertical", "padding": 24, "gap": 20,
+              "children": [
+                { "type": "text", "id": "rvq-label", "content": "Question", "fontSize": 12, "fontWeight": 500, "textColor": "#6366F1" },
+                { "type": "text", "id": "rvq-title", "content": "Explain the chain rule's role in backpropagation", "fontSize": 18, "fontWeight": 600, "textColor": "#FAFAFA", "width": 640 },
+                { "type": "text", "id": "rvq-body", "content": "Describe how the chain rule of calculus enables the computation of gradients through multiple layers of a neural network during backpropagation.", "fontSize": 15, "textColor": "#D4D4D8", "width": 640 },
+                {
+                  "type": "rectangle", "id": "rvq-divider", "width": 640, "height": 1, "fill": "#27272A"
+                },
+                { "type": "text", "id": "rvq-rubric-lbl", "content": "Rubric", "fontSize": 12, "fontWeight": 500, "textColor": "#71717A" },
+                { "type": "text", "id": "rvq-rubric", "content": "- Chain rule connects layer gradients\n- Composite function decomposition\n- Gradient flow from output to input", "fontSize": 13, "textColor": "#A1A1AA", "width": 640 }
+              ]
+            },
+            {
+              "type": "rectangle", "id": "rv-resize", "name": "Resize Handle", "width": 4, "height": 820, "fill": "#27272A"
+            },
+            {
+              "type": "frame", "id": "rv-answer", "name": "Answer Panel (Right)", "width": 736, "height": 820, "fill": "#09090B", "layout": "vertical", "gap": 0,
+              "children": [
+                {
+                  "type": "frame", "id": "rva-editor", "name": "Answer Editor (70%)", "width": 736, "height": 574, "fill": "#09090B", "layout": "vertical", "gap": 0,
+                  "children": [
+                    {
+                      "type": "frame", "id": "rva-hdr", "width": 736, "height": 36, "fill": "#27272A30", "layout": "horizontal", "padding": 10, "alignItems": "center", "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+                      "children": [
+                        { "type": "text", "id": "rva-lbl", "content": "Your Answer", "fontSize": 12, "fontWeight": 500, "textColor": "#A1A1AA" }
+                      ]
+                    },
+                    {
+                      "type": "frame", "id": "rva-toolbar", "width": 736, "height": 36, "fill": "#18181B", "layout": "horizontal", "padding": 8, "gap": 6, "alignItems": "center", "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+                      "children": [
+                        { "type": "text", "id": "at-b", "content": "B", "fontSize": 12, "fontWeight": 700, "textColor": "#71717A" },
+                        { "type": "text", "id": "at-i", "content": "I", "fontSize": 12, "textColor": "#71717A" },
+                        { "type": "text", "id": "at-u", "content": "U", "fontSize": 12, "textColor": "#71717A" },
+                        { "type": "text", "id": "at-sep", "content": "|", "fontSize": 12, "textColor": "#27272A" },
+                        { "type": "text", "id": "at-code", "content": "</>", "fontSize": 11, "textColor": "#71717A" },
+                        { "type": "text", "id": "at-link", "content": "🔗", "fontSize": 11, "textColor": "#71717A" }
+                      ]
+                    },
+                    {
+                      "type": "frame", "id": "rva-input", "width": 736, "height": 502, "fill": "#18181B", "layout": "vertical", "padding": 16,
+                      "children": [
+                        { "type": "text", "id": "rva-typed", "content": "The chain rule allows us to compute the derivative of a composite function by multiplying the derivatives of its constituent functions...", "fontSize": 14, "textColor": "#D4D4D8", "width": 700 }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "rectangle", "id": "rva-hresize", "width": 736, "height": 4, "fill": "#27272A"
+                },
+                {
+                  "type": "frame", "id": "rva-results", "name": "Results Panel (30%)", "width": 736, "height": 242, "fill": "#09090B", "layout": "vertical", "gap": 0,
+                  "children": [
+                    {
+                      "type": "frame", "id": "rvr-hdr", "width": 736, "height": 36, "fill": "#27272A30", "layout": "horizontal", "padding": 10, "justifyContent": "space-between", "alignItems": "center", "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+                      "children": [
+                        { "type": "text", "id": "rvr-lbl", "content": "Analysis Results", "fontSize": 12, "fontWeight": 500, "textColor": "#A1A1AA" },
+                        { "type": "text", "id": "rvr-score", "content": "78%", "fontSize": 12, "fontWeight": 600, "textColor": "#22C55E" }
+                      ]
+                    },
+                    {
+                      "type": "frame", "id": "rvr-body", "width": 736, "fill": "transparent", "layout": "vertical", "padding": 12, "gap": 8,
+                      "children": [
+                        { "type": "text", "id": "rvr-fb", "content": "Good understanding of the chain rule concept. Consider elaborating on how gradients flow backwards through each layer.", "fontSize": 13, "textColor": "#A1A1AA", "width": 700 },
+                        { "type": "text", "id": "rvr-kp-lbl", "content": "Key Points Covered:", "fontSize": 12, "fontWeight": 500, "textColor": "#71717A" },
+                        { "type": "text", "id": "rvr-kp1", "content": "✓ Chain rule definition", "fontSize": 12, "textColor": "#22C55E" },
+                        { "type": "text", "id": "rvr-kp2", "content": "✓ Composite function decomposition", "fontSize": 12, "textColor": "#22C55E" },
+                        { "type": "text", "id": "rvr-kp3", "content": "✗ Gradient flow direction", "fontSize": 12, "textColor": "#EF4444" }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame", "id": "rv-bottombar", "name": "Action Buttons", "width": 1440, "height": 40, "fill": "#09090B", "layout": "horizontal", "padding": 8, "justifyContent": "flex-end", "alignItems": "center", "gap": 8, "stroke": { "type": "solid", "color": "#27272A", "width": 1 },
+          "children": [
+            { "type": "frame", "id": "rv-analyze", "width": 80, "height": 28, "fill": "#0EA5E9", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "rva-t", "content": "Analyze", "fontSize": 12, "fontWeight": 600, "textColor": "#FFF", "x": 14, "y": 6 }] },
+            {
+              "type": "frame", "id": "rv-ratings", "layout": "horizontal", "gap": 6, "fill": "transparent",
+              "children": [
+                { "type": "frame", "id": "rv-again", "width": 60, "height": 28, "fill": "#EF444420", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "ra-t", "content": "Again", "fontSize": 11, "fontWeight": 500, "textColor": "#EF4444", "x": 12, "y": 6 }] },
+                { "type": "frame", "id": "rv-hard", "width": 52, "height": 28, "fill": "#F9731620", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "rh-t", "content": "Hard", "fontSize": 11, "fontWeight": 500, "textColor": "#F97316", "x": 10, "y": 6 }] },
+                { "type": "frame", "id": "rv-good", "width": 54, "height": 28, "fill": "#22C55E20", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "rg-t", "content": "Good", "fontSize": 11, "fontWeight": 500, "textColor": "#22C55E", "x": 10, "y": 6 }] },
+                { "type": "frame", "id": "rv-easy", "width": 50, "height": 28, "fill": "#3B82F620", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "re-t", "content": "Easy", "fontSize": 11, "fontWeight": 500, "textColor": "#3B82F6", "x": 10, "y": 6 }] }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "type": "frame",
+      "id": "pg-pricing",
+      "x": 0,
+      "y": 3500,
+      "name": "Pricing Page",
+      "clip": true,
+      "width": 1440,
+      "height": 1000,
+      "fill": "#09090B",
+      "layout": "vertical",
+      "gap": 0,
+      "children": [
+        {
+          "type": "frame", "id": "pr-nav", "width": 1440, "height": 56, "fill": "#09090B", "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "horizontal", "padding": 16, "justifyContent": "space-between", "alignItems": "center",
+          "children": [
+            { "type": "text", "id": "pr-logo", "content": "Temar", "fontSize": 20, "fontWeight": 700, "textColor": "#FAFAFA" },
+            { "type": "frame", "id": "pr-auth", "layout": "horizontal", "gap": 12, "fill": "transparent", "children": [
+              { "type": "text", "id": "pr-si", "content": "Sign In", "fontSize": 14, "textColor": "#A1A1AA" }
+            ]}
+          ]
+        },
+        {
+          "type": "frame", "id": "pr-hero", "width": 1440, "height": 120, "fill": "#09090B", "layout": "vertical", "padding": 32, "gap": 8, "alignItems": "center",
+          "children": [
+            { "type": "text", "id": "pr-h1", "content": "Simple, Transparent Pricing", "fontSize": 40, "fontWeight": 700, "textColor": "#FAFAFA" },
+            { "type": "text", "id": "pr-sub", "content": "Choose the plan that works for you. Upgrade or downgrade anytime.", "fontSize": 16, "textColor": "#A1A1AA" }
+          ]
+        },
+        {
+          "type": "frame", "id": "pr-tiers", "name": "Pricing Tiers (3-col)", "width": 1440, "height": 520, "fill": "#09090B", "layout": "horizontal", "gap": 24, "padding": 40, "justifyContent": "center", "alignItems": "flex-start",
+          "children": [
+            {
+              "type": "frame", "id": "tier-free", "width": 360, "height": 440, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 24, "gap": 16,
+              "children": [
+                { "type": "text", "id": "tf-name", "content": "Free", "fontSize": 20, "fontWeight": 600, "textColor": "#FAFAFA" },
+                { "type": "text", "id": "tf-desc", "content": "For getting started with BYOK", "fontSize": 13, "textColor": "#A1A1AA" },
+                {
+                  "type": "frame", "id": "tf-price", "layout": "horizontal", "gap": 4, "fill": "transparent", "alignItems": "flex-end",
+                  "children": [
+                    { "type": "text", "id": "tf-amt", "content": "$0", "fontSize": 36, "fontWeight": 700, "textColor": "#FAFAFA" },
+                    { "type": "text", "id": "tf-per", "content": "/month", "fontSize": 14, "textColor": "#71717A" }
+                  ]
+                },
+                { "type": "frame", "id": "tf-btn", "width": 312, "height": 36, "fill": "transparent", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none", "children": [{ "type": "text", "id": "tf-bt", "content": "Get Started", "fontSize": 13, "fontWeight": 500, "textColor": "#FAFAFA", "x": 116, "y": 9 }] },
+                { "type": "text", "id": "tf-f1", "content": "✓ Unlimited topics & notes", "fontSize": 13, "textColor": "#A1A1AA" },
+                { "type": "text", "id": "tf-f2", "content": "✓ Bring your own API key", "fontSize": 13, "textColor": "#A1A1AA" },
+                { "type": "text", "id": "tf-f3", "content": "✓ Basic spaced repetition", "fontSize": 13, "textColor": "#A1A1AA" }
+              ]
+            },
+            {
+              "type": "frame", "id": "tier-starter", "width": 360, "height": 460, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#6366F1", "width": 2 }, "layout": "vertical", "padding": 24, "gap": 16,
+              "children": [
+                {
+                  "type": "frame", "id": "ts-badge", "width": 100, "height": 24, "fill": "#6366F1", "cornerRadius": 12, "layout": "none",
+                  "children": [{ "type": "text", "id": "tsb-t", "content": "Popular", "fontSize": 11, "fontWeight": 600, "textColor": "#FFF", "x": 28, "y": 4 }]
+                },
+                { "type": "text", "id": "ts-name", "content": "Starter", "fontSize": 20, "fontWeight": 600, "textColor": "#FAFAFA" },
+                { "type": "text", "id": "ts-desc", "content": "For regular learners", "fontSize": 13, "textColor": "#A1A1AA" },
+                {
+                  "type": "frame", "id": "ts-price", "layout": "horizontal", "gap": 4, "fill": "transparent", "alignItems": "flex-end",
+                  "children": [
+                    { "type": "text", "id": "ts-amt", "content": "$9", "fontSize": 36, "fontWeight": 700, "textColor": "#FAFAFA" },
+                    { "type": "text", "id": "ts-per", "content": "/month", "fontSize": 14, "textColor": "#71717A" }
+                  ]
+                },
+                { "type": "frame", "id": "ts-btn", "width": 312, "height": 36, "fill": "#6366F1", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "ts-bt", "content": "Subscribe", "fontSize": 13, "fontWeight": 600, "textColor": "#FFF", "x": 118, "y": 9 }] },
+                { "type": "text", "id": "ts-f1", "content": "✓ Everything in Free", "fontSize": 13, "textColor": "#A1A1AA" },
+                { "type": "text", "id": "ts-f2", "content": "✓ 100 Pass included/month", "fontSize": 13, "textColor": "#A1A1AA" },
+                { "type": "text", "id": "ts-f3", "content": "✓ AI question generation", "fontSize": 13, "textColor": "#A1A1AA" },
+                { "type": "text", "id": "ts-f4", "content": "✓ AI answer analysis", "fontSize": 13, "textColor": "#A1A1AA" }
+              ]
+            },
+            {
+              "type": "frame", "id": "tier-scholar", "width": 360, "height": 440, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 24, "gap": 16,
+              "children": [
+                { "type": "text", "id": "tsc-name", "content": "Scholar", "fontSize": 20, "fontWeight": 600, "textColor": "#FAFAFA" },
+                { "type": "text", "id": "tsc-desc", "content": "For power users", "fontSize": 13, "textColor": "#A1A1AA" },
+                {
+                  "type": "frame", "id": "tsc-price", "layout": "horizontal", "gap": 4, "fill": "transparent", "alignItems": "flex-end",
+                  "children": [
+                    { "type": "text", "id": "tsc-amt", "content": "$19", "fontSize": 36, "fontWeight": 700, "textColor": "#FAFAFA" },
+                    { "type": "text", "id": "tsc-per", "content": "/month", "fontSize": 14, "textColor": "#71717A" }
+                  ]
+                },
+                { "type": "frame", "id": "tsc-btn", "width": 312, "height": 36, "fill": "transparent", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none", "children": [{ "type": "text", "id": "tsc-bt", "content": "Subscribe", "fontSize": 13, "fontWeight": 500, "textColor": "#FAFAFA", "x": 118, "y": 9 }] },
+                { "type": "text", "id": "tsc-f1", "content": "✓ Everything in Starter", "fontSize": 13, "textColor": "#A1A1AA" },
+                { "type": "text", "id": "tsc-f2", "content": "✓ 300 Pass included/month", "fontSize": 13, "textColor": "#A1A1AA" },
+                { "type": "text", "id": "tsc-f3", "content": "✓ Priority AI models", "fontSize": 13, "textColor": "#A1A1AA" },
+                { "type": "text", "id": "tsc-f4", "content": "✓ Advanced analytics", "fontSize": 13, "textColor": "#A1A1AA" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame", "id": "pr-topup", "name": "Top-up Packs", "width": 1440, "height": 240, "fill": "#27272A15", "layout": "vertical", "padding": 32, "gap": 16, "alignItems": "center",
+          "children": [
+            { "type": "text", "id": "tu-title", "content": "Need More Pass?", "fontSize": 20, "fontWeight": 600, "textColor": "#FAFAFA" },
+            {
+              "type": "frame", "id": "tu-packs", "layout": "horizontal", "gap": 20, "fill": "transparent",
+              "children": [
+                {
+                  "type": "frame", "id": "tu-100", "width": 200, "height": 130, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 16, "gap": 8, "alignItems": "center",
+                  "children": [
+                    { "type": "text", "id": "tu1-amt", "content": "100 Pass", "fontSize": 20, "fontWeight": 700, "textColor": "#FAFAFA" },
+                    { "type": "text", "id": "tu1-price", "content": "$4.99", "fontSize": 16, "fontWeight": 600, "textColor": "#A1A1AA" },
+                    { "type": "frame", "id": "tu1-btn", "width": 160, "height": 28, "fill": "transparent", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none", "children": [{ "type": "text", "id": "tu1-bt", "content": "Buy", "fontSize": 12, "textColor": "#A1A1AA", "x": 68, "y": 6 }] }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "tu-300", "width": 200, "height": 130, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#6366F150", "width": 2 }, "layout": "vertical", "padding": 16, "gap": 8, "alignItems": "center",
+                  "children": [
+                    { "type": "text", "id": "tu2-amt", "content": "300 Pass", "fontSize": 20, "fontWeight": 700, "textColor": "#FAFAFA" },
+                    { "type": "text", "id": "tu2-price", "content": "$12.99", "fontSize": 16, "fontWeight": 600, "textColor": "#A1A1AA" },
+                    { "type": "frame", "id": "tu2-btn", "width": 160, "height": 28, "fill": "transparent", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none", "children": [{ "type": "text", "id": "tu2-bt", "content": "Buy", "fontSize": 12, "textColor": "#A1A1AA", "x": 68, "y": 6 }] }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "tu-600", "width": 200, "height": 130, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 16, "gap": 8, "alignItems": "center",
+                  "children": [
+                    { "type": "text", "id": "tu3-amt", "content": "600 Pass", "fontSize": 20, "fontWeight": 700, "textColor": "#FAFAFA" },
+                    { "type": "text", "id": "tu3-price", "content": "$22.99", "fontSize": 16, "fontWeight": 600, "textColor": "#A1A1AA" },
+                    { "type": "frame", "id": "tu3-btn", "width": 160, "height": 28, "fill": "transparent", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none", "children": [{ "type": "text", "id": "tu3-bt", "content": "Buy", "fontSize": 12, "textColor": "#A1A1AA", "x": 68, "y": 6 }] }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "type": "frame",
+      "id": "pg-billing",
+      "x": 1520,
+      "y": 2000,
+      "name": "Dashboard Billing",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "#09090B",
+      "layout": "horizontal",
+      "gap": 0,
+      "children": [
+        {
+          "type": "rectangle", "id": "bil-sb", "name": "Sidebar (collapsed)", "width": 260, "height": 900, "fill": "#0D0D12", "stroke": { "type": "solid", "color": "#27272A", "width": 1 }
+        },
+        {
+          "type": "frame", "id": "bil-main", "width": 1180, "height": 900, "fill": "#09090B", "layout": "vertical", "gap": 0,
+          "children": [
+            {
+              "type": "frame", "id": "bil-hdr", "width": 1180, "height": 48, "fill": "#09090B", "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "horizontal", "padding": 12, "alignItems": "center",
+              "children": [
+                { "type": "text", "id": "bil-bc", "content": "Dashboard > Billing", "fontSize": 14, "textColor": "#A1A1AA" }
+              ]
+            },
+            {
+              "type": "frame", "id": "bil-content", "width": 1180, "height": 852, "fill": "#09090B", "layout": "vertical", "padding": 32, "gap": 24, "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame", "id": "bil-wrapper", "width": 640, "layout": "vertical", "gap": 24, "fill": "transparent",
+                  "children": [
+                    { "type": "text", "id": "bil-title", "content": "Billing", "fontSize": 24, "fontWeight": 700, "textColor": "#FAFAFA" },
+                    { "type": "text", "id": "bil-sub", "content": "Manage your subscription and Pass balance", "fontSize": 14, "textColor": "#A1A1AA" },
+                    {
+                      "type": "frame", "id": "bil-plan", "name": "Current Plan Card", "width": 640, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 20, "gap": 12,
+                      "children": [
+                        {
+                          "type": "frame", "id": "bp-hdr", "layout": "horizontal", "fill": "transparent", "justifyContent": "space-between", "alignItems": "center",
+                          "children": [
+                            { "type": "text", "id": "bp-title", "content": "Current Plan", "fontSize": 16, "fontWeight": 600, "textColor": "#FAFAFA" },
+                            { "type": "frame", "id": "bp-badge", "width": 60, "height": 22, "fill": "#6366F120", "cornerRadius": 11, "layout": "none", "children": [{ "type": "text", "id": "bpb-t", "content": "Starter", "fontSize": 11, "fontWeight": 500, "textColor": "#818CF8", "x": 8, "y": 3 }] }
+                          ]
+                        },
+                        { "type": "text", "id": "bp-renew", "content": "Next renewal: April 16, 2026", "fontSize": 13, "textColor": "#A1A1AA" },
+                        { "type": "frame", "id": "bp-manage", "width": 140, "height": 32, "fill": "transparent", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none", "children": [{ "type": "text", "id": "bpm-t", "content": "Manage Plan", "fontSize": 12, "textColor": "#A1A1AA", "x": 28, "y": 8 }] }
+                      ]
+                    },
+                    {
+                      "type": "frame", "id": "bil-balance", "name": "Pass Balance Card", "width": 640, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 20, "gap": 8,
+                      "children": [
+                        { "type": "text", "id": "bb-title", "content": "Pass Balance", "fontSize": 16, "fontWeight": 600, "textColor": "#FAFAFA" },
+                        { "type": "text", "id": "bb-desc", "content": "Pass are consumed for AI operations", "fontSize": 13, "textColor": "#A1A1AA" },
+                        {
+                          "type": "frame", "id": "bb-amount", "layout": "horizontal", "gap": 8, "fill": "transparent", "alignItems": "flex-end",
+                          "children": [
+                            { "type": "text", "id": "bb-num", "content": "42", "fontSize": 48, "fontWeight": 700, "textColor": "#FAFAFA" },
+                            { "type": "text", "id": "bb-unit", "content": "Pass", "fontSize": 18, "textColor": "#71717A" }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame", "id": "bil-tx", "name": "Transaction History", "width": 640, "layout": "vertical", "gap": 8, "fill": "transparent",
+                      "children": [
+                        { "type": "text", "id": "bt-title", "content": "Transaction History", "fontSize": 16, "fontWeight": 600, "textColor": "#FAFAFA" },
+                        {
+                          "type": "frame", "id": "bt-row1", "width": 640, "height": 44, "fill": "transparent", "cornerRadius": 8, "layout": "horizontal", "padding": 12, "justifyContent": "space-between", "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame", "id": "btr1-left", "layout": "vertical", "gap": 2, "fill": "transparent",
+                              "children": [
+                                { "type": "text", "id": "btr1-desc", "content": "Question generation — Backpropagation", "fontSize": 13, "textColor": "#FAFAFA" },
+                                { "type": "text", "id": "btr1-time", "content": "2 hours ago", "fontSize": 11, "textColor": "#71717A" }
+                              ]
+                            },
+                            { "type": "text", "id": "btr1-delta", "content": "-3", "fontSize": 14, "fontWeight": 600, "textColor": "#A1A1AA" }
+                          ]
+                        },
+                        {
+                          "type": "frame", "id": "bt-row2", "width": 640, "height": 44, "fill": "transparent", "cornerRadius": 8, "layout": "horizontal", "padding": 12, "justifyContent": "space-between", "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame", "id": "btr2-left", "layout": "vertical", "gap": 2, "fill": "transparent",
+                              "children": [
+                                { "type": "text", "id": "btr2-desc", "content": "Monthly subscription credit", "fontSize": 13, "textColor": "#FAFAFA" },
+                                { "type": "text", "id": "btr2-time", "content": "March 1, 2026", "fontSize": 11, "textColor": "#71717A" }
+                              ]
+                            },
+                            { "type": "text", "id": "btr2-delta", "content": "+100", "fontSize": 14, "fontWeight": 600, "textColor": "#22C55E" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "type": "frame",
+      "id": "pg-settings",
+      "x": 0,
+      "y": 4600,
+      "name": "Dashboard Settings",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "#09090B",
+      "layout": "horizontal",
+      "gap": 0,
+      "children": [
+        {
+          "type": "rectangle", "id": "set-sb", "name": "Sidebar", "width": 260, "height": 900, "fill": "#0D0D12", "stroke": { "type": "solid", "color": "#27272A", "width": 1 }
+        },
+        {
+          "type": "frame", "id": "set-main", "width": 1180, "height": 900, "fill": "#09090B", "layout": "vertical", "gap": 0,
+          "children": [
+            {
+              "type": "frame", "id": "set-hdr", "width": 1180, "height": 48, "fill": "#09090B", "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "horizontal", "padding": 12, "alignItems": "center",
+              "children": [
+                { "type": "text", "id": "set-bc", "content": "Dashboard > Settings", "fontSize": 14, "textColor": "#A1A1AA" }
+              ]
+            },
+            {
+              "type": "frame", "id": "set-content", "width": 1180, "height": 852, "fill": "#09090B", "layout": "vertical", "padding": 32, "gap": 24,
+              "children": [
+                { "type": "text", "id": "set-title", "content": "Settings", "fontSize": 24, "fontWeight": 700, "textColor": "#FAFAFA" },
+                { "type": "text", "id": "set-sub", "content": "Manage your account preferences", "fontSize": 14, "textColor": "#A1A1AA" },
+                {
+                  "type": "frame", "id": "set-tabs", "name": "Tab Navigation", "layout": "horizontal", "gap": 0, "fill": "#27272A", "cornerRadius": 8, "padding": 4,
+                  "children": [
+                    { "type": "frame", "id": "tab-account", "width": 90, "height": 30, "fill": "#18181B", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "ta-t", "content": "Account", "fontSize": 13, "fontWeight": 500, "textColor": "#FAFAFA", "x": 16, "y": 7 }] },
+                    { "type": "frame", "id": "tab-security", "width": 90, "height": 30, "fill": "transparent", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "tsec-t", "content": "Security", "fontSize": 13, "textColor": "#A1A1AA", "x": 16, "y": 7 }] },
+                    { "type": "frame", "id": "tab-ai", "width": 90, "height": 30, "fill": "transparent", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "tai-t", "content": "AI & Data", "fontSize": 13, "textColor": "#A1A1AA", "x": 12, "y": 7 }] }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "set-account-content", "name": "Account Tab Content", "width": 640, "layout": "vertical", "gap": 20, "fill": "transparent",
+                  "children": [
+                    {
+                      "type": "frame", "id": "sac-card", "width": 640, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 20, "gap": 16,
+                      "children": [
+                        { "type": "text", "id": "sac-title", "content": "Profile", "fontSize": 16, "fontWeight": 600, "textColor": "#FAFAFA" },
+                        {
+                          "type": "frame", "id": "sac-name", "layout": "vertical", "gap": 6, "fill": "transparent",
+                          "children": [
+                            { "type": "text", "id": "sac-lbl1", "content": "Display Name", "fontSize": 13, "fontWeight": 500, "textColor": "#A1A1AA" },
+                            { "type": "frame", "id": "sac-input1", "width": 400, "height": 36, "fill": "#09090B", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none", "children": [{ "type": "text", "id": "saci1-v", "content": "John Doe", "fontSize": 13, "textColor": "#FAFAFA", "x": 12, "y": 9 }] }
+                          ]
+                        },
+                        {
+                          "type": "frame", "id": "sac-email", "layout": "vertical", "gap": 6, "fill": "transparent",
+                          "children": [
+                            { "type": "text", "id": "sac-lbl2", "content": "Email", "fontSize": 13, "fontWeight": 500, "textColor": "#A1A1AA" },
+                            { "type": "frame", "id": "sac-input2", "width": 400, "height": 36, "fill": "#09090B", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none", "children": [{ "type": "text", "id": "saci2-v", "content": "john@example.com", "fontSize": 13, "textColor": "#FAFAFA", "x": 12, "y": 9 }] }
+                          ]
+                        },
+                        { "type": "frame", "id": "sac-save", "width": 80, "height": 32, "fill": "#6366F1", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "sacs-t", "content": "Save", "fontSize": 13, "fontWeight": 500, "textColor": "#FFF", "x": 24, "y": 7 }] }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "type": "frame",
+      "id": "pg-auth",
+      "x": 1520,
+      "y": 3100,
+      "name": "Auth - Sign In",
+      "clip": true,
+      "width": 1440,
+      "height": 900,
+      "fill": "#09090B",
+      "layout": "vertical",
+      "gap": 0,
+      "children": [
+        {
+          "type": "frame", "id": "auth-nav", "width": 1440, "height": 56, "fill": "#09090B", "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "horizontal", "padding": 16, "alignItems": "center",
+          "children": [
+            { "type": "text", "id": "auth-logo", "content": "Temar", "fontSize": 20, "fontWeight": 700, "textColor": "#FAFAFA" }
+          ]
+        },
+        {
+          "type": "frame", "id": "auth-body", "width": 1440, "height": 780, "fill": "#09090B", "layout": "none",
+          "children": [
+            {
+              "type": "frame", "id": "auth-card", "name": "Sign In Form", "x": 520, "y": 100, "width": 400, "height": 480, "fill": "#18181B", "cornerRadius": 12, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "vertical", "padding": 32, "gap": 20, "alignItems": "center",
+              "children": [
+                { "type": "text", "id": "ac-title", "content": "Welcome back", "fontSize": 24, "fontWeight": 700, "textColor": "#FAFAFA" },
+                { "type": "text", "id": "ac-sub", "content": "Sign in to your account", "fontSize": 14, "textColor": "#A1A1AA" },
+                {
+                  "type": "frame", "id": "ac-google", "width": 336, "height": 40, "fill": "transparent", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none",
+                  "children": [{ "type": "text", "id": "acg-t", "content": "Continue with Google", "fontSize": 14, "textColor": "#FAFAFA", "x": 90, "y": 10 }]
+                },
+                {
+                  "type": "frame", "id": "ac-github", "width": 336, "height": 40, "fill": "transparent", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none",
+                  "children": [{ "type": "text", "id": "ach-t", "content": "Continue with GitHub", "fontSize": 14, "textColor": "#FAFAFA", "x": 90, "y": 10 }]
+                },
+                {
+                  "type": "frame", "id": "ac-divider", "width": 336, "layout": "horizontal", "gap": 12, "fill": "transparent", "alignItems": "center",
+                  "children": [
+                    { "type": "rectangle", "id": "acd-l", "width": 140, "height": 1, "fill": "#27272A" },
+                    { "type": "text", "id": "acd-or", "content": "or", "fontSize": 12, "textColor": "#71717A" },
+                    { "type": "rectangle", "id": "acd-r", "width": 140, "height": 1, "fill": "#27272A" }
+                  ]
+                },
+                {
+                  "type": "frame", "id": "ac-email-field", "width": 336, "layout": "vertical", "gap": 6, "fill": "transparent",
+                  "children": [
+                    { "type": "text", "id": "ace-lbl", "content": "Email", "fontSize": 13, "fontWeight": 500, "textColor": "#A1A1AA" },
+                    { "type": "frame", "id": "ace-input", "width": 336, "height": 40, "fill": "#09090B", "cornerRadius": 6, "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "none", "children": [{ "type": "text", "id": "acei-ph", "content": "you@example.com", "fontSize": 13, "textColor": "#52525B", "x": 12, "y": 11 }] }
+                  ]
+                },
+                { "type": "frame", "id": "ac-submit", "width": 336, "height": 40, "fill": "#6366F1", "cornerRadius": 6, "layout": "none", "children": [{ "type": "text", "id": "acs-t", "content": "Sign In with Email", "fontSize": 14, "fontWeight": 600, "textColor": "#FFF", "x": 100, "y": 10 }] },
+                {
+                  "type": "frame", "id": "ac-footer", "layout": "horizontal", "gap": 4, "fill": "transparent",
+                  "children": [
+                    { "type": "text", "id": "acf-q", "content": "Don't have an account?", "fontSize": 13, "textColor": "#71717A" },
+                    { "type": "text", "id": "acf-link", "content": "Sign up", "fontSize": 13, "fontWeight": 500, "textColor": "#6366F1" }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame", "id": "auth-footer", "width": 1440, "height": 64, "fill": "#09090B", "stroke": { "type": "solid", "color": "#27272A", "width": 1 }, "layout": "horizontal", "padding": 20, "justifyContent": "center", "alignItems": "center",
+          "children": [
+            { "type": "text", "id": "af-copy", "content": "© 2026 Temar", "fontSize": 12, "textColor": "#52525B" }
+          ]
+        }
+      ]
+    }
+  ],
+  "imports": {
+    "F": "pencil:shadcn.lib.pen"
+  }
+}
