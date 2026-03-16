@@ -47,8 +47,8 @@ export function PassBalanceChip() {
     <Link
       href="/dashboard/billing"
       className={cn(
-        'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors',
-        'bg-primary/10 text-primary hover:bg-primary/20'
+        'flex items-center gap-1.5 h-fit p-2 rounded-xl text-xs font-semibold transition-colors',
+        'bg-primary/90 text-card hover:bg-primary'
       )}
       title="Pass balance — click to manage"
     >
