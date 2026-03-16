@@ -43,12 +43,14 @@ interface TopupPack {
 const PLAN_LABELS: Record<string, string> = {
   free: 'Free',
   starter: 'Starter',
+  hobbyist: 'Hobbyist',
   scholar: 'Scholar',
 };
 
 const PLAN_BADGE_COLORS: Record<string, string> = {
   free: 'bg-muted text-muted-foreground',
   starter: 'bg-primary text-primary-foreground',
+  hobbyist: 'bg-blue-600 text-white',
   scholar: 'bg-violet-600 text-white',
 };
 
@@ -56,6 +58,7 @@ interface PaddleConfig {
   clientToken: string;
   environment: Environments;
   starterPriceId: string;
+  hobbyistPriceId: string;
   scholarPriceId: string;
   topupPacks: TopupPack[];
 }
@@ -214,7 +217,23 @@ export function BillingClient({
               >
                 {loading === 'starter'
                   ? 'Opening…'
-                  : 'Upgrade to Starter — $9.99/mo'}
+                  : 'Starter — $4.99/mo'}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  openCheckout(
+                    paddleConfig.hobbyistPriceId,
+                    undefined,
+                    'hobbyist'
+                  )
+                }
+                disabled={!paddleReady || !!loading}
+              >
+                {loading === 'hobbyist'
+                  ? 'Opening…'
+                  : 'Hobbyist — $9.00/mo'}
               </Button>
               <Button
                 size="sm"
@@ -228,7 +247,7 @@ export function BillingClient({
                 }
                 disabled={!paddleReady || !!loading}
               >
-                {loading === 'scholar' ? 'Opening…' : 'Go Scholar — $24.99/mo'}
+                {loading === 'scholar' ? 'Opening…' : 'Scholar — $14.99/mo'}
               </Button>
             </div>
           )}
@@ -269,7 +288,7 @@ export function BillingClient({
           <ArrowUpCircle className="h-5 w-5 text-primary" />
           Top-up Packs
         </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           {paddleConfig.topupPacks.map((pack) => (
             <Card
               key={pack.id}

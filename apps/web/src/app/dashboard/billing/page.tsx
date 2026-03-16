@@ -28,26 +28,20 @@ export default async function BillingPage() {
       | 'sandbox'
       | 'production',
     starterPriceId: env('NEXT_PUBLIC_PADDLE_STARTER_PRICE_ID'),
+    hobbyistPriceId: env('NEXT_PUBLIC_PADDLE_HOBBYIST_PRICE_ID'),
     scholarPriceId: env('NEXT_PUBLIC_PADDLE_SCHOLAR_PRICE_ID'),
     topupPacks: [
       {
+        id: 'topup_50',
+        pass: 50,
+        price: '$2.50',
+        priceId: env('NEXT_PUBLIC_PADDLE_TOPUP_50_PRICE_ID'),
+      },
+      {
         id: 'topup_100',
         pass: 100,
-        price: '$3.99',
+        price: '$4.99',
         priceId: env('NEXT_PUBLIC_PADDLE_TOPUP_100_PRICE_ID'),
-      },
-      {
-        id: 'topup_300',
-        pass: 300,
-        price: '$9.99',
-        priceId: env('NEXT_PUBLIC_PADDLE_TOPUP_300_PRICE_ID'),
-        best: true,
-      },
-      {
-        id: 'topup_600',
-        pass: 600,
-        price: '$17.99',
-        priceId: env('NEXT_PUBLIC_PADDLE_TOPUP_600_PRICE_ID'),
       },
     ],
   };

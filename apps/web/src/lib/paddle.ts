@@ -22,12 +22,17 @@ export function getPaddleInstance(): Paddle {
 export const PADDLE_PLANS = {
   starter: {
     priceId: process.env['NEXT_PUBLIC_PADDLE_STARTER_PRICE_ID'] ?? '',
-    passPerMonth: 200,
+    passPerMonth: 100,
     name: 'Starter',
+  },
+  hobbyist: {
+    priceId: process.env['NEXT_PUBLIC_PADDLE_HOBBYIST_PRICE_ID'] ?? '',
+    passPerMonth: 200,
+    name: 'Hobbyist',
   },
   scholar: {
     priceId: process.env['NEXT_PUBLIC_PADDLE_SCHOLAR_PRICE_ID'] ?? '',
-    passPerMonth: 600,
+    passPerMonth: 300,
     name: 'Scholar',
   },
 } as const;
