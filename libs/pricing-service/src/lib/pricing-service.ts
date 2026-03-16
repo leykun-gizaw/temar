@@ -27,7 +27,7 @@ interface CacheEntry<T> {
   expiresAt: number;
 }
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 60 * 1000; // 1 minute
 
 const pricingCache = new Map<string, CacheEntry<{ inputPricePer1M: number; outputPricePer1M: number }>>();
 const markupCache = new Map<string, CacheEntry<{ markupFactor: number }>>();
@@ -142,7 +142,7 @@ export async function getOperationConfig(
 
 function getCostPerPassUsd(): number {
   const envVal = process.env['COST_PER_PASS_USD'];
-  return envVal ? parseFloat(envVal) || 0.005 : 0.005;
+  return envVal ? parseFloat(envVal) || 0.05 : 0.05;
 }
 
 /**

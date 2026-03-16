@@ -9,7 +9,6 @@ import {
   desc,
 } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
-import { revalidatePath } from 'next/cache';
 import type { OperationType } from '@/lib/config/ai-operations';
 import {
   isByokFree,
@@ -31,15 +30,6 @@ export type PassBalanceInfo = {
 
 export type CheckPassResult =
   | { status: 'ok'; passToDeduct: number; isByok: boolean }
-  | { status: 'insufficient_pass'; balance: number; required: number }
-  | {
-      status: 'consent_required';
-      estimatedPassCost: number;
-      basePassCost: number;
-    };
-
-export type DeductPassResult =
-  | { status: 'ok'; passDeducted: number; newBalance: number }
   | { status: 'insufficient_pass'; balance: number; required: number }
   | {
       status: 'consent_required';
@@ -200,77 +190,6 @@ export async function checkPassAvailability(
   }
 
   return { status: 'ok', passToDeduct: requiredCost, isByok: false };
-}
-
-// ---------------------------------------------------------------------------
-// Deduct pass (call AFTER the API call succeeds)
-// ---------------------------------------------------------------------------
-
-export async function deductPass(
-  operationType: OperationType,
-  passToDeduct: number
-): Promise<{ newBalance: number }> {
-  const sessionUser = await getLoggedInUser();
-  if (!sessionUser) return { newBalance: 0 };
-  if (passToDeduct <= 0) return { newBalance: await getPassBalanceQuick() };
-
-  const [balanceRow] = await dbClient
-    .select({ balance: passBalance.balance })
-    .from(passBalance)
-    .where(eq(passBalance.userId, sessionUser.id))
-    .limit(1);
-
-  const currentBalance = balanceRow?.balance ?? 0;
-  const newBalance = Math.max(0, currentBalance - passToDeduct);
-
-  await dbClient.transaction(async (tx) => {
-    await tx
-      .update(passBalance)
-      .set({ balance: newBalance })
-      .where(eq(passBalance.userId, sessionUser.id));
-
-    await tx.insert(passTransaction).values({
-      userId: sessionUser.id,
-      delta: -passToDeduct,
-      operationType,
-      description: `Used for ${operationType.replace(/_/g, ' ')}`,
-    });
-  });
-
-  revalidatePath('/dashboard/billing');
-  return { newBalance };
-}
-
-// ---------------------------------------------------------------------------
-// Legacy wrapper — kept for backwards-compat during migration
-// ---------------------------------------------------------------------------
-
-export async function checkAndDeductPass(
-  operationType: OperationType,
-  modelId: string,
-  inputText: string,
-  provider: 'google' | 'openai' | 'anthropic',
-  consentedPassCost?: number
-): Promise<DeductPassResult> {
-  const check = await checkPassAvailability(
-    operationType,
-    modelId,
-    inputText,
-    provider,
-    consentedPassCost
-  );
-
-  if (check.status !== 'ok') return check;
-  if (check.passToDeduct === 0) {
-    return {
-      status: 'ok',
-      passDeducted: 0,
-      newBalance: await getPassBalanceQuick(),
-    };
-  }
-
-  const { newBalance } = await deductPass(operationType, check.passToDeduct);
-  return { status: 'ok', passDeducted: check.passToDeduct, newBalance };
 }
 
 // ---------------------------------------------------------------------------

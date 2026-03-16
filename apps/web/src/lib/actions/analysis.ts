@@ -16,7 +16,8 @@ async function getAiHeaders(): Promise<Record<string, string>> {
   const isByok = settings.useByok && settings.hasApiKey;
   return {
     ...(config?.provider && { 'x-ai-provider': config.provider }),
-    ...(config?.model && { 'x-ai-model': config.model }),
+    // Always send the pricing model ID so services can record usage correctly.
+    'x-ai-model': config?.model || settings.model || DEFAULT_MODEL_ID,
     ...(config?.apiKey && { 'x-ai-api-key': config.apiKey }),
     'x-byok': isByok ? 'true' : 'false',
   };

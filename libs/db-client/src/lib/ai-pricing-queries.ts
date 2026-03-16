@@ -98,14 +98,27 @@ export async function decrementUserPassBalance(
   tx?: DbClient
 ) {
   const db = tx ?? dbClient;
+
+  // Try to decrement the existing row, clamping to 0 (never go negative)
   const [row] = await db
     .update(passBalance)
     .set({
-      balance: sql`${passBalance.balance} - ${amount}`,
+      balance: sql`GREATEST(0, ${passBalance.balance} - ${amount})`,
     })
     .where(eq(passBalance.userId, userId))
     .returning({ balance: passBalance.balance });
-  return row ?? null;
+
+  if (row) return row;
+
+  // No pass_balance row exists — create one with 0 balance.
+  // The usage log still records the full passCharged for audit purposes.
+  const [inserted] = await db
+    .insert(passBalance)
+    .values({ userId, balance: 0 })
+    .onConflictDoNothing()
+    .returning({ balance: passBalance.balance });
+
+  return inserted ?? null;
 }
 
 // ---------------------------------------------------------------------------

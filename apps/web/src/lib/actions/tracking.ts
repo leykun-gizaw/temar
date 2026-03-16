@@ -5,7 +5,7 @@ import { getLoggedInUser } from '@/lib/fetchers/users';
 import { fsrsServiceFetch } from '../fsrs-service';
 import { getUserAiConfig, getAiSettings } from './ai-settings';
 import { checkPassAvailability } from './pass';
-import { dbClient, chunk, eq } from '@temar/db-client';
+import { dbClient, chunk, note, eq, count } from '@temar/db-client';
 import type { AiProvider } from '@/lib/config/ai-operations';
 import { DEFAULT_MODEL_ID } from '@/lib/config/ai-operations';
 
@@ -25,7 +25,9 @@ async function getAiHeaders(): Promise<Record<string, string>> {
   const isByok = settings.useByok && settings.hasApiKey;
   return {
     ...(config?.provider && { 'x-ai-provider': config.provider }),
-    ...(config?.model && { 'x-ai-model': config.model }),
+    // Always send the pricing model ID so services can record usage correctly.
+    // Falls back to DEFAULT_MODEL_ID when the user has no custom setting.
+    'x-ai-model': config?.model || settings.model || DEFAULT_MODEL_ID,
     ...(config?.apiKey && { 'x-ai-api-key': config.apiKey }),
     'x-byok': isByok ? 'true' : 'false',
   };
@@ -33,7 +35,8 @@ async function getAiHeaders(): Promise<Record<string, string>> {
 
 async function passCheckForGeneration(
   inputText: string,
-  consentedPassCost?: number
+  consentedPassCost?: number,
+  chunkCount = 1
 ): Promise<
   { ok: true; passToDeduct: number } | { ok: false; result: TrackResult }
 > {
@@ -50,7 +53,29 @@ async function passCheckForGeneration(
   );
 
   if (passResult.status === 'ok') {
-    return { ok: true, passToDeduct: passResult.passToDeduct };
+    const totalCost = passResult.passToDeduct * chunkCount;
+    return { ok: true, passToDeduct: totalCost };
+  }
+  // Scale insufficient_pass required amount by chunk count
+  if (passResult.status === 'insufficient_pass' && chunkCount > 1) {
+    return {
+      ok: false,
+      result: {
+        ...passResult,
+        required: passResult.required * chunkCount,
+      },
+    };
+  }
+  // Scale consent_required costs by chunk count
+  if (passResult.status === 'consent_required' && chunkCount > 1) {
+    return {
+      ok: false,
+      result: {
+        ...passResult,
+        estimatedPassCost: passResult.estimatedPassCost * chunkCount,
+        basePassCost: passResult.basePassCost * chunkCount,
+      },
+    };
   }
   return { ok: false, result: passResult as TrackResult };
 }
@@ -64,7 +89,15 @@ export async function trackTopic(
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
-  const passCheck = await passCheckForGeneration('', consentedPassCost);
+  // Count chunks under this topic for accurate cost estimation
+  const [chunkCountRow] = await dbClient
+    .select({ value: count() })
+    .from(chunk)
+    .innerJoin(note, eq(chunk.noteId, note.id))
+    .where(eq(note.topicId, topicId));
+  const numChunks = chunkCountRow?.value ?? 1;
+
+  const passCheck = await passCheckForGeneration('', consentedPassCost, Math.max(1, numChunks));
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
@@ -111,7 +144,14 @@ export async function trackNote(
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
-  const passCheck = await passCheckForGeneration('', consentedPassCost);
+  // Count chunks under this note for accurate cost estimation
+  const [chunkCountRow] = await dbClient
+    .select({ value: count() })
+    .from(chunk)
+    .where(eq(chunk.noteId, noteId));
+  const numChunks = chunkCountRow?.value ?? 1;
+
+  const passCheck = await passCheckForGeneration('', consentedPassCost, Math.max(1, numChunks));
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
