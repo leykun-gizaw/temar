@@ -73,16 +73,25 @@ export async function trackTopic(
   if (questionCount != null) body.questionCount = questionCount;
 
   try {
-    const data = await fsrsServiceFetch(`track/topic/${topicId}`, {
-      method: 'POST',
-      userId: loggedInUser.id,
-      headers: aiHeaders,
-      ...(Object.keys(body).length > 0 && { body }),
-    });
+    const data = await fsrsServiceFetch<Record<string, unknown>>(
+      `track/topic/${topicId}`,
+      {
+        method: 'POST',
+        userId: loggedInUser.id,
+        headers: aiHeaders,
+        ...(Object.keys(body).length > 0 && { body }),
+      }
+    );
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/materials');
-    return { status: 'success', data };
+    return {
+      status: 'success',
+      data,
+      ...(data?.newBalance != null && {
+        newBalance: data.newBalance as number,
+      }),
+    };
   } catch (err) {
     return {
       status: 'error',
@@ -111,16 +120,25 @@ export async function trackNote(
   if (questionCount != null) body.questionCount = questionCount;
 
   try {
-    const data = await fsrsServiceFetch(`track/note/${noteId}`, {
-      method: 'POST',
-      userId: loggedInUser.id,
-      headers: aiHeaders,
-      ...(Object.keys(body).length > 0 && { body }),
-    });
+    const data = await fsrsServiceFetch<Record<string, unknown>>(
+      `track/note/${noteId}`,
+      {
+        method: 'POST',
+        userId: loggedInUser.id,
+        headers: aiHeaders,
+        ...(Object.keys(body).length > 0 && { body }),
+      }
+    );
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/materials');
-    return { status: 'success', data };
+    return {
+      status: 'success',
+      data,
+      ...(data?.newBalance != null && {
+        newBalance: data.newBalance as number,
+      }),
+    };
   } catch (err) {
     return {
       status: 'error',
@@ -157,16 +175,25 @@ export async function trackChunk(
   if (questionCount != null) body.questionCount = questionCount;
 
   try {
-    const data = await fsrsServiceFetch(`track/chunk/${chunkId}`, {
-      method: 'POST',
-      userId: loggedInUser.id,
-      headers: aiHeaders,
-      ...(Object.keys(body).length > 0 && { body }),
-    });
+    const data = await fsrsServiceFetch<Record<string, unknown>>(
+      `track/chunk/${chunkId}`,
+      {
+        method: 'POST',
+        userId: loggedInUser.id,
+        headers: aiHeaders,
+        ...(Object.keys(body).length > 0 && { body }),
+      }
+    );
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/materials');
-    return { status: 'success', data };
+    return {
+      status: 'success',
+      data,
+      ...(data?.newBalance != null && {
+        newBalance: data.newBalance as number,
+      }),
+    };
   } catch (err) {
     return {
       status: 'error',
@@ -335,14 +362,23 @@ export async function regenerateChunkQuestions(
   const aiHeaders = await getAiHeaders();
 
   try {
-    const data = await fsrsServiceFetch(`track/regenerate/${chunkId}`, {
-      method: 'POST',
-      userId: loggedInUser.id,
-      headers: aiHeaders,
-    });
+    const data = await fsrsServiceFetch<Record<string, unknown>>(
+      `track/regenerate/${chunkId}`,
+      {
+        method: 'POST',
+        userId: loggedInUser.id,
+        headers: aiHeaders,
+      }
+    );
 
     revalidatePath('/dashboard');
-    return { status: 'success', data };
+    return {
+      status: 'success',
+      data,
+      ...(data?.newBalance != null && {
+        newBalance: data.newBalance as number,
+      }),
+    };
   } catch (err) {
     return {
       status: 'error',

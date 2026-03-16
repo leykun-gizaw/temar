@@ -216,18 +216,23 @@ export class QuestionGenerationService {
         `Generated ${questions.length} questions for chunk ${chunkId} (batch ${batchId})`
       );
 
-      // Record usage and deduct passes (fire-and-forget, don't block response)
+      // Record usage and deduct passes — awaited so deduction only happens
+      // after confirmed success, and newBalance propagates to the caller.
       const isByok = aiConfig?.byok ?? false;
-      recordUsage({
-        userId,
-        modelId,
-        operationType: 'question_generation',
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
-        isByok,
-      }).catch((err: unknown) =>
-        this.logger.error(`recordUsage failed for chunk ${chunkId}: ${err}`)
-      );
+      let newBalance: number | null = null;
+      try {
+        const usageResult = await recordUsage({
+          userId,
+          modelId,
+          operationType: 'question_generation',
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          isByok,
+        });
+        newBalance = usageResult.newBalance;
+      } catch (err: unknown) {
+        this.logger.error(`recordUsage failed for chunk ${chunkId}: ${err}`);
+      }
 
       return {
         chunkId,
@@ -235,6 +240,7 @@ export class QuestionGenerationService {
         questionsGenerated: questions.length,
         recallItemIds: inserted.map((r) => r.id),
         usage,
+        newBalance,
       };
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);

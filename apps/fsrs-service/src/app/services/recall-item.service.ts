@@ -79,35 +79,22 @@ export class RecallItemService {
         `Tracked chunk ${chunkId} for user ${userId} (pending generation)`
       );
 
-      // Fire-and-forget: trigger question generation in question-gen-service
-      const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
-      if (qgenEndpoint) {
-        const body: Record<string, unknown> = {};
-        if (questionTypes?.length) body.questionTypes = questionTypes;
-        if (questionCount != null) body.questionCount = questionCount;
+      // Trigger question generation synchronously so errors propagate
+      const qgenResult = await this.triggerQuestionGen(
+        chunkId,
+        userId,
+        aiConfig,
+        questionTypes,
+        questionCount
+      );
 
-        fetch(`${qgenEndpoint}/generate/${chunkId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
-              'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
-            }),
-            'x-user-id': userId,
-            ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
-            ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
-            ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
-            'x-byok': aiConfig?.byok ? 'true' : 'false',
-          },
-          ...(Object.keys(body).length > 0 && { body: JSON.stringify(body) }),
-        }).catch((err) =>
-          this.logger.error(
-            `Fire-and-forget question generation failed for chunk ${chunkId}: ${err}`
-          )
-        );
-      }
-
-      return { tracked: true, chunkId, trackingId: row.id, status: 'pending' };
+      return {
+        tracked: true,
+        chunkId,
+        trackingId: row.id,
+        status: qgenResult?.status ?? 'pending',
+        newBalance: qgenResult?.newBalance ?? null,
+      };
     } catch (err: unknown) {
       if (
         err instanceof Error &&
@@ -508,30 +495,12 @@ export class RecallItemService {
       byok?: boolean;
     }
   ) {
-    const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
-    if (!qgenEndpoint) {
-      throw new Error('QUESTION_GEN_SERVICE_API_ENDPOINT not configured');
-    }
-    // Fire-and-forget: trigger retry in question-gen-service
-    fetch(`${qgenEndpoint}/generate/retry/${chunkId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
-          'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
-        }),
-        'x-user-id': userId,
-        ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
-        ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
-        ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
-        'x-byok': aiConfig?.byok ? 'true' : 'false',
-      },
-    }).catch((err) =>
-      this.logger.error(
-        `Fire-and-forget retry failed for chunk ${chunkId}: ${err}`
-      )
+    const result = await this.callQuestionGenService(
+      `/generate/retry/${chunkId}`,
+      userId,
+      aiConfig
     );
-    return { chunkId, status: 'retry_triggered' };
+    return { chunkId, ...result };
   }
 
   async retryAllFailed(
@@ -543,27 +512,12 @@ export class RecallItemService {
       byok?: boolean;
     }
   ) {
-    const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
-    if (!qgenEndpoint) {
-      throw new Error('QUESTION_GEN_SERVICE_API_ENDPOINT not configured');
-    }
-    fetch(`${qgenEndpoint}/generate/retry-failed`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
-          'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
-        }),
-        'x-user-id': userId,
-        ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
-        ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
-        ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
-        'x-byok': aiConfig?.byok ? 'true' : 'false',
-      },
-    }).catch((err) =>
-      this.logger.error(`Fire-and-forget retry-all-failed failed: ${err}`)
+    const result = await this.callQuestionGenService(
+      '/generate/retry-failed',
+      userId,
+      aiConfig
     );
-    return { status: 'retry_all_triggered' };
+    return result;
   }
 
   async getUnderperformingChunks(
@@ -778,31 +732,94 @@ export class RecallItemService {
         )
       );
 
-    // Fire-and-forget: trigger question generation
+    // Trigger question generation synchronously
+    const qgenResult = await this.triggerQuestionGen(chunkId, userId, aiConfig);
+
+    this.logger.log(`Regeneration triggered for chunk ${chunkId}`);
+    return {
+      chunkId,
+      status: qgenResult?.status ?? 'regeneration_triggered',
+      newBalance: qgenResult?.newBalance ?? null,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers for question-gen-service calls
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Call question-gen-service and await response.
+   * Throws if the endpoint is not configured or the call fails.
+   */
+  private async callQuestionGenService(
+    path: string,
+    userId: string,
+    aiConfig?: {
+      provider?: string;
+      model?: string;
+      apiKey?: string;
+      byok?: boolean;
+    },
+    body?: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
     const qgenEndpoint = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
-    if (qgenEndpoint) {
-      fetch(`${qgenEndpoint}/generate/${chunkId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
-            'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
-          }),
-          'x-user-id': userId,
-          ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
-          ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
-          ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
-          'x-byok': aiConfig?.byok ? 'true' : 'false',
-        },
-      }).catch((err) =>
-        this.logger.error(
-          `Fire-and-forget regeneration failed for chunk ${chunkId}: ${err}`
-        )
+    if (!qgenEndpoint) {
+      throw new Error('QUESTION_GEN_SERVICE_API_ENDPOINT not configured');
+    }
+
+    const res = await fetch(`${qgenEndpoint}${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.QUESTION_GEN_SERVICE_API_KEY && {
+          'x-api-key': process.env.QUESTION_GEN_SERVICE_API_KEY,
+        }),
+        'x-user-id': userId,
+        ...(aiConfig?.provider && { 'x-ai-provider': aiConfig.provider }),
+        ...(aiConfig?.model && { 'x-ai-model': aiConfig.model }),
+        ...(aiConfig?.apiKey && { 'x-ai-api-key': aiConfig.apiKey }),
+        'x-byok': aiConfig?.byok ? 'true' : 'false',
+      },
+      ...(body && Object.keys(body).length > 0 && { body: JSON.stringify(body) }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(
+        `Question generation service error ${res.status}: ${text}`
       );
     }
 
-    this.logger.log(`Regeneration triggered for chunk ${chunkId}`);
-    return { chunkId, status: 'regeneration_triggered' };
+    const text = await res.text();
+    return text ? JSON.parse(text) : {};
+  }
+
+  /**
+   * Trigger question generation for a single chunk via question-gen-service.
+   * Returns the parsed response (includes newBalance when passes were deducted).
+   */
+  private async triggerQuestionGen(
+    chunkId: string,
+    userId: string,
+    aiConfig?: {
+      provider?: string;
+      model?: string;
+      apiKey?: string;
+      byok?: boolean;
+    },
+    questionTypes?: string[],
+    questionCount?: number
+  ): Promise<Record<string, unknown>> {
+    const body: Record<string, unknown> = {};
+    if (questionTypes?.length) body.questionTypes = questionTypes;
+    if (questionCount != null) body.questionCount = questionCount;
+
+    return this.callQuestionGenService(
+      `/generate/${chunkId}`,
+      userId,
+      aiConfig,
+      body
+    );
   }
 
   async getDueCount(userId: string) {
