@@ -4,6 +4,7 @@ import {
   getAllRecallItems,
 } from '@/lib/fetchers/recall-items';
 import { getFilteredTopics } from '@/lib/fetchers/topics';
+import { getAnswerDrafts } from '@/lib/actions/review';
 import ReviewSession from './_components/review-session';
 import ReviewHistory from './_components/review-history';
 
@@ -24,6 +25,11 @@ export default async function ReviewsPage({
     getFilteredTopics(''),
   ]);
 
+  // Load any saved answer drafts for the due items
+  const answerDrafts = dueItems.length > 0
+    ? await getAnswerDrafts(dueItems.map((item) => item.id))
+    : {};
+
   if (dueItems.length === 0) {
     const { items: allItems } = await getAllRecallItems({ limit: 200 });
     return (
@@ -38,6 +44,7 @@ export default async function ReviewsPage({
   return (
     <ReviewSession
       initialItems={dueItems}
+      initialDrafts={answerDrafts}
       topics={topics.map((t) => ({ id: t.id, name: t.name }))}
       currentTopicId={topicId}
       currentNoteId={noteId}

@@ -220,6 +220,10 @@ function nodeToPlainText(node: SerializedLexicalNode): string {
     return '\n';
   }
 
+  if (n.type === 'code-highlight' || n.type === 'tab') {
+    return (n.text as string) ?? '';
+  }
+
   if (n.type === 'horizontalrule') {
     return '';
   }
@@ -252,6 +256,8 @@ function nodeToPlainText(node: SerializedLexicalNode): string {
     case 'quote':
       return `${childText}\n`;
     case 'listitem':
+      return `${childText}\n`;
+    case 'code':
       return `${childText}\n`;
     case 'list':
       return childText;
