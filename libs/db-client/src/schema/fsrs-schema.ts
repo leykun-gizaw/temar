@@ -42,6 +42,7 @@ export const recallItem = pgTable('recall_item', {
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .default(sql`now()`),
+  answerDraftJson: jsonb('answer_draft_json'),
   generationBatchId: uuid('generation_batch_id'),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
