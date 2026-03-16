@@ -37,7 +37,8 @@ const theme: EditorThemeClasses = {
     'border-l-4 border-muted-foreground/30 pl-4 italic text-muted-foreground mb-2',
   code: 'bg-muted rounded-md p-4 font-mono text-sm mb-2 block overflow-x-auto relative',
   table: 'border-collapse border border-border my-2 w-full',
-  tableCell: 'border border-border px-3 py-2 text-left min-w-[75px] align-top',
+  tableCell:
+    'border border-border px-3 py-2 text-left min-w-[75px] align-top',
   tableCellHeader:
     'border border-border px-3 py-2 text-left font-bold bg-muted min-w-[75px] align-top',
   tableRow: '',
@@ -50,6 +51,12 @@ const theme: EditorThemeClasses = {
     focus: 'outline outline-2 outline-primary rounded-md',
   },
   indent: 'pl-8',
+  // New node theme classes
+  pageBreak: 'my-4',
+  layoutContainer:
+    'my-4 border border-dashed border-border rounded-md p-3 min-h-[80px]',
+  layoutItem:
+    'border border-dashed border-border/50 rounded-sm p-2 min-h-[60px]',
   codeHighlight: {
     atrule: 'text-blue-500',
     attr: 'text-blue-500',

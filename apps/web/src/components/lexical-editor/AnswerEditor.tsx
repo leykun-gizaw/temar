@@ -19,7 +19,7 @@ export default function AnswerEditor({
       initialState={initialValue}
       onChange={onChange}
       placeholder={placeholder}
-      showToolbar={false}
+      showToolbar
       className="bg-card border-0 h-full"
       editorClassName="prose prose-sm dark:prose-invert max-w-none"
     />

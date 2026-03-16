@@ -10,8 +10,9 @@ import type {
   SerializedLexicalNode,
   Spread,
 } from 'lexical';
-import { $applyNodeReplacement, DecoratorNode } from 'lexical';
-import { JSX } from 'react';
+import { $applyNodeReplacement, $getNodeByKey, DecoratorNode } from 'lexical';
+import { JSX, useCallback, useRef, useState } from 'react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 
 export interface ImagePayload {
   altText: string;
@@ -36,6 +37,7 @@ function ImageComponent({
   altText,
   width,
   height,
+  nodeKey,
 }: {
   src: string;
   altText: string;
@@ -43,15 +45,77 @@ function ImageComponent({
   height?: number;
   nodeKey: NodeKey;
 }): JSX.Element {
+  const [editor] = useLexicalComposerContext();
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [, setIsResizing] = useState(false);
+  const [currentWidth, setCurrentWidth] = useState(width);
+  const [currentHeight, setCurrentHeight] = useState(height);
+  const [isSelected, setIsSelected] = useState(false);
+  const isEditable = editor.isEditable();
+
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent, corner: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!imgRef.current) return;
+
+      const startX = e.clientX;
+      const startWidth = imgRef.current.offsetWidth;
+      const startHeight = imgRef.current.offsetHeight;
+      const ratio = startWidth / startHeight;
+
+      setIsResizing(true);
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const dx = moveEvent.clientX - startX;
+        let newWidth = startWidth;
+
+        if (corner === 'se' || corner === 'ne') {
+          newWidth = Math.max(100, startWidth + dx);
+        } else {
+          newWidth = Math.max(100, startWidth - dx);
+        }
+
+        const newHeight = Math.round(newWidth / ratio);
+        setCurrentWidth(newWidth);
+        setCurrentHeight(newHeight);
+      };
+
+      const handleMouseUp = () => {
+        setIsResizing(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+
+        // Persist to node
+        editor.update(() => {
+          const node = $getNodeByKey(nodeKey);
+          if (node && $isImageNode(node)) {
+            node.setDimensions(currentWidth, currentHeight);
+          }
+        });
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [editor, nodeKey, currentWidth, currentHeight]
+  );
+
   return (
-    <div className="relative inline-block max-w-full my-2">
+    <div
+      className={`relative inline-block max-w-full my-2 ${
+        isSelected ? 'ring-2 ring-primary rounded-md' : ''
+      }`}
+      onClick={() => isEditable && setIsSelected(!isSelected)}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={imgRef}
         src={src}
         alt={altText}
         style={{
-          width: width ? `${width}px` : undefined,
-          height: height ? `${height}px` : undefined,
+          width: currentWidth ? `${currentWidth}px` : undefined,
+          height: currentHeight ? `${currentHeight}px` : undefined,
           maxWidth: '100%',
         }}
         className="rounded-md"
@@ -61,6 +125,26 @@ function ImageComponent({
         <span className="block text-xs text-muted-foreground mt-1 text-center">
           {altText}
         </span>
+      )}
+      {/* Resize handles */}
+      {isEditable && isSelected && (
+        <>
+          {(['nw', 'ne', 'sw', 'se'] as const).map((corner) => (
+            <div
+              key={corner}
+              className={`absolute w-3 h-3 bg-primary border-2 border-background rounded-sm cursor-${
+                corner === 'nw' || corner === 'se' ? 'nwse' : 'nesw'
+              }-resize z-10 ${
+                corner.includes('n') ? 'top-0' : 'bottom-0'
+              } ${corner.includes('w') ? 'left-0' : 'right-0'} ${
+                corner.includes('n') ? '-translate-y-1/2' : 'translate-y-1/2'
+              } ${
+                corner.includes('w') ? '-translate-x-1/2' : 'translate-x-1/2'
+              }`}
+              onMouseDown={(e) => handleResizeStart(e, corner)}
+            />
+          ))}
+        </>
       )}
     </div>
   );
@@ -118,6 +202,12 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
 
   getAltText(): string {
     return this.__altText;
+  }
+
+  setDimensions(width?: number, height?: number): void {
+    const writable = this.getWritable();
+    writable.__width = width;
+    writable.__height = height;
   }
 
   static override importJSON(serializedNode: SerializedImageNode): ImageNode {
