@@ -19,6 +19,7 @@ export interface AnalysisResult extends AnalysisOutput {
   suggestedRating: number;
   suggestedLabel: 'Again' | 'Hard' | 'Good' | 'Easy';
   usage: TokenUsage;
+  newBalance: number | null;
 }
 
 function percentToRating(percent: number): {
@@ -57,19 +58,23 @@ export class AnswerAnalysisService {
       `Analysis for "${request.questionTitle}": ${analysis.scorePercent}% → ${label} (${rating})`
     );
 
-    // Record usage and deduct passes (fire-and-forget)
+    // Record usage and deduct passes
     const isByok = aiConfig?.byok ?? false;
+    let newBalance: number | null = null;
     if (userId) {
-      recordUsage({
-        userId,
-        modelId,
-        operationType: 'answer_analysis',
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
-        isByok,
-      }).catch((err: unknown) =>
-        this.logger.error(`recordUsage failed: ${err}`)
-      );
+      try {
+        const usageResult = await recordUsage({
+          userId,
+          modelId,
+          operationType: 'answer_analysis',
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          isByok,
+        });
+        newBalance = usageResult.newBalance;
+      } catch (err: unknown) {
+        this.logger.error(`recordUsage failed: ${err}`);
+      }
     }
 
     return {
@@ -77,6 +82,7 @@ export class AnswerAnalysisService {
       suggestedRating: rating,
       suggestedLabel: label,
       usage,
+      newBalance,
     };
   }
 }

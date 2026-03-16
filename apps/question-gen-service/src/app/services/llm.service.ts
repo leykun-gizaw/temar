@@ -119,7 +119,16 @@ export type TokenUsage = {
   outputTokens: number;
 };
 
-const DEFAULT_MODELS: Record<string, string> = {
+import {
+  DEFAULT_MODEL_ID,
+  MODEL_PROVIDER_MAP,
+} from '@temar/shared-types';
+
+/**
+ * Fallback provider model IDs for BYOK users who supply their own API key
+ * but no explicit model. These are raw provider identifiers (not pricing IDs).
+ */
+const BYOK_FALLBACK_MODELS: Record<string, string> = {
   google: 'gemini-2.0-flash',
   openai: 'gpt-4o-mini',
   anthropic: 'claude-sonnet-4-20250514',
@@ -129,36 +138,64 @@ const DEFAULT_MODELS: Record<string, string> = {
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
 
+  /**
+   * Resolves the LLM model to call.
+   *
+   * Returns:
+   *  - `model`: the Vercel AI SDK model instance for the LLM call
+   *  - `pricingModelId`: the pricing-table ID to pass to `recordUsage()`
+   *
+   * When the caller provides a pricing model ID (via `x-ai-model` header),
+   * we map it to the provider model via `MODEL_PROVIDER_MAP`. When a BYOK
+   * user passes a raw provider model ID we use it directly but still try to
+   * reverse-map to the pricing ID.
+   */
   private resolveModel(config?: AiConfig): {
     model: ReturnType<ReturnType<typeof createGoogleGenerativeAI>>;
-    modelId: string;
+    pricingModelId: string;
   } {
     const provider = config?.provider || process.env.AI_PROVIDER || 'google';
-    const modelId =
+
+    // Determine the pricing model ID (what we bill against)
+    const pricingModelId =
       config?.model ||
       process.env.AI_MODEL ||
-      DEFAULT_MODELS[provider] ||
-      'gemini-2.0-flash';
+      DEFAULT_MODEL_ID;
+
+    // Map pricing ID → provider model ID for the actual LLM call
+    const providerModelId =
+      MODEL_PROVIDER_MAP[pricingModelId] ??
+      // Fallback: if the ID is already a provider model (BYOK), use as-is
+      pricingModelId;
 
     switch (provider) {
       case 'openai': {
         const openai = createOpenAI(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return { model: openai(modelId) as any, modelId };
+        const sdkModelId = config?.apiKey
+          ? (providerModelId || BYOK_FALLBACK_MODELS.openai)
+          : providerModelId;
+        return { model: openai(sdkModelId) as any, pricingModelId };
       }
       case 'anthropic': {
         const anthropic = createAnthropic(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return { model: anthropic(modelId) as any, modelId };
+        const sdkModelId = config?.apiKey
+          ? (providerModelId || BYOK_FALLBACK_MODELS.anthropic)
+          : providerModelId;
+        return { model: anthropic(sdkModelId) as any, pricingModelId };
       }
       case 'google':
       default: {
         const google = createGoogleGenerativeAI(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return { model: google(modelId), modelId };
+        const sdkModelId = config?.apiKey
+          ? (providerModelId || BYOK_FALLBACK_MODELS.google)
+          : providerModelId;
+        return { model: google(sdkModelId), pricingModelId };
       }
     }
   }
@@ -176,7 +213,7 @@ export class LlmService {
     usage: TokenUsage;
     modelId: string;
   }> {
-    const { model: llmModel, modelId } = this.resolveModel(aiConfig);
+    const { model: llmModel, pricingModelId: modelId } = this.resolveModel(aiConfig);
     const types = questionTypes?.length ? questionTypes : ['open_ended'];
     const count =
       questionCount ??

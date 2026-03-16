@@ -34,7 +34,16 @@ export type TokenUsage = {
   outputTokens: number;
 };
 
-const DEFAULT_MODELS: Record<string, string> = {
+import {
+  DEFAULT_MODEL_ID,
+  MODEL_PROVIDER_MAP,
+} from '@temar/shared-types';
+
+/**
+ * Fallback provider model IDs for BYOK users who supply their own API key
+ * but no explicit model. These are raw provider identifiers (not pricing IDs).
+ */
+const BYOK_FALLBACK_MODELS: Record<string, string> = {
   google: 'gemini-2.0-flash',
   openai: 'gpt-4o-mini',
   anthropic: 'claude-sonnet-4-20250514',
@@ -46,34 +55,48 @@ export class LlmService {
 
   private resolveModel(config?: AiConfig): {
     model: ReturnType<ReturnType<typeof createGoogleGenerativeAI>>;
-    modelId: string;
+    pricingModelId: string;
   } {
     const provider = config?.provider || process.env.AI_PROVIDER || 'google';
-    const modelId =
+
+    // Determine the pricing model ID (what we bill against)
+    const pricingModelId =
       config?.model ||
       process.env.AI_MODEL ||
-      DEFAULT_MODELS[provider] ||
-      'gemini-2.0-flash';
+      DEFAULT_MODEL_ID;
+
+    // Map pricing ID → provider model ID for the actual LLM call
+    const providerModelId =
+      MODEL_PROVIDER_MAP[pricingModelId] ?? pricingModelId;
 
     switch (provider) {
       case 'openai': {
         const openai = createOpenAI(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return { model: openai(modelId) as any, modelId };
+        const sdkModelId = config?.apiKey
+          ? (providerModelId || BYOK_FALLBACK_MODELS.openai)
+          : providerModelId;
+        return { model: openai(sdkModelId) as any, pricingModelId };
       }
       case 'anthropic': {
         const anthropic = createAnthropic(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return { model: anthropic(modelId) as any, modelId };
+        const sdkModelId = config?.apiKey
+          ? (providerModelId || BYOK_FALLBACK_MODELS.anthropic)
+          : providerModelId;
+        return { model: anthropic(sdkModelId) as any, pricingModelId };
       }
       case 'google':
       default: {
         const google = createGoogleGenerativeAI(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return { model: google(modelId), modelId };
+        const sdkModelId = config?.apiKey
+          ? (providerModelId || BYOK_FALLBACK_MODELS.google)
+          : providerModelId;
+        return { model: google(sdkModelId), pricingModelId };
       }
     }
   }
@@ -86,7 +109,7 @@ export class LlmService {
     keyPoints: string[],
     aiConfig?: AiConfig
   ): Promise<{ analysis: AnalysisOutput; usage: TokenUsage; modelId: string }> {
-    const { model: llmModel, modelId } = this.resolveModel(aiConfig);
+    const { model: llmModel, pricingModelId: modelId } = this.resolveModel(aiConfig);
 
     const systemPrompt = `You are a precise, fair grading assistant for a spaced-repetition study system.
 
