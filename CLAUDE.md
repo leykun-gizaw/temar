@@ -65,22 +65,22 @@ User <-> Next.js (web) <-> NestJS microservices <-> PostgreSQL
 
 ### Applications (`apps/`)
 
-| App | Port | Purpose | Status |
-|-----|------|---------|--------|
-| `web` | 5173 | Next.js frontend -- dashboard, materials browser, review sessions, billing | **Active** |
-| `fsrs-service` | 3334 | NestJS -- ts-fsrs engine, tracking cascades, review lifecycle | **Active** |
-| `question-gen-service` | 3335 | NestJS -- LLM question + rubric generation per chunk | **Active** |
-| `answer-analysis-service` | 3336 | NestJS -- LLM semantic answer evaluation, mapped to FSRS ratings | **Active** |
-| `admin` | 3000 | Next.js admin panel -- analytics, AI model management | **Active** |
-| `notion_sync-service` | 3333 | NestJS -- Notion sync (OAuth, webhooks, markdown conversion) | **Retired, not deployed** |
-| `api` | -- | NestJS API scaffold | **Vestigial, ignore** |
+| App                       | Port | Purpose                                                                    | Status                    |
+| ------------------------- | ---- | -------------------------------------------------------------------------- | ------------------------- |
+| `web`                     | 5173 | Next.js frontend -- dashboard, materials browser, review sessions, billing | **Active**                |
+| `fsrs-service`            | 3334 | NestJS -- ts-fsrs engine, tracking cascades, review lifecycle              | **Active**                |
+| `question-gen-service`    | 3335 | NestJS -- LLM question + rubric generation per chunk                       | **Active**                |
+| `answer-analysis-service` | 3336 | NestJS -- LLM semantic answer evaluation, mapped to FSRS ratings           | **Active**                |
+| `admin`                   | 3000 | Next.js admin panel -- analytics, AI model management                      | **Active**                |
+| `notion_sync-service`     | 3333 | NestJS -- Notion sync (OAuth, webhooks, markdown conversion)               | **Retired, not deployed** |
+| `api`                     | --   | NestJS API scaffold                                                        | **Vestigial, ignore**     |
 
 ### Libraries (`libs/`)
 
-| Library | Purpose |
-|---------|---------|
-| `db-client` | Drizzle ORM client, all schema definitions, crypto utilities, re-exported Drizzle operators |
-| `shared-types` | Cross-app TypeScript interfaces and DTOs (`ModelConfig`, `OperationType`, etc.) |
+| Library           | Purpose                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| `db-client`       | Drizzle ORM client, all schema definitions, crypto utilities, re-exported Drizzle operators  |
+| `shared-types`    | Cross-app TypeScript interfaces and DTOs (`ModelConfig`, `OperationType`, etc.)              |
 | `pricing-service` | In-memory cached pricing engine -- computes Pass costs, records usage with balance deduction |
 
 ### Inter-service communication
@@ -137,6 +137,7 @@ pnpm workspace symlinks (`node_modules/@temar/*`) conflict with lib tsconfigs du
 - **Service `tsconfig.app.json`** must explicitly `include` lib source paths and add `references`
 
 **When adding a new `@temar/*` library or service**, update ALL of:
+
 1. `tsconfig.base.json` -- path alias
 2. `Dockerfile` -- COPY + rm -rf commands in relevant stages
 3. `docker-compose.prod.yml` -- service entry
@@ -172,3 +173,27 @@ Returns no error on duplicates, so code returning `{ success: true }` unconditio
 ## Environment Variables
 
 Full list in `.env.template`. Critical note: service endpoint vars (e.g., `FSRS_SERVICE_API_ENDPOINT`) **must include `/api`** suffix. Paddle sandbox uses different CDN (`sandbox-cdn.paddle.com`) and `test_` prefixed tokens.
+
+<!-- nx configuration start-->
+<!-- Leave the start & end comments to automatically receive updates. -->
+
+## General Guidelines for working with Nx
+
+- For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
+- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
+- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
+- You have access to the Nx MCP server and its tools, use them to help the user
+- For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
+- NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
+
+## Scaffolding & Generators
+
+- For scaffolding tasks (creating apps, libs, project structure, setup), ALWAYS invoke the `nx-generate` skill FIRST before exploring or calling MCP tools
+
+## When to use nx_docs
+
+- USE for: advanced config options, unfamiliar flags, migration guides, plugin configuration, edge cases
+- DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
+- The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
+
+<!-- nx configuration end-->
