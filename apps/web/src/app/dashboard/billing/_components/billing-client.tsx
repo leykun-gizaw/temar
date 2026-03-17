@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Script from 'next/script';
+import {
+  type Environments,
+  type Paddle,
+  initializePaddle,
+} from '@paddle/paddle-js';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -10,6 +14,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -19,25 +24,13 @@ import {
   ArrowUpCircle,
   Zap,
   ExternalLink,
+  CalendarClock,
+  CheckCircle2,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PassTransaction } from '@/lib/actions/pass';
-
-declare global {
-  interface Window {
-    Paddle?: {
-      Environment: { set: (env: string) => void };
-      Setup: (opts: { token: string }) => void;
-      Checkout: {
-        open: (opts: {
-          items: { priceId: string; quantity: number }[];
-          customData?: Record<string, string>;
-          settings?: { successUrl?: string };
-        }) => void;
-      };
-    };
-  }
-}
+import type { SubscriptionInfo } from '@/lib/actions/paddle-sync';
 
 interface TopupPack {
   id: string;
@@ -50,63 +43,79 @@ interface TopupPack {
 const PLAN_LABELS: Record<string, string> = {
   free: 'Free',
   starter: 'Starter',
+  hobbyist: 'Hobbyist',
   scholar: 'Scholar',
 };
 
-const PLAN_BADGE_VARIANT: Record<string, string> = {
-  free: 'secondary',
-  starter: 'default',
-  scholar: 'default',
+const PLAN_BADGE_COLORS: Record<string, string> = {
+  free: 'bg-muted text-muted-foreground',
+  starter: 'bg-primary text-primary-foreground',
+  hobbyist: 'bg-blue-600 text-white',
+  scholar: 'bg-violet-600 text-white',
 };
 
 interface PaddleConfig {
   clientToken: string;
-  environment: string;
+  environment: Environments;
   starterPriceId: string;
+  hobbyistPriceId: string;
   scholarPriceId: string;
   topupPacks: TopupPack[];
 }
 
 interface BillingClientProps {
-  balance: number;
-  plan: string;
+  subscriptionInfo: SubscriptionInfo;
   userId: string;
   transactions: PassTransaction[];
   paddleConfig: PaddleConfig;
 }
 
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export function BillingClient({
-  balance,
-  plan,
+  subscriptionInfo,
   userId,
   transactions,
   paddleConfig,
 }: BillingClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
-  const [paddleReady, setPaddleReady] = useState(false);
+  const [paddle, setPaddle] = useState<Paddle | null>(null);
 
-  const initPaddle = useCallback(() => {
-    if (!window.Paddle) return;
-    if (paddleConfig.environment === 'sandbox') {
-      window.Paddle.Environment.set('sandbox');
-    }
-    window.Paddle.Setup({ token: paddleConfig.clientToken });
-    setPaddleReady(true);
-  }, [paddleConfig.clientToken, paddleConfig.environment]);
+  const { plan, status, nextBilledAt, balance } = subscriptionInfo;
+  const hasActiveSub = plan !== 'free' && !!status;
 
   useEffect(() => {
-    if (window.Paddle) initPaddle();
-  }, [initPaddle]);
+    if (paddle?.Initialized) return;
+    if (!paddleConfig.clientToken) return;
+
+    initializePaddle({
+      token: paddleConfig.clientToken,
+      environment: paddleConfig.environment,
+    }).then((instance) => {
+      if (instance) {
+        setPaddle(instance);
+      }
+    });
+  }, [paddle?.Initialized, paddleConfig.clientToken, paddleConfig.environment]);
+
+  const paddleReady = !!paddle?.Initialized;
 
   const openCheckout = (
     priceId: string,
     customData?: Record<string, string>,
     packId?: string
   ) => {
-    if (!window.Paddle || !paddleReady) return;
+    if (!paddle || !paddleReady) return;
     setLoading(packId ?? 'checkout');
-    window.Paddle.Checkout.open({
+    paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
       customData: { userId, ...customData },
       settings: {
@@ -136,11 +145,6 @@ export function BillingClient({
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
-      <Script
-        src="https://cdn.paddle.com/paddle/v2/paddle.js"
-        onLoad={initPaddle}
-      />
-
       <div>
         <h1 className="text-2xl font-bold">Billing &amp; Pass</h1>
         <p className="text-muted-foreground mt-1">
@@ -148,31 +152,43 @@ export function BillingClient({
         </p>
       </div>
 
-      {/* Balance card */}
+      {/* Current Plan card */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <Coins className="h-5 w-5 text-primary" />
-              Pass Balance
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Current Plan
             </span>
-            <Badge
-              variant={PLAN_BADGE_VARIANT[plan] as 'default' | 'secondary'}
-              className="capitalize"
-            >
+            <Badge className={cn('capitalize', PLAN_BADGE_COLORS[plan])}>
               {PLAN_LABELS[plan] ?? plan}
             </Badge>
           </CardTitle>
-          <CardDescription>
-            Pass is used for AI operations. Renews monthly with your plan.
-          </CardDescription>
+          {hasActiveSub ? (
+            <CardDescription className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              Active subscription
+            </CardDescription>
+          ) : (
+            <CardDescription>
+              You are on the free plan. Upgrade to get monthly Pass.
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-end gap-2">
-            <span className="text-5xl font-bold tabular-nums">{balance}</span>
-            <span className="mb-1 text-lg text-muted-foreground">Pass</span>
-          </div>
-          {plan !== 'free' && (
+          {hasActiveSub && nextBilledAt && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CalendarClock className="h-4 w-4" />
+              <span>
+                Next renewal:{' '}
+                <span className="font-medium text-foreground">
+                  {formatDate(nextBilledAt)}
+                </span>
+              </span>
+            </div>
+          )}
+
+          {hasActiveSub && (
             <Button
               variant="outline"
               size="sm"
@@ -185,7 +201,8 @@ export function BillingClient({
               <ExternalLink className="h-3.5 w-3.5 opacity-60" />
             </Button>
           )}
-          {plan === 'free' && (
+
+          {!hasActiveSub && (
             <div className="flex gap-3 flex-wrap">
               <Button
                 size="sm"
@@ -198,7 +215,25 @@ export function BillingClient({
                 }
                 disabled={!paddleReady || !!loading}
               >
-                Upgrade to Starter — $9.99/mo
+                {loading === 'starter'
+                  ? 'Opening…'
+                  : 'Starter — $4.99/mo'}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  openCheckout(
+                    paddleConfig.hobbyistPriceId,
+                    undefined,
+                    'hobbyist'
+                  )
+                }
+                disabled={!paddleReady || !!loading}
+              >
+                {loading === 'hobbyist'
+                  ? 'Opening…'
+                  : 'Hobbyist — $9.00/mo'}
               </Button>
               <Button
                 size="sm"
@@ -212,11 +247,39 @@ export function BillingClient({
                 }
                 disabled={!paddleReady || !!loading}
               >
-                Go Scholar — $24.99/mo
+                {loading === 'scholar' ? 'Opening…' : 'Scholar — $14.99/mo'}
               </Button>
             </div>
           )}
         </CardContent>
+      </Card>
+
+      {/* Balance card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Coins className="h-5 w-5 text-primary" />
+            Pass Balance
+          </CardTitle>
+          <CardDescription>
+            Pass is used for AI operations.
+            {hasActiveSub
+              ? ' Renews monthly with your plan.'
+              : ' Purchase a plan or top-up pack to get Pass.'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-2">
+            <span className="text-5xl font-bold tabular-nums">{balance}</span>
+            <span className="mb-1 text-lg text-muted-foreground">Pass</span>
+          </div>
+        </CardContent>
+        {hasActiveSub && nextBilledAt && (
+          <CardFooter className="text-xs text-muted-foreground border-t pt-4">
+            Your balance will reset on {formatDate(nextBilledAt)} with your plan
+            renewal.
+          </CardFooter>
+        )}
       </Card>
 
       {/* Top-up packs */}
@@ -225,7 +288,7 @@ export function BillingClient({
           <ArrowUpCircle className="h-5 w-5 text-primary" />
           Top-up Packs
         </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           {paddleConfig.topupPacks.map((pack) => (
             <Card
               key={pack.id}

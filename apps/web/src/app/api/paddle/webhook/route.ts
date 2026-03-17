@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { paddle, PADDLE_PLANS } from '@/lib/paddle';
+import { getPaddleInstance, PADDLE_PLANS } from '@/lib/paddle';
 import { creditPass } from '@/lib/actions/pass';
 import { dbClient, user, passBalance, eq } from '@temar/db-client';
 import {
@@ -80,6 +80,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const paddle = getPaddleInstance();
+
   let event: EventEntity;
   try {
     event = paddle.webhooks.unmarshal(
@@ -123,9 +125,7 @@ export async function POST(req: NextRequest) {
             paddleCustomerId: sub.customerId,
             plan: planKey,
             paddleSubscriptionId: sub.id,
-            passResetAt: sub.nextBilledAt
-              ? new Date(sub.nextBilledAt)
-              : null,
+            passResetAt: sub.nextBilledAt ? new Date(sub.nextBilledAt) : null,
           })
           .where(eq(user.id, userId));
 
@@ -201,9 +201,7 @@ export async function POST(req: NextRequest) {
           const planKey = priceId ? planKeyFromPriceId(priceId) : null;
           if (planKey) {
             // Fetch subscription to get nextBilledAt
-            const subData = await paddle.subscriptions.get(
-              txn.subscriptionId
-            );
+            const subData = await paddle.subscriptions.get(txn.subscriptionId);
             const nextBilledAt =
               (subData as { nextBilledAt?: string }).nextBilledAt ?? null;
             await resetMonthlyPass(userId, planKey, nextBilledAt);

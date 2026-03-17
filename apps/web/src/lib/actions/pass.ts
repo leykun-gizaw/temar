@@ -9,20 +9,37 @@ import {
   desc,
 } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
-import { revalidatePath } from 'next/cache';
 import type { OperationType } from '@/lib/config/ai-operations';
 import {
-  getPassCost,
   isByokFree,
   estimateInputTokens,
+  computePassCost,
   estimatedPassCostFromTokens,
-  OPERATION_CONFIGS,
+  getOperationConfig,
+  getActiveModels,
 } from '@/lib/config/ai-operations';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export type PassBalanceInfo = {
   balance: number;
   plan: string;
 };
+
+export type CheckPassResult =
+  | { status: 'ok'; passToDeduct: number; isByok: boolean }
+  | { status: 'insufficient_pass'; balance: number; required: number }
+  | {
+      status: 'consent_required';
+      estimatedPassCost: number;
+      basePassCost: number;
+    };
+
+// ---------------------------------------------------------------------------
+// Balance queries
+// ---------------------------------------------------------------------------
 
 export async function getPassBalance(): Promise<PassBalanceInfo> {
   const sessionUser = await getLoggedInUser();
@@ -49,6 +66,24 @@ export async function getPassBalance(): Promise<PassBalanceInfo> {
 
   return { balance: row.balance, plan: row.plan ?? 'free' };
 }
+
+/** Lightweight balance-only fetch for real-time UI updates. */
+export async function getPassBalanceQuick(): Promise<number> {
+  const sessionUser = await getLoggedInUser();
+  if (!sessionUser) return 0;
+
+  const [row] = await dbClient
+    .select({ balance: passBalance.balance })
+    .from(passBalance)
+    .where(eq(passBalance.userId, sessionUser.id))
+    .limit(1);
+
+  return row?.balance ?? 0;
+}
+
+// ---------------------------------------------------------------------------
+// Credit
+// ---------------------------------------------------------------------------
 
 export async function creditPass(
   userId: string,
@@ -83,22 +118,17 @@ export async function creditPass(
   });
 }
 
-export type DeductPassResult =
-  | { status: 'ok'; passDeducted: number }
-  | { status: 'insufficient_pass'; balance: number; required: number }
-  | {
-      status: 'consent_required';
-      estimatedPassCost: number;
-      basePassCost: number;
-    };
+// ---------------------------------------------------------------------------
+// Check pass availability (does NOT deduct — call deductPass after success)
+// ---------------------------------------------------------------------------
 
-export async function checkAndDeductPass(
+export async function checkPassAvailability(
   operationType: OperationType,
   modelId: string,
   inputText: string,
   provider: 'google' | 'openai' | 'anthropic',
   consentedPassCost?: number
-): Promise<DeductPassResult> {
+): Promise<CheckPassResult> {
   const sessionUser = await getLoggedInUser();
   if (!sessionUser) {
     return { status: 'insufficient_pass', balance: 0, required: 1 };
@@ -107,6 +137,7 @@ export async function checkAndDeductPass(
   const [userRow] = await dbClient
     .select({
       aiApiKeyEncrypted: user.aiApiKeyEncrypted,
+      useByok: user.useByok,
       plan: user.plan,
     })
     .from(user)
@@ -114,19 +145,23 @@ export async function checkAndDeductPass(
     .limit(1);
 
   const hasApiKey = !!userRow?.aiApiKeyEncrypted;
-  const byokFree = isByokFree(operationType, hasApiKey);
+  const useByok = userRow?.useByok ?? false;
+  const byokFree = await isByokFree(operationType, hasApiKey, useByok);
 
   if (byokFree) {
-    return { status: 'ok', passDeducted: 0 };
+    return { status: 'ok', passToDeduct: 0, isByok: true };
   }
 
-  const basePassCost = getPassCost(operationType, modelId);
+  const basePassCost = await computePassCost(modelId, operationType);
   const inputTokens = estimateInputTokens(inputText, provider);
-  const estimatedCost = estimatedPassCostFromTokens(
-    inputTokens,
-    operationType,
-    modelId
-  );
+
+  const models = await getActiveModels();
+  const modelCfg = models.find((m) => m.modelId === modelId);
+  const opCfg = await getOperationConfig(operationType);
+  const estimatedCost =
+    modelCfg && opCfg
+      ? estimatedPassCostFromTokens(inputTokens, operationType, modelCfg, opCfg)
+      : basePassCost;
 
   const requiredCost = consentedPassCost ?? estimatedCost;
 
@@ -139,7 +174,7 @@ export async function checkAndDeductPass(
   }
 
   const [balanceRow] = await dbClient
-    .select({ id: passBalance.id, balance: passBalance.balance })
+    .select({ balance: passBalance.balance })
     .from(passBalance)
     .where(eq(passBalance.userId, sessionUser.id))
     .limit(1);
@@ -154,25 +189,12 @@ export async function checkAndDeductPass(
     };
   }
 
-  await dbClient.transaction(async (tx) => {
-    await tx
-      .update(passBalance)
-      .set({ balance: currentBalance - requiredCost })
-      .where(eq(passBalance.userId, sessionUser.id));
-
-    await tx.insert(passTransaction).values({
-      userId: sessionUser.id,
-      delta: -requiredCost,
-      operationType,
-      description: `Used for ${
-        OPERATION_CONFIGS[operationType]?.label ?? operationType
-      }`,
-    });
-  });
-
-  revalidatePath('/dashboard/billing');
-  return { status: 'ok', passDeducted: requiredCost };
+  return { status: 'ok', passToDeduct: requiredCost, isByok: false };
 }
+
+// ---------------------------------------------------------------------------
+// Transactions
+// ---------------------------------------------------------------------------
 
 export type PassTransaction = {
   id: string;

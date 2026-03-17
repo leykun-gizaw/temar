@@ -10,6 +10,7 @@ export type AiSettings = {
   provider: AiProvider | null;
   model: string | null;
   hasApiKey: boolean;
+  useByok: boolean;
   maxQuestionReviews: number;
 };
 
@@ -20,6 +21,7 @@ export async function getAiSettings(): Promise<AiSettings> {
       provider: null,
       model: null,
       hasApiKey: false,
+      useByok: false,
       maxQuestionReviews: 5,
     };
   }
@@ -29,6 +31,7 @@ export async function getAiSettings(): Promise<AiSettings> {
       aiProvider: user.aiProvider,
       aiModel: user.aiModel,
       aiApiKeyEncrypted: user.aiApiKeyEncrypted,
+      useByok: user.useByok,
       maxQuestionReviews: user.maxQuestionReviews,
     })
     .from(user)
@@ -40,6 +43,7 @@ export async function getAiSettings(): Promise<AiSettings> {
       provider: null,
       model: null,
       hasApiKey: false,
+      useByok: false,
       maxQuestionReviews: 5,
     };
   }
@@ -48,6 +52,7 @@ export async function getAiSettings(): Promise<AiSettings> {
     provider: (row.aiProvider as AiProvider) ?? null,
     model: row.aiModel ?? null,
     hasApiKey: !!row.aiApiKeyEncrypted,
+    useByok: row.useByok ?? false,
     maxQuestionReviews: row.maxQuestionReviews ?? 5,
   };
 }
@@ -55,7 +60,8 @@ export async function getAiSettings(): Promise<AiSettings> {
 export async function saveAiSettings(
   provider: AiProvider | null,
   model: string | null,
-  apiKey?: string
+  apiKey?: string,
+  useByok?: boolean
 ): Promise<{ success: boolean; error?: string }> {
   const sessionUser = await getLoggedInUser();
   if (!sessionUser) {
@@ -63,13 +69,17 @@ export async function saveAiSettings(
   }
 
   try {
-    const updateData: Record<string, string | null> = {
+    const updateData: Record<string, string | boolean | null> = {
       aiProvider: provider,
       aiModel: model,
     };
 
     if (apiKey !== undefined) {
       updateData.aiApiKeyEncrypted = apiKey ? encrypt(apiKey) : null;
+    }
+
+    if (useByok !== undefined) {
+      updateData.useByok = useByok;
     }
 
     await dbClient
@@ -145,16 +155,18 @@ export async function getUserAiConfig(): Promise<
       aiProvider: user.aiProvider,
       aiModel: user.aiModel,
       aiApiKeyEncrypted: user.aiApiKeyEncrypted,
+      useByok: user.useByok,
     })
     .from(user)
     .where(eq(user.id, sessionUser.id))
     .limit(1);
 
-  if (!row?.aiProvider || !row?.aiApiKeyEncrypted) return undefined;
+  // Only return user's own API key config when BYOK is toggled ON
+  if (!row?.useByok || !row?.aiApiKeyEncrypted) return undefined;
 
   try {
     return {
-      provider: row.aiProvider,
+      provider: row.aiProvider || '',
       model: row.aiModel || '',
       apiKey: decrypt(row.aiApiKeyEncrypted),
     };

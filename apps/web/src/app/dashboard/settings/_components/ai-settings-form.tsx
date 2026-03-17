@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -29,60 +30,68 @@ import {
 import { toast } from 'sonner';
 import type { AiSettings, AiProvider } from '@/lib/actions/ai-settings';
 import {
-  MODEL_CONFIGS,
-  OPERATION_CONFIGS,
+  DEFAULT_MODEL_ID,
   type OperationType,
-} from '@/lib/config/ai-operations';
+  type ModelConfig,
+} from '@temar/shared-types';
 import {
   saveAiSettings,
   clearAiApiKey,
   saveMaxQuestionReviews,
 } from '@/lib/actions/ai-settings';
 
+const OP_LABELS: Record<string, string> = {
+  question_generation: 'Question Generation',
+  answer_analysis: 'Answer Analysis',
+  chunk_enhancement: 'Chunk Enhancement',
+  content_generation: 'Content Generation',
+};
+
 const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
   {
     value: 'google',
     label: 'Google Gemini',
-    description: 'Gemini 2.0 Flash, Pro, etc.',
+    description: 'Gemini 3 Flash, 2.5 Pro, etc.',
   },
   {
     value: 'openai',
     label: 'OpenAI',
-    description: 'GPT-4o, GPT-4o Mini, etc.',
+    description: 'GPT-4.1, o4-mini, etc.',
   },
   {
     value: 'anthropic',
     label: 'Anthropic',
-    description: 'Claude Sonnet, Haiku, etc.',
+    description: 'Claude Sonnet 4, Haiku 4, etc.',
   },
 ];
 
-const MODEL_OPTIONS: Record<AiProvider, string[]> = {
-  google: ['gemini-2.0-flash', 'gemini-2.5-pro', 'gemini-2.5-flash'],
-  openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1-nano'],
-  anthropic: ['claude-sonnet-4-20250514', 'claude-haiku-4-20250414'],
-};
-
 export function AiSettingsForm({
   initialSettings,
+  modelConfigs,
+  passCosts,
 }: {
   initialSettings: AiSettings;
+  modelConfigs: ModelConfig[];
+  passCosts: Record<string, Record<string, number>>;
 }) {
-  const [provider, setProvider] = useState<AiProvider | ''>(
-    initialSettings.provider ?? ''
+  const defaultModel = modelConfigs.find((m) => m.modelId === DEFAULT_MODEL_ID);
+  const [provider, setProvider] = useState<AiProvider>(
+    initialSettings.provider ?? defaultModel?.provider ?? 'google'
   );
-  const [model, setModel] = useState(initialSettings.model ?? '');
+  const [model, setModel] = useState(initialSettings.model ?? DEFAULT_MODEL_ID);
   const [apiKey, setApiKey] = useState('');
   const [hasExistingKey, setHasExistingKey] = useState(
     initialSettings.hasApiKey
   );
+  const [useByok, setUseByok] = useState(initialSettings.useByok);
   const [maxReviews, setMaxReviews] = useState(
     initialSettings.maxQuestionReviews
   );
   const [isPending, startTransition] = useTransition();
 
-  const modelConfig = MODEL_CONFIGS.find((m) => m.modelId === model);
-  const isByok = !!(provider && (hasExistingKey || apiKey));
+  const providerModels = modelConfigs.filter((m) => m.provider === provider);
+  const effectiveModel = model || DEFAULT_MODEL_ID;
+  const isByokActive = useByok && (hasExistingKey || !!apiKey);
 
   const CURRENT_OPS: OperationType[] = [
     'question_generation',
@@ -94,22 +103,19 @@ export function AiSettingsForm({
   ];
 
   const handleProviderChange = (value: string) => {
-    if (value === 'system') {
-      setProvider('');
-      setModel('');
-      return;
-    }
     const p = value as AiProvider;
     setProvider(p);
-    setModel(MODEL_OPTIONS[p]?.[0] ?? '');
+    const firstModel = modelConfigs.find((m) => m.provider === p);
+    setModel(firstModel?.modelId ?? '');
   };
 
   const handleSave = () => {
     startTransition(async () => {
       const result = await saveAiSettings(
-        provider || null,
+        provider,
         model || null,
-        apiKey || undefined
+        apiKey || undefined,
+        useByok
       );
       if (result.success) {
         toast.success('AI settings saved');
@@ -130,23 +136,9 @@ export function AiSettingsForm({
         toast.success('API key removed');
         setHasExistingKey(false);
         setApiKey('');
+        setUseByok(false);
       } else {
         toast.error(result.error ?? 'Failed to clear key');
-      }
-    });
-  };
-
-  const handleUseDefault = () => {
-    startTransition(async () => {
-      const result = await saveAiSettings(null, null, '');
-      if (result.success) {
-        toast.success('Switched to system default');
-        setProvider('');
-        setModel('');
-        setApiKey('');
-        setHasExistingKey(false);
-      } else {
-        toast.error(result.error ?? 'Failed to reset');
       }
     });
   };
@@ -160,23 +152,18 @@ export function AiSettingsForm({
             AI Model Configuration
           </CardTitle>
           <CardDescription>
-            Choose your preferred AI provider and model for question generation.
-            If left as system default, the platform&apos;s built-in model will
-            be used.
+            Choose your preferred AI provider and model for question generation
+            and answer analysis.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Provider</label>
-            <Select
-              value={provider || 'system'}
-              onValueChange={handleProviderChange}
-            >
+            <Select value={provider} onValueChange={handleProviderChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a provider" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="system">System Default</SelectItem>
                 {PROVIDERS.map((p) => (
                   <SelectItem key={p.value} value={p.value}>
                     <div className="flex flex-col">
@@ -191,157 +178,141 @@ export function AiSettingsForm({
             </Select>
           </div>
 
-          {provider && (
-            <>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Model</label>
-                <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MODEL_OPTIONS[provider]?.map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  You can also type a custom model ID if it&apos;s not listed.
-                </p>
-                <Input
-                  placeholder="Or enter a custom model ID..."
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Model</label>
+            <Select value={model} onValueChange={setModel}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a model" />
+              </SelectTrigger>
+              <SelectContent>
+                {providerModels.map((m) => (
+                  <SelectItem key={m.modelId} value={m.modelId}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-              <div className="space-y-2">
+          {/* BYOK toggle + API key */}
+          <div className="rounded-lg border p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
                 <label className="text-sm font-medium flex items-center gap-1.5">
                   <Key className="h-3.5 w-3.5" />
-                  API Key
+                  Bring Your Own Key (BYOK)
                 </label>
-                {hasExistingKey && !apiKey && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Shield className="h-3.5 w-3.5 text-green-500" />
-                    <span>API key is saved and encrypted</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClearKey}
-                      disabled={isPending}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Remove
-                    </Button>
-                  </div>
-                )}
-                <Input
-                  type="password"
-                  placeholder={
-                    hasExistingKey
-                      ? 'Enter new key to replace existing...'
-                      : 'Enter your API key...'
-                  }
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  autoComplete="off"
-                />
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Shield className="h-3 w-3" />
-                  Your API key is encrypted at rest using AES-256-GCM.
+                <p className="text-xs text-muted-foreground">
+                  Use your own API key instead of purchased passes.
                 </p>
               </div>
-            </>
-          )}
+              <Switch
+                checked={useByok}
+                onCheckedChange={setUseByok}
+                disabled={!hasExistingKey && !apiKey}
+              />
+            </div>
+
+            <div className="space-y-2">
+              {hasExistingKey && !apiKey && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Shield className="h-3.5 w-3.5 text-green-500" />
+                  <span>API key is saved and encrypted</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearKey}
+                    disabled={isPending}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Remove
+                  </Button>
+                </div>
+              )}
+              <Input
+                type="password"
+                placeholder={
+                  hasExistingKey
+                    ? 'Enter new key to replace existing...'
+                    : 'Enter your API key...'
+                }
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                autoComplete="off"
+              />
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                Your API key is encrypted at rest using AES-256-GCM.
+              </p>
+            </div>
+          </div>
 
           {/* Pass cost preview */}
-          {model && provider && (
-            <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium flex items-center gap-1.5">
-                  <Coins className="h-4 w-4 text-primary" />
-                  Pass Cost Preview
+          <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+            <div className="flex items-center gap-1.5">
+              <Coins className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Pass Cost Preview</span>
+            </div>
+            {isByokActive ? (
+              <div className="flex items-start gap-2 text-sm text-green-600 dark:text-green-400">
+                <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>
+                  BYOK active — current AI features (question generation &amp;
+                  answer analysis) are <strong>free</strong> with your own API
+                  key.
                 </span>
-                {modelConfig && (
-                  <span className="text-xs rounded-full px-2 py-0.5 font-semibold bg-primary/10 text-primary capitalize">
-                    {modelConfig.tier}
-                  </span>
-                )}
               </div>
-              {isByok ? (
-                <div className="flex items-start gap-2 text-sm text-green-600 dark:text-green-400">
-                  <Shield className="h-4 w-4 mt-0.5 shrink-0" />
-                  <span>
-                    BYOK — current AI features (question generation &amp; answer
-                    analysis) are
-                    <strong> free</strong> with your own API key.
-                  </span>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {CURRENT_OPS.map((op) => {
-                    const cfg = OPERATION_CONFIGS[op];
-                    const tier = modelConfig?.tier ?? 'economy';
+            ) : (
+              <div className="space-y-1">
+                {CURRENT_OPS.map((op) => {
+                  const cost = passCosts[effectiveModel]?.[op] ?? 1;
+                  const label = OP_LABELS[op];
+                  return (
+                    <div key={op} className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{label}</span>
+                      <span className="font-medium tabular-nums">
+                        {cost} Pass
+                      </span>
+                    </div>
+                  );
+                })}
+                <div className="border-t pt-2 mt-2">
+                  {FUTURE_OPS.map((op) => {
+                    const cost = passCosts[effectiveModel]?.[op] ?? 1;
+                    const label = OP_LABELS[op];
                     return (
-                      <div key={op} className="flex justify-between text-sm">
+                      <div
+                        key={op}
+                        className="flex justify-between text-sm opacity-50"
+                      >
                         <span className="text-muted-foreground">
-                          {cfg.label}
+                          {label} (coming soon)
                         </span>
                         <span className="font-medium tabular-nums">
-                          {cfg.passCost[tier]} Pass
+                          {cost} Pass
                         </span>
                       </div>
                     );
                   })}
-                  <div className="border-t pt-2 mt-2">
-                    {FUTURE_OPS.map((op) => {
-                      const cfg = OPERATION_CONFIGS[op];
-                      const tier = modelConfig?.tier ?? 'economy';
-                      return (
-                        <div
-                          key={op}
-                          className="flex justify-between text-sm opacity-50"
-                        >
-                          <span className="text-muted-foreground">
-                            {cfg.label} (coming soon)
-                          </span>
-                          <span className="font-medium tabular-nums">
-                            {cfg.passCost[tier]} Pass
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </div>
-              )}
-              {!isByok && (
-                <p className="text-xs text-muted-foreground flex items-start gap-1">
-                  <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  No API key set — uses your Pass balance. Add a BYOK key above
-                  for free current-feature access.
-                </p>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+            {!isByokActive && (
+              <p className="text-xs text-muted-foreground flex items-start gap-1">
+                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                {hasExistingKey
+                  ? 'BYOK is toggled off — using your Pass balance. Toggle on above to use your API key instead.'
+                  : 'No API key set — uses your Pass balance. Add a key and enable BYOK for free access.'}
+              </p>
+            )}
+          </div>
 
           <div className="flex items-center gap-3 pt-2">
             <Button onClick={handleSave} disabled={isPending}>
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Save Settings
             </Button>
-            {(provider || hasExistingKey) && (
-              <Button
-                variant="outline"
-                onClick={handleUseDefault}
-                disabled={isPending}
-              >
-                Use System Default
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>

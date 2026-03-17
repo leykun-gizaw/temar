@@ -29,7 +29,9 @@ export function NavUser() {
       size="icon"
       side="bottom"
       align="end"
+      variant={'outline'}
       additionalLinks={[<ThemeMenuItem key="theme" />]}
+      className="rounded-xl hover:cursor-pointer"
     />
   );
 }

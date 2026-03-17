@@ -1,29 +1,38 @@
-import { Paddle, Environment } from '@paddle/paddle-node-sdk';
+import {
+  Environment,
+  LogLevel,
+  Paddle,
+  type PaddleOptions,
+} from '@paddle/paddle-node-sdk';
 
-const paddleApiKey = process.env.PADDLE_API_KEY;
+export function getPaddleInstance(): Paddle {
+  const paddleOptions: PaddleOptions = {
+    environment:
+      (process.env.PADDLE_ENVIRONMENT as Environment) ?? Environment.sandbox,
+    logLevel: LogLevel.error,
+  };
 
-if (!paddleApiKey) {
-  console.warn('[paddle] PADDLE_API_KEY is not set — Paddle SDK will not work.');
+  if (!process.env.PADDLE_API_KEY) {
+    console.error('[paddle] PADDLE_API_KEY is missing');
+  }
+
+  return new Paddle(process.env.PADDLE_API_KEY ?? '', paddleOptions);
 }
-
-export const paddle = paddleApiKey
-  ? new Paddle(paddleApiKey, {
-      environment:
-        process.env.PADDLE_ENVIRONMENT === 'production'
-          ? Environment.production
-          : Environment.sandbox,
-    })
-  : (null as unknown as Paddle);
 
 export const PADDLE_PLANS = {
   starter: {
-    priceId: process.env.NEXT_PUBLIC_PADDLE_STARTER_PRICE_ID ?? '',
-    passPerMonth: 200,
+    priceId: process.env['NEXT_PUBLIC_PADDLE_STARTER_PRICE_ID'] ?? '',
+    passPerMonth: 100,
     name: 'Starter',
   },
+  hobbyist: {
+    priceId: process.env['NEXT_PUBLIC_PADDLE_HOBBYIST_PRICE_ID'] ?? '',
+    passPerMonth: 200,
+    name: 'Hobbyist',
+  },
   scholar: {
-    priceId: process.env.NEXT_PUBLIC_PADDLE_SCHOLAR_PRICE_ID ?? '',
-    passPerMonth: 600,
+    priceId: process.env['NEXT_PUBLIC_PADDLE_SCHOLAR_PRICE_ID'] ?? '',
+    passPerMonth: 300,
     name: 'Scholar',
   },
 } as const;

@@ -104,6 +104,24 @@ services:
     networks:
       - temar-network
 
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: admin-service
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      - "${ADMIN_PORT:-3002}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - temar-network
+
   adminer:
     image: adminer:latest
     restart: unless-stopped

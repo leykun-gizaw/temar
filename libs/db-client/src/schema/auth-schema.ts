@@ -31,6 +31,7 @@ export const user = pgTable('user', {
   aiProvider: text('ai_provider'),
   aiModel: text('ai_model'),
   aiApiKeyEncrypted: text('ai_api_key_encrypted'),
+  useByok: boolean('use_byok').notNull().default(false),
   maxQuestionReviews: integer('max_question_reviews').notNull().default(5),
   paddleCustomerId: text('paddle_customer_id').unique(),
   plan: text('plan').notNull().default('free'),

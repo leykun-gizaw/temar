@@ -1,0 +1,7 @@
+{
+  "name": "pricing-service",
+  "sourceRoot": "libs/pricing-service/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {}
+}

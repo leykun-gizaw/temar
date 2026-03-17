@@ -137,6 +137,19 @@ function nodeToMarkdown(node: SerializedLexicalNode): string {
       return `${content}\n</details>\n`;
     }
 
+    case 'page-break': {
+      return '<!-- pagebreak -->\n';
+    }
+
+    case 'layout-container': {
+      // Flatten layout columns into sequential content
+      return children.map(nodeToMarkdown).join('\n');
+    }
+
+    case 'layout-item': {
+      return children.map(nodeToMarkdown).join('\n');
+    }
+
     default:
       if (children.length > 0) {
         return children.map(nodeToMarkdown).join('\n');
@@ -207,6 +220,10 @@ function nodeToPlainText(node: SerializedLexicalNode): string {
     return '\n';
   }
 
+  if (n.type === 'code-highlight' || n.type === 'tab') {
+    return (n.text as string) ?? '';
+  }
+
   if (n.type === 'horizontalrule') {
     return '';
   }
@@ -227,6 +244,10 @@ function nodeToPlainText(node: SerializedLexicalNode): string {
     return `https://www.youtube.com/watch?v=${(n.videoID as string) ?? ''}`;
   }
 
+  if (n.type === 'page-break') {
+    return '\n';
+  }
+
   const childText = children.map(nodeToPlainText).join('');
 
   switch (n.type) {
@@ -236,6 +257,8 @@ function nodeToPlainText(node: SerializedLexicalNode): string {
       return `${childText}\n`;
     case 'listitem':
       return `${childText}\n`;
+    case 'code':
+      return `${childText}\n`;
     case 'list':
       return childText;
     case 'table':
@@ -244,6 +267,8 @@ function nodeToPlainText(node: SerializedLexicalNode): string {
     case 'collapsible-container':
     case 'collapsible-title':
     case 'collapsible-content':
+    case 'layout-container':
+    case 'layout-item':
       return `${childText}\n`;
     default:
       return childText;

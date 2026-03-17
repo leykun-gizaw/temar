@@ -18,7 +18,9 @@ COPY apps/notion_sync-service/package.json apps/notion_sync-service/
 COPY apps/fsrs-service/package.json apps/fsrs-service/
 COPY apps/question-gen-service/package.json apps/question-gen-service/
 COPY apps/answer-analysis-service/package.json apps/answer-analysis-service/
+COPY apps/admin/package.json apps/admin/
 COPY libs/db-client/package.json libs/db-client/
+COPY libs/pricing-service/package.json libs/pricing-service/
 COPY libs/shared-types/package.json libs/shared-types/
 RUN pnpm install --frozen-lockfile
 
@@ -32,6 +34,7 @@ COPY apps/web ./apps/web
 COPY tsconfig.base.json ./
 COPY eslint.config.mjs ./
 COPY libs/db-client ./libs/db-client
+COPY libs/pricing-service ./libs/pricing-service
 COPY libs/shared-types ./libs/shared-types
 # Remove workspace symlinks so webpack bundles @temar/* from source via tsconfig paths
 RUN rm -rf node_modules/@temar
@@ -52,11 +55,13 @@ RUN NX_DAEMON=false pnpm nx build notion_sync-service --prod
 FROM deps AS fsrs-service-builder
 # Copy relevant source code
 COPY /tsconfig.base.json ./
+COPY libs/pricing-service ./libs/pricing-service
+COPY libs/shared-types ./libs/shared-types
 COPY libs/db-client ./libs/db-client
 COPY apps/fsrs-service ./apps/fsrs-service
-# Remove workspace symlinks and db-client project tsconfigs so webpack
+# Remove workspace symlinks and lib project tsconfigs so webpack
 # bundles @temar/* from source via the service tsconfig paths only
-RUN rm -rf node_modules/@temar libs/db-client/tsconfig*.json
+RUN rm -rf node_modules/@temar libs/pricing-service/tsconfig*.json libs/shared-types/tsconfig*.json libs/db-client/tsconfig*.json
 # Build 'fsrs-service'
 RUN NX_DAEMON=false pnpm nx build fsrs-service --prod
 
@@ -64,10 +69,12 @@ FROM deps AS question-gen-service-builder
 # Copy relevant source code
 COPY apps/question-gen-service ./apps/question-gen-service
 COPY /tsconfig.base.json ./
+COPY libs/pricing-service ./libs/pricing-service
+COPY libs/shared-types ./libs/shared-types
 COPY libs/db-client ./libs/db-client
-# Remove workspace symlinks and db-client project tsconfigs so webpack
+# Remove workspace symlinks and lib project tsconfigs so webpack
 # bundles @temar/* from source via the service tsconfig paths only
-RUN rm -rf node_modules/@temar libs/db-client/tsconfig*.json
+RUN rm -rf node_modules/@temar libs/pricing-service/tsconfig*.json libs/shared-types/tsconfig*.json libs/db-client/tsconfig*.json
 # Build 'question-gen-service'
 RUN NX_DAEMON=false pnpm nx build question-gen-service --prod
 
@@ -75,10 +82,24 @@ FROM deps AS answer-analysis-service-builder
 # Copy relevant source code
 COPY apps/answer-analysis-service ./apps/answer-analysis-service
 COPY /tsconfig.base.json ./
-# Remove workspace symlinks so webpack bundles @temar/* from source via tsconfig paths
-RUN rm -rf node_modules/@temar
+COPY libs/pricing-service ./libs/pricing-service
+COPY libs/shared-types ./libs/shared-types
+COPY libs/db-client ./libs/db-client
+# Remove workspace symlinks and lib project tsconfigs so webpack
+# bundles @temar/* from source via the service tsconfig paths only
+RUN rm -rf node_modules/@temar libs/pricing-service/tsconfig*.json libs/shared-types/tsconfig*.json libs/db-client/tsconfig*.json
 # Build 'answer-analysis-service'
 RUN NX_DAEMON=false pnpm nx build answer-analysis-service --prod
+
+FROM deps AS admin-builder
+COPY apps/admin ./apps/admin
+COPY tsconfig.base.json ./
+COPY eslint.config.mjs ./
+COPY libs/db-client ./libs/db-client
+COPY libs/pricing-service ./libs/pricing-service
+COPY libs/shared-types ./libs/shared-types
+RUN rm -rf node_modules/@temar
+RUN NX_DAEMON=false pnpm nx build admin --prod --verbose
 
 # ----------------------------------------------
 
@@ -195,7 +216,29 @@ USER analysisuser
 EXPOSE 3336
 CMD [ "node", "main.js" ]
 
-# STAGE 10: Migration Service Runner
+# STAGE 10: Admin Panel Production Runner (Next.js)
+FROM base AS admin-service
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1006 nodejs && adduser --system --uid 1006 adminjs
+
+COPY --from=admin-builder --chown=adminjs:nodejs /app/dist/apps/admin/.next/standalone ./
+COPY --from=admin-builder --chown=adminjs:nodejs /app/dist/apps/admin/public ./apps/admin/public
+COPY --from=admin-builder --chown=adminjs:nodejs /app/dist/apps/admin/.next/static ./dist/apps/admin/.next/static
+
+USER adminjs
+
+EXPOSE 3000
+ENV PORT=3000
+
+WORKDIR /app/apps/admin
+
+CMD ["node", "server.js"]
+
+# ----------------------------------------------
+
+# STAGE 11: Migration Service Runner
 FROM base AS migration
 COPY libs/db-client/package.json ./
 RUN pnpm install

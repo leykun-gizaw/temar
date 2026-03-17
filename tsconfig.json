@@ -32,6 +32,9 @@
     },
     {
       "path": "./apps/answer-analysis-service"
+    },
+    {
+      "path": "./apps/admin"
     }
   ],
   "compilerOptions": {

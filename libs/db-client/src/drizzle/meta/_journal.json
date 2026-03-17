@@ -141,6 +141,27 @@
       "when": 1773348377147,
       "tag": "0019_nebulous_iron_lad",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1773483329370,
+      "tag": "0020_red_justice",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1773505417297,
+      "tag": "0021_mean_lake",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1773674412111,
+      "tag": "0022_thin_absorbing_man",
+      "breakpoints": true
     }
   ]
 }

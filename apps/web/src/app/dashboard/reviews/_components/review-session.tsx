@@ -16,7 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { submitReview } from '@/lib/actions/review';
+import { submitReview, saveAnswerDraft } from '@/lib/actions/review';
 import {
   analyzeAnswer,
   type AnalysisResult,
@@ -37,6 +37,7 @@ import {
   ChevronUp,
   Sparkles,
   Loader2,
+  Send,
 } from 'lucide-react';
 import {
   ResizablePanelGroup,
@@ -46,8 +47,12 @@ import {
 import type { PanelImperativeHandle } from 'react-resizable-panels';
 import AnswerEditor from '@/components/lexical-editor/AnswerEditor';
 import type { SerializedEditorState } from 'lexical';
-import { lexicalToPlainText } from '@/components/lexical-editor/utils/serialize';
+import {
+  lexicalToMarkdown,
+  lexicalToPlainText,
+} from '@/components/lexical-editor/utils/serialize';
 import { cn } from '@/lib/utils';
+import { notifyPassBalanceChanged } from '@/lib/pass-events';
 import {
   Dialog,
   DialogContent,
@@ -110,6 +115,7 @@ const RATING_CONFIG = [
 
 interface ReviewSessionProps {
   initialItems: RecallItemDue[];
+  initialDrafts?: Record<string, unknown>;
   topics: Array<{ id: string; name: string }>;
   currentTopicId?: string;
   currentNoteId?: string;
@@ -118,6 +124,7 @@ interface ReviewSessionProps {
 
 export default function ReviewSession({
   initialItems,
+  initialDrafts,
   topics,
   currentTopicId,
   dueCount,
@@ -143,20 +150,42 @@ export default function ReviewSession({
   } | null>(null);
   const resultsPanelRef = useRef<PanelImperativeHandle>(null);
   const [resultsCollapsed, setResultsCollapsed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Track which items have been submitted (answer saved to DB)
+  const [submittedIds, setSubmittedIds] = useState<Set<string>>(new Set());
+  // Track if editor has changed since last submit
+  const [dirtyIds, setDirtyIds] = useState<Set<string>>(new Set());
 
-  // Hydrate answersRef from localStorage on mount
+  // Hydrate answersRef from DB drafts first, then overlay localStorage
   useEffect(() => {
+    // Load DB-persisted drafts (source of truth)
+    if (initialDrafts) {
+      const alreadySubmitted = new Set<string>();
+      for (const [id, value] of Object.entries(initialDrafts)) {
+        if (value) {
+          answersRef.current.set(id, value as SerializedEditorState);
+          alreadySubmitted.add(id);
+        }
+      }
+      setSubmittedIds(alreadySubmitted);
+    }
+    // Overlay with localStorage (may have newer unsaved edits)
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Record<string, SerializedEditorState>;
         for (const [id, value] of Object.entries(parsed)) {
           answersRef.current.set(id, value);
+          // If localStorage has content for a submitted item, mark it dirty
+          if (initialDrafts?.[id]) {
+            setDirtyIds((prev) => new Set(prev).add(id));
+          }
         }
       }
     } catch {
       // Ignore corrupted localStorage data
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const persistToLocalStorage = useCallback(() => {
@@ -175,13 +204,13 @@ export default function ReviewSession({
   }, []);
 
   const removeFromLocalStorage = useCallback((itemId: string) => {
-    answersRef.current.delete(itemId);
     try {
-      const obj: Record<string, SerializedEditorState> = {};
-      answersRef.current.forEach((v, k) => {
-        obj[k] = v;
-      });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, SerializedEditorState>;
+        delete parsed[itemId];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      }
     } catch {
       // silently ignore
     }
@@ -231,6 +260,29 @@ export default function ReviewSession({
     setCurrentIndex(0);
   }, [currentIndex, items, reviewedIds]);
 
+  const handleSubmitAnswer = async () => {
+    if (!currentItem) return;
+    const answer = answersRef.current.get(currentItem.id);
+    if (!answer) return;
+
+    setIsSubmitting(true);
+    try {
+      await saveAnswerDraft(currentItem.id, answer);
+      setSubmittedIds((prev) => new Set(prev).add(currentItem.id));
+      setDirtyIds((prev) => {
+        const next = new Set(prev);
+        next.delete(currentItem.id);
+        return next;
+      });
+      // Clear from localStorage since it's now in DB
+      removeFromLocalStorage(currentItem.id);
+    } catch (err) {
+      console.error('Failed to save answer draft:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleAnalyze = async () => {
     if (!currentItem) return;
     const answer = answersRef.current.get(currentItem.id);
@@ -264,9 +316,12 @@ export default function ReviewSession({
 
     if (!keyPoints.length) return;
 
+    // Use markdown for analysis — preserves code blocks, formatting, structure
+    const answerMd = lexicalToMarkdown(answer);
+    // Also get plain text to check for empty answers
     const plainText = lexicalToPlainText(answer);
 
-    if (!plainText) return;
+    if (!plainText && !answerMd.trim()) return;
 
     setIsAnalyzing(true);
     setAnalysisError(null);
@@ -274,7 +329,7 @@ export default function ReviewSession({
     setAnalysisConsent(null);
 
     const baseArgs: AnalyzeBaseArgs = [
-      plainText,
+      answerMd || plainText,
       currentItem.questionTitle ?? '',
       currentItem.questionText ?? '',
       criteria,
@@ -285,6 +340,7 @@ export default function ReviewSession({
       const result: AnalyzeAnswerResult = await analyzeAnswer(...baseArgs);
       if (result.status === 'success') {
         setAnalysis(result.data);
+        notifyPassBalanceChanged();
       } else if (result.status === 'consent_required') {
         setAnalysisConsent({
           estimatedPassCost: result.estimatedPassCost,
@@ -322,6 +378,7 @@ export default function ReviewSession({
       );
       if (result.status === 'success') {
         setAnalysis(result.data);
+        notifyPassBalanceChanged();
       } else if (result.status === 'insufficient_pass') {
         setAnalysisError(
           `Not enough Pass (have ${result.balance}, need ${result.required}). Top up in billing.`
@@ -351,8 +408,17 @@ export default function ReviewSession({
           analysis ?? undefined
         );
         removeFromLocalStorage(currentItem.id);
+        answersRef.current.delete(currentItem.id);
+        // Clear draft from DB (fire-and-forget)
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        saveAnswerDraft(currentItem.id, null).catch(() => {});
         setCompletedCount((c) => c + 1);
         setReviewedIds((prev) => new Set(prev).add(currentItem.id));
+        setSubmittedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(currentItem.id);
+          return next;
+        });
         setAnalysis(null);
         setAnalysisError(null);
         advanceAfterReview();
@@ -528,6 +594,34 @@ export default function ReviewSession({
                   <span className="text-xs font-medium text-muted-foreground">
                     Your Answer
                   </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      'h-6 text-xs px-2.5',
+                      submittedIds.has(currentItem.id) &&
+                        !dirtyIds.has(currentItem.id)
+                        ? 'bg-fsrs-good-bg text-fsrs-good border-fsrs-good/30'
+                        : ''
+                    )}
+                    onClick={handleSubmitAnswer}
+                    disabled={
+                      isSubmitting ||
+                      isPending ||
+                      (submittedIds.has(currentItem.id) &&
+                        !dirtyIds.has(currentItem.id))
+                    }
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <Send className="h-3 w-3 mr-1" />
+                    )}
+                    {submittedIds.has(currentItem.id) &&
+                    !dirtyIds.has(currentItem.id)
+                      ? 'Submitted'
+                      : 'Submit'}
+                  </Button>
                 </div>
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
                   <AnswerEditor
@@ -536,6 +630,10 @@ export default function ReviewSession({
                     onChange={(value) => {
                       answersRef.current.set(currentItem.id, value);
                       persistToLocalStorage();
+                      // Mark dirty if this item was previously submitted
+                      if (submittedIds.has(currentItem.id)) {
+                        setDirtyIds((prev) => new Set(prev).add(currentItem.id));
+                      }
                     }}
                     placeholder="Write your answer here..."
                   />
@@ -578,14 +676,22 @@ export default function ReviewSession({
                     <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
                       <Sparkles className="h-5 w-5 opacity-40" />
                       <p className="text-xs">
-                        Click Analyze to get AI feedback
+                        {submittedIds.has(currentItem.id) &&
+                        !dirtyIds.has(currentItem.id)
+                          ? 'Click Analyze to get AI feedback'
+                          : 'Submit your answer first, then analyze'}
                       </p>
                       <Button
                         variant="outline"
                         size="sm"
                         className="h-7 text-xs bg-sky-400/20 hover:bg-sky-400/30"
                         onClick={handleAnalyze}
-                        disabled={isAnalyzing || isPending}
+                        disabled={
+                          isAnalyzing ||
+                          isPending ||
+                          !submittedIds.has(currentItem.id) ||
+                          dirtyIds.has(currentItem.id)
+                        }
                       >
                         {isAnalyzing ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />

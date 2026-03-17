@@ -1,19 +1,25 @@
 'use server';
 
 import { getLoggedInUser } from '@/lib/fetchers/users';
-import { getUserAiConfig } from './ai-settings';
+import { getUserAiConfig, getAiSettings } from './ai-settings';
 import { analysisServiceFetch } from '../answer-analysis-service';
-import { checkAndDeductPass } from './pass';
-import { estimateInputTokens } from '@/lib/config/ai-operations';
+import { checkPassAvailability } from './pass';
+import {
+  estimateInputTokens,
+  DEFAULT_MODEL_ID,
+} from '@/lib/config/ai-operations';
 import type { AiProvider } from '@/lib/config/ai-operations';
 
 async function getAiHeaders(): Promise<Record<string, string>> {
   const config = await getUserAiConfig();
-  if (!config) return {};
+  const settings = await getAiSettings();
+  const isByok = settings.useByok && settings.hasApiKey;
   return {
-    ...(config.provider && { 'x-ai-provider': config.provider }),
-    ...(config.model && { 'x-ai-model': config.model }),
-    ...(config.apiKey && { 'x-ai-api-key': config.apiKey }),
+    ...(config?.provider && { 'x-ai-provider': config.provider }),
+    // Always send the pricing model ID so services can record usage correctly.
+    'x-ai-model': config?.model || settings.model || DEFAULT_MODEL_ID,
+    ...(config?.apiKey && { 'x-ai-api-key': config.apiKey }),
+    'x-byok': isByok ? 'true' : 'false',
   };
 }
 
@@ -27,7 +33,11 @@ export interface AnalysisResult {
 }
 
 export type AnalyzeAnswerResult =
-  | { status: 'success'; data: AnalysisResult; passDeducted: number }
+  | {
+      status: 'success';
+      data: AnalysisResult;
+      passDeducted: number;
+    }
   | {
       status: 'consent_required';
       estimatedPassCost: number;
@@ -49,7 +59,7 @@ export async function analyzeAnswer(
 
   const aiConfig = await getUserAiConfig();
   const provider = (aiConfig?.provider ?? 'google') as AiProvider;
-  const modelId = aiConfig?.model ?? 'gemini-2.0-flash';
+  const modelId = aiConfig?.model ?? DEFAULT_MODEL_ID;
 
   const inputText = [
     answer,
@@ -60,7 +70,8 @@ export async function analyzeAnswer(
   ].join(' ');
   const estimatedTokens = estimateInputTokens(inputText, provider);
 
-  const passResult = await checkAndDeductPass(
+  // Step 1: Check if user can afford this operation (no deduction yet)
+  const passCheck = await checkPassAvailability(
     'answer_analysis',
     modelId,
     inputText,
@@ -68,13 +79,14 @@ export async function analyzeAnswer(
     consentedPassCost
   );
 
-  if (passResult.status !== 'ok') {
-    return passResult as AnalyzeAnswerResult;
+  if (passCheck.status !== 'ok') {
+    return passCheck as AnalyzeAnswerResult;
   }
 
   const aiHeaders = await getAiHeaders();
 
   try {
+    // Step 2: Make the API call
     const data = await analysisServiceFetch<AnalysisResult>('analyze', {
       method: 'POST',
       userId: loggedInUser.id,
@@ -89,8 +101,14 @@ export async function analyzeAnswer(
         _estimatedTokens: estimatedTokens,
       },
     });
-    return { status: 'success', data, passDeducted: passResult.passDeducted };
+
+    return {
+      status: 'success',
+      data,
+      passDeducted: passCheck.passToDeduct,
+    };
   } catch (err) {
+    // API call failed — no passes deducted
     return {
       status: 'error',
       message: err instanceof Error ? err.message : 'Analysis failed',

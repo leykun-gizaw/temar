@@ -17,9 +17,7 @@ const analysisSchema = z.object({
   weaknesses: z
     .array(z.string())
     .describe('Specific weaknesses or missing elements in the answer'),
-  reasoning: z
-    .string()
-    .describe('Brief explanation of the overall assessment'),
+  reasoning: z.string().describe('Brief explanation of the overall assessment'),
 });
 
 export type AnalysisOutput = z.infer<typeof analysisSchema>;
@@ -28,9 +26,24 @@ export type AiConfig = {
   provider?: string;
   model?: string;
   apiKey?: string;
+  byok?: boolean;
 };
 
-const DEFAULT_MODELS: Record<string, string> = {
+export type TokenUsage = {
+  inputTokens: number;
+  outputTokens: number;
+};
+
+import {
+  DEFAULT_MODEL_ID,
+  MODEL_PROVIDER_MAP,
+} from '@temar/shared-types';
+
+/**
+ * Fallback provider model IDs for BYOK users who supply their own API key
+ * but no explicit model. These are raw provider identifiers (not pricing IDs).
+ */
+const BYOK_FALLBACK_MODELS: Record<string, string> = {
   google: 'gemini-2.0-flash',
   openai: 'gpt-4o-mini',
   anthropic: 'claude-sonnet-4-20250514',
@@ -40,33 +53,50 @@ const DEFAULT_MODELS: Record<string, string> = {
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
 
-  private resolveModel(config?: AiConfig) {
+  private resolveModel(config?: AiConfig): {
+    model: ReturnType<ReturnType<typeof createGoogleGenerativeAI>>;
+    pricingModelId: string;
+  } {
     const provider = config?.provider || process.env.AI_PROVIDER || 'google';
-    const modelId =
+
+    // Determine the pricing model ID (what we bill against)
+    const pricingModelId =
       config?.model ||
       process.env.AI_MODEL ||
-      DEFAULT_MODELS[provider] ||
-      'gemini-2.0-flash';
+      DEFAULT_MODEL_ID;
+
+    // Map pricing ID → provider model ID for the actual LLM call
+    const providerModelId =
+      MODEL_PROVIDER_MAP[pricingModelId] ?? pricingModelId;
 
     switch (provider) {
       case 'openai': {
         const openai = createOpenAI(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return openai(modelId);
+        const sdkModelId = config?.apiKey
+          ? (providerModelId || BYOK_FALLBACK_MODELS.openai)
+          : providerModelId;
+        return { model: openai(sdkModelId) as any, pricingModelId };
       }
       case 'anthropic': {
         const anthropic = createAnthropic(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return anthropic(modelId);
+        const sdkModelId = config?.apiKey
+          ? (providerModelId || BYOK_FALLBACK_MODELS.anthropic)
+          : providerModelId;
+        return { model: anthropic(sdkModelId) as any, pricingModelId };
       }
       case 'google':
       default: {
         const google = createGoogleGenerativeAI(
           config?.apiKey ? { apiKey: config.apiKey } : {}
         );
-        return google(modelId);
+        const sdkModelId = config?.apiKey
+          ? (providerModelId || BYOK_FALLBACK_MODELS.google)
+          : providerModelId;
+        return { model: google(sdkModelId), pricingModelId };
       }
     }
   }
@@ -78,8 +108,8 @@ export class LlmService {
     criteria: string[],
     keyPoints: string[],
     aiConfig?: AiConfig
-  ): Promise<AnalysisOutput> {
-    const llmModel = this.resolveModel(aiConfig);
+  ): Promise<{ analysis: AnalysisOutput; usage: TokenUsage; modelId: string }> {
+    const { model: llmModel, pricingModelId: modelId } = this.resolveModel(aiConfig);
 
     const systemPrompt = `You are a precise, fair grading assistant for a spaced-repetition study system.
 
@@ -113,7 +143,7 @@ ${keyPoints.map((k, i) => `${i + 1}. ${k}`).join('\n')}
 ${answer}`;
 
     try {
-      const { output } = await generateText({
+      const { output, usage } = await generateText({
         model: llmModel as Parameters<typeof generateText>[0]['model'],
         maxRetries: 0,
         output: Output.object({
@@ -127,7 +157,14 @@ ${answer}`;
       this.logger.log(
         `Analysis complete for "${questionTitle}": ${output.scorePercent}%`
       );
-      return output;
+      return {
+        analysis: output,
+        usage: {
+          inputTokens: usage.inputTokens ?? 0,
+          outputTokens: usage.outputTokens ?? 0,
+        },
+        modelId,
+      };
     } catch (err) {
       this.logger.error(`LLM analysis failed: ${err}`);
       throw err;

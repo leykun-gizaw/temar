@@ -15,6 +15,11 @@ import {
   CollapsibleTitleNode,
   CollapsibleContentNode,
 } from './nodes/CollapsibleNodes';
+import { PageBreakNode } from './nodes/PageBreakNode';
+import {
+  LayoutContainerNode,
+  LayoutItemNode,
+} from './nodes/LayoutNodes';
 
 export const editorNodes: Array<Klass<LexicalNode>> = [
   HeadingNode,
@@ -36,4 +41,7 @@ export const editorNodes: Array<Klass<LexicalNode>> = [
   CollapsibleContainerNode,
   CollapsibleTitleNode,
   CollapsibleContentNode,
+  PageBreakNode,
+  LayoutContainerNode,
+  LayoutItemNode,
 ];

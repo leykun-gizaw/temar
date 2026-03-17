@@ -13,7 +13,12 @@
     "emitDecoratorMetadata": true,
     "target": "es2021"
   },
-  "include": ["src/**/*.ts", "../../libs/db-client/src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "../../libs/db-client/src/**/*.ts",
+    "../../libs/shared-types/src/**/*.ts",
+    "../../libs/pricing-service/src/**/*.ts"
+  ],
   "exclude": [
     "out-tsc",
     "dist",
@@ -23,7 +28,9 @@
     "eslint.config.js",
     "eslint.config.cjs",
     "eslint.config.mjs",
-    "../../libs/db-client/src/**/*.spec.ts"
+    "../../libs/db-client/src/**/*.spec.ts",
+    "../../libs/shared-types/src/**/*.spec.ts",
+    "../../libs/pricing-service/src/**/*.spec.ts"
   ],
   "references": [
     {

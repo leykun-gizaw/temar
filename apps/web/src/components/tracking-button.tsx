@@ -28,6 +28,7 @@ import {
   untrackNote,
   untrackChunk,
 } from '@/lib/actions/tracking';
+import { notifyPassBalanceChanged } from '@/lib/pass-events';
 
 const QUESTION_TYPES = [
   {
@@ -123,6 +124,8 @@ export default function TrackingButton({
         }
         if (result.status === 'success') {
           setTracked(true);
+          if (result.newBalance != null)
+            notifyPassBalanceChanged(result.newBalance);
         } else if (result.status === 'consent_required') {
           setConsentState({
             estimatedPassCost: result.estimatedPassCost,
@@ -133,6 +136,8 @@ export default function TrackingButton({
           setPassError(
             `Not enough Pass (have ${result.balance}, need ${result.required}). Top up at /dashboard/billing.`
           );
+        } else if (result.status === 'error') {
+          setPassError(result.message);
         }
       } catch (err) {
         console.error('Track failed:', err);

@@ -1,6 +1,6 @@
-import type { Config } from 'jest';
+const { Config } = require('jest');
 
-const config: Config = {
+const config: typeof Config = {
   displayName: '@temar/web',
   preset: '../../jest.preset.js',
   transform: {
@@ -31,4 +31,4 @@ const config: Config = {
   testEnvironment: 'jsdom',
 };
 
-export default config;
+module.exports = config;

@@ -1,5 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { LlmService, AiConfig, AnalysisOutput } from './llm.service';
+import {
+  LlmService,
+  AiConfig,
+  AnalysisOutput,
+  TokenUsage,
+} from './llm.service';
+import { recordUsage } from '@temar/pricing-service';
 
 export interface AnalysisRequest {
   answer: string;
@@ -12,6 +18,8 @@ export interface AnalysisRequest {
 export interface AnalysisResult extends AnalysisOutput {
   suggestedRating: number;
   suggestedLabel: 'Again' | 'Hard' | 'Good' | 'Easy';
+  usage: TokenUsage;
+  newBalance: number | null;
 }
 
 function percentToRating(percent: number): {
@@ -32,9 +40,10 @@ export class AnswerAnalysisService {
 
   async analyze(
     request: AnalysisRequest,
-    aiConfig?: AiConfig
+    aiConfig?: AiConfig,
+    userId?: string
   ): Promise<AnalysisResult> {
-    const output = await this.llmService.analyzeAnswer(
+    const { analysis, usage, modelId } = await this.llmService.analyzeAnswer(
       request.answer,
       request.questionTitle,
       request.questionText,
@@ -43,16 +52,37 @@ export class AnswerAnalysisService {
       aiConfig
     );
 
-    const { rating, label } = percentToRating(output.scorePercent);
+    const { rating, label } = percentToRating(analysis.scorePercent);
 
     this.logger.log(
-      `Analysis for "${request.questionTitle}": ${output.scorePercent}% → ${label} (${rating})`
+      `Analysis for "${request.questionTitle}": ${analysis.scorePercent}% → ${label} (${rating})`
     );
 
+    // Record usage and deduct passes
+    const isByok = aiConfig?.byok ?? false;
+    let newBalance: number | null = null;
+    if (userId) {
+      try {
+        const usageResult = await recordUsage({
+          userId,
+          modelId,
+          operationType: 'answer_analysis',
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          isByok,
+        });
+        newBalance = usageResult.newBalance;
+      } catch (err: unknown) {
+        this.logger.error(`recordUsage failed: ${err}`);
+      }
+    }
+
     return {
-      ...output,
+      ...analysis,
       suggestedRating: rating,
       suggestedLabel: label,
+      usage,
+      newBalance,
     };
   }
 }

@@ -19,6 +19,7 @@
     "@lexical/selection": "^0.21.0",
     "@lexical/table": "^0.21.0",
     "@lexical/utils": "^0.21.0",
+    "@paddle/paddle-node-sdk": "^1.7.0",
     "@platejs/ai": "^52.1.0",
     "@platejs/autoformat": "^52.0.11",
     "@platejs/basic-nodes": "^52.0.11",
@@ -92,7 +93,6 @@
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "sonner": "^2.0.7",
-    "@paddle/paddle-node-sdk": "^1.7.0",
     "tailwind-merge": "^3.3.1",
     "tailwind-scrollbar-hide": "^4.0.0",
     "tailwindcss": "4.1.11",
@@ -103,6 +103,7 @@
     "zod": "^4.0.14"
   },
   "devDependencies": {
+    "@paddle/paddle-js": "^1.6.2",
     "@tanstack/eslint-plugin-query": "^5.83.1",
     "canvas": "^3.2.1",
     "shadcn": "^3.2.1",
