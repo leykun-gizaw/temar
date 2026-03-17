@@ -117,7 +117,7 @@ export function SiteNavbar() {
   const isLoggedIn = !!data;
 
   return (
-    <header className="mx-auto flex flex-1 fixed left-1/8 top-3 z-40 h-16 border rounded-2xl w-3/4 items-center bg-blur justify-between px-4 sm:px-6 lg:px-8 bg-card/20 backdrop-blur">
+    <header className="mx-auto flex flex-1 fixed left-1/8 top-3 z-40 h-16 rounded-2xl w-3/4 items-center bg-blur bg-transparent justify-between px-4 sm:px-6 lg:px-8 backdrop-blur">
       {!isPending ? (
         <>
           <div className="flex items-center gap-6">
