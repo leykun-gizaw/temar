@@ -1,6 +1,6 @@
 const { Config } = require('jest');
 
-const config: Config = {
+const config: typeof Config = {
   displayName: '@temar/web',
   preset: '../../jest.preset.js',
   transform: {
