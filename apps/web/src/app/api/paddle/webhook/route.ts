@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPaddleInstance, PADDLE_PLANS } from '@/lib/paddle';
 import { creditPass } from '@/lib/actions/pass';
-import { dbClient, user, passBalance, eq } from '@temar/db-client';
+import {
+  dbClient,
+  user,
+  passBalance,
+  passTransaction,
+  eq,
+  and,
+} from '@temar/db-client';
 import {
   PLAN_PASS_ALLOCATIONS,
   PLAN_PASS_ROLLOVER_CAPS,
@@ -63,6 +70,42 @@ function planKeyFromPriceId(priceId: string): string | null {
     ([, v]) => v.priceId === priceId
   );
   return entry ? entry[0] : null;
+}
+
+/**
+ * Debit passes from the user's balance (clamped to 0) and log a transaction.
+ */
+async function debitPass(
+  userId: string,
+  amount: number,
+  description: string,
+  operationType: string,
+  paddleTransactionId?: string
+): Promise<void> {
+  await dbClient.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: passBalance.id, balance: passBalance.balance })
+      .from(passBalance)
+      .where(eq(passBalance.userId, userId))
+      .limit(1);
+
+    if (existing) {
+      const newBalance = Math.max(0, existing.balance - amount);
+      await tx
+        .update(passBalance)
+        .set({ balance: newBalance })
+        .where(eq(passBalance.userId, userId));
+    }
+    // If no balance row exists, nothing to debit
+
+    await tx.insert(passTransaction).values({
+      userId,
+      delta: -amount,
+      operationType,
+      description,
+      paddleTransactionId: paddleTransactionId ?? null,
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -205,6 +248,90 @@ export async function POST(req: NextRequest) {
             const nextBilledAt =
               (subData as { nextBilledAt?: string }).nextBilledAt ?? null;
             await resetMonthlyPass(userId, planKey, nextBilledAt);
+          }
+        }
+        break;
+      }
+
+      // -----------------------------------------------------------------
+      // Adjustment created — handles refunds and chargebacks
+      // -----------------------------------------------------------------
+      case EventName.AdjustmentCreated: {
+        const adj = event.data as {
+          id: string;
+          action: string;
+          transactionId: string;
+          subscriptionId: string | null;
+          customerId: string;
+          status: string;
+        };
+
+        // Only act on approved refunds/chargebacks
+        if (adj.status !== 'approved') break;
+        if (adj.action !== 'refund' && adj.action !== 'chargeback') break;
+
+        const userId = await getUserIdByPaddleCustomerId(adj.customerId);
+        if (!userId) break;
+
+        if (adj.subscriptionId) {
+          // ---------------------------------------------------------------
+          // Subscription refund → downgrade to free tier
+          // ---------------------------------------------------------------
+          await dbClient
+            .update(user)
+            .set({
+              plan: 'free',
+              paddleSubscriptionId: null,
+              passResetAt: null,
+            })
+            .where(eq(user.id, userId));
+
+          // Debit the subscription allocation that was credited
+          const [originalCredit] = await dbClient
+            .select({ delta: passTransaction.delta })
+            .from(passTransaction)
+            .where(
+              and(
+                eq(passTransaction.userId, userId),
+                eq(passTransaction.paddleTransactionId, adj.transactionId),
+                eq(passTransaction.operationType, 'subscription')
+              )
+            )
+            .limit(1);
+
+          if (originalCredit && originalCredit.delta > 0) {
+            await debitPass(
+              userId,
+              originalCredit.delta,
+              `Refund: ${originalCredit.delta} Pass (subscription)`,
+              'refund',
+              adj.transactionId
+            );
+          }
+        } else {
+          // ---------------------------------------------------------------
+          // Top-up refund → debit the credited passes
+          // ---------------------------------------------------------------
+          const [originalCredit] = await dbClient
+            .select({ delta: passTransaction.delta })
+            .from(passTransaction)
+            .where(
+              and(
+                eq(passTransaction.userId, userId),
+                eq(passTransaction.paddleTransactionId, adj.transactionId),
+                eq(passTransaction.operationType, 'topup')
+              )
+            )
+            .limit(1);
+
+          if (originalCredit && originalCredit.delta > 0) {
+            await debitPass(
+              userId,
+              originalCredit.delta,
+              `Refund: ${originalCredit.delta} Pass (top-up)`,
+              'refund',
+              adj.transactionId
+            );
           }
         }
         break;
