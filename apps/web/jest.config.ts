@@ -1,4 +1,4 @@
-import type { Config } from 'jest';
+const { Config } = require('jest');
 
 const config: Config = {
   displayName: '@temar/web',
@@ -31,4 +31,4 @@ const config: Config = {
   testEnvironment: 'jsdom',
 };
 
-export default config;
+module.exports = config;
