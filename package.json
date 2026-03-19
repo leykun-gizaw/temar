@@ -53,6 +53,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tabler/icons-react": "^3.38.0",
     "@tailwindcss/postcss": "^4.2.1",
+    "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-table": "^8.21.3",
     "@temar/db-client": "workspace:*",
