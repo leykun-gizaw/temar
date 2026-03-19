@@ -23,8 +23,7 @@ import {
   type AnalyzeAnswerResult,
 } from '@/lib/actions/analysis';
 import type { RecallItemDue, AnswerRubric } from '@/lib/fetchers/recall-items';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MarkdownRenderer } from '@/components/markdown-renderer';
 import { ReviewAnalysis } from './review-analysis';
 import { ReviewRubricDisplay } from './review-rubric';
 import {
@@ -38,6 +37,7 @@ import {
   Sparkles,
   Loader2,
   Send,
+  RefreshCw,
 } from 'lucide-react';
 import {
   ResizablePanelGroup,
@@ -461,7 +461,7 @@ export default function ReviewSession({
   const isCurrentReviewed = reviewedIds.has(currentItem.id);
 
   return (
-    <div className="grid grid-rows-[auto_1fr_auto] h-[calc(100vh-var(--header-height))]">
+    <div className="grid grid-rows-[auto_1fr_auto] h-full">
       {/* ── Top bar ── */}
       <div className="flex items-center bg-primary/5 justify-between px-4 py-1.5 border-b shrink-0">
         <div className="flex items-center gap-3">
@@ -561,11 +561,9 @@ export default function ReviewSession({
                     No question generated yet. Showing content as reference:
                   </p>
                   {currentItem.chunkContentMd ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none mt-3">
-                      <Markdown remarkPlugins={[remarkGfm]}>
-                        {currentItem.chunkContentMd}
-                      </Markdown>
-                    </div>
+                    <MarkdownRenderer className="mt-3">
+                      {currentItem.chunkContentMd}
+                    </MarkdownRenderer>
                   ) : (
                     <p className="text-sm mt-2 font-medium">
                       {currentItem.chunkName}
@@ -709,9 +707,21 @@ export default function ReviewSession({
                     </div>
                   )}
                   {analysisError && (
-                    <p className="text-sm text-destructive py-2">
-                      {analysisError}
-                    </p>
+                    <div className="flex flex-col items-center gap-2 py-3">
+                      <p className="text-sm text-destructive text-center">
+                        {analysisError}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={handleAnalyze}
+                        disabled={isAnalyzing || isPending}
+                      >
+                        <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                        Retry Analysis
+                      </Button>
+                    </div>
                   )}
                   {analysis && (
                     <div className="space-y-3">

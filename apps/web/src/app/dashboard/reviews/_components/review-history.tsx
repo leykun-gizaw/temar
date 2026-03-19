@@ -18,8 +18,7 @@ import type {
 import type { AnalysisResult } from '@/lib/actions/analysis';
 import { lexicalToMarkdown } from '@/components/lexical-editor/utils/serialize';
 import type { SerializedEditorState } from 'lexical';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { MarkdownRenderer } from '@/components/markdown-renderer';
 import { ReviewAnalysis } from './review-analysis';
 import { ReviewRubricDisplay } from './review-rubric';
 import { RotateCcw, CheckCircle2, Clock, History } from 'lucide-react';
@@ -169,7 +168,7 @@ export default function ReviewHistory({
   };
 
   return (
-    <div className="grid grid-rows-[auto_1fr] h-[calc(100vh-var(--header-height))]">
+    <div className="grid grid-rows-[auto_1fr] h-full">
       {/* ── Top bar ── */}
       <div className="flex items-center justify-between px-4 py-1.5 border-b bg-card shrink-0">
         <div className="flex items-center gap-3">
@@ -300,11 +299,9 @@ export default function ReviewHistory({
                   </p>
                 </div>
               ) : selectedItem.chunkContentMd ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <Markdown remarkPlugins={[remarkGfm]}>
-                    {selectedItem.chunkContentMd}
-                  </Markdown>
-                </div>
+                <MarkdownRenderer>
+                  {selectedItem.chunkContentMd}
+                </MarkdownRenderer>
               ) : (
                 <p className="text-sm text-muted-foreground italic">
                   No question content available
@@ -416,10 +413,8 @@ export default function ReviewHistory({
                     Your Answer
                   </h3>
                   {answerMarkdown ? (
-                    <div className="prose prose-sm text-sm/6 dark:prose-invert max-w-none rounded-md border p-4 bg-muted/20">
-                      <Markdown remarkPlugins={[remarkGfm]}>
-                        {answerMarkdown}
-                      </Markdown>
+                    <div className="rounded-md border p-4 bg-muted/20">
+                      <MarkdownRenderer>{answerMarkdown}</MarkdownRenderer>
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">

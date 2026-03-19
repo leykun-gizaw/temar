@@ -5,8 +5,7 @@ import {
 } from '@/lib/fetchers/recall-items';
 import { getFilteredTopics } from '@/lib/fetchers/topics';
 import { getAnswerDrafts } from '@/lib/actions/review';
-import ReviewSession from './_components/review-session';
-import ReviewHistory from './_components/review-history';
+import ReviewsTabs from './_components/reviews-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,36 +18,27 @@ export default async function ReviewsPage({
   const topicId = params?.topicId;
   const noteId = params?.noteId;
 
-  const [dueItems, dueCount, topics] = await Promise.all([
+  const [dueItems, dueCount, allItemsResult, topics] = await Promise.all([
     getDueRecallItems({ topicId, noteId, limit: 50 }),
     getDueCount(),
+    getAllRecallItems({ limit: 200 }),
     getFilteredTopics(''),
   ]);
 
-  // Load any saved answer drafts for the due items
-  const answerDrafts = dueItems.length > 0
-    ? await getAnswerDrafts(dueItems.map((item) => item.id))
-    : {};
-
-  if (dueItems.length === 0) {
-    const { items: allItems } = await getAllRecallItems({ limit: 200 });
-    return (
-      <ReviewHistory
-        allItems={allItems}
-        topics={topics.map((t) => ({ id: t.id, name: t.name }))}
-        currentTopicId={topicId}
-      />
-    );
-  }
+  const answerDrafts =
+    dueItems.length > 0
+      ? await getAnswerDrafts(dueItems.map((item) => item.id))
+      : {};
 
   return (
-    <ReviewSession
-      initialItems={dueItems}
-      initialDrafts={answerDrafts}
+    <ReviewsTabs
+      dueItems={dueItems}
+      dueCount={dueCount}
+      allItems={allItemsResult.items}
+      answerDrafts={answerDrafts}
       topics={topics.map((t) => ({ id: t.id, name: t.name }))}
       currentTopicId={topicId}
       currentNoteId={noteId}
-      dueCount={dueCount}
     />
   );
 }
