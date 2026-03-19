@@ -31,5 +31,16 @@
     "../../libs/db-client/src/**/*.spec.ts",
     "../../libs/shared-types/src/**/*.spec.ts",
     "../../libs/pricing-service/src/**/*.spec.ts"
+  ],
+  "references": [
+    {
+      "path": "../../libs/db-client"
+    },
+    {
+      "path": "../../libs/shared-types"
+    },
+    {
+      "path": "../../libs/pricing-service"
+    }
   ]
 }

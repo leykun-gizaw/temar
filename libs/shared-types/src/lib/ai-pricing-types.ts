@@ -8,7 +8,7 @@ export type OperationType =
   | 'chunk_enhancement'
   | 'content_generation';
 
-export type AiProvider = 'google' | 'openai' | 'anthropic';
+export type AiProvider = 'google' | 'openai' | 'anthropic' | 'deepseek';
 
 export interface ModelConfig {
   provider: AiProvider;
@@ -42,22 +42,6 @@ export interface TokenUsage {
 // ---------------------------------------------------------------------------
 
 export const DEFAULT_MODEL_ID = 'gemini-3-flash';
-
-/**
- * Maps pricing model IDs (from the `ai_models` table) to the actual provider
- * model identifiers accepted by the Vercel AI SDK.
- *
- * Services must use the pricing ID for `recordUsage()` and map to the provider
- * ID only when calling the LLM.
- */
-export const MODEL_PROVIDER_MAP: Record<string, string> = {
-  'gemini-3-flash': 'gemini-2.0-flash',
-  'gemini-2.5-flash': 'gemini-2.5-flash-preview-04-17',
-  'gemini-2.5-pro': 'gemini-2.5-pro-preview-05-06',
-  'gpt-4.1-nano': 'gpt-4.1-nano',
-  'gpt-4.1-mini': 'gpt-4.1-mini',
-  'gpt-4.1': 'gpt-4.1',
-};
 
 export const PLAN_PASS_ALLOCATIONS: Record<string, number> = {
   free: 0,
