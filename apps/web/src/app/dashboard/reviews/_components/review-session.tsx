@@ -436,10 +436,15 @@ export default function ReviewSession({
     }
   };
 
+  useEffect(() => {
+    if (isSessionComplete) {
+      // Refresh the page to trigger the server component which will
+      // show ReviewHistory when no due items remain
+      router.refresh();
+    }
+  }, [isSessionComplete, router]);
+
   if (isSessionComplete) {
-    // Refresh the page to trigger the server component which will
-    // show ReviewHistory when no due items remain
-    router.refresh();
     return (
       <div className="flex flex-col items-center justify-center gap-6 py-20">
         <CheckCircle2 className="h-16 w-16 text-fsrs-good" />
