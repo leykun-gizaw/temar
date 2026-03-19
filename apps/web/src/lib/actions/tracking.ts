@@ -7,7 +7,7 @@ import { getUserAiConfig, getAiSettings } from './ai-settings';
 import { checkPassAvailability } from './pass';
 import { dbClient, chunk, note, eq, count } from '@temar/db-client';
 import type { AiProvider } from '@/lib/config/ai-operations';
-import { DEFAULT_MODEL_ID } from '@/lib/config/ai-operations';
+import { DEFAULT_MODEL_ID, getCostPerPassUsd } from '@/lib/config/ai-operations';
 
 export type TrackResult<T = unknown> =
   | { status: 'success'; data: T; newBalance?: number }
@@ -122,7 +122,7 @@ export async function trackTopic(
       status: 'success',
       data,
       ...(data?.newBalance != null && {
-        newBalance: data.newBalance as number,
+        newBalance: Math.floor((data.newBalance as number) / getCostPerPassUsd()),
       }),
     };
   } catch (err) {
@@ -176,7 +176,7 @@ export async function trackNote(
       status: 'success',
       data,
       ...(data?.newBalance != null && {
-        newBalance: data.newBalance as number,
+        newBalance: Math.floor((data.newBalance as number) / getCostPerPassUsd()),
       }),
     };
   } catch (err) {
@@ -231,7 +231,7 @@ export async function trackChunk(
       status: 'success',
       data,
       ...(data?.newBalance != null && {
-        newBalance: data.newBalance as number,
+        newBalance: Math.floor((data.newBalance as number) / getCostPerPassUsd()),
       }),
     };
   } catch (err) {
@@ -416,7 +416,7 @@ export async function regenerateChunkQuestions(
       status: 'success',
       data,
       ...(data?.newBalance != null && {
-        newBalance: data.newBalance as number,
+        newBalance: Math.floor((data.newBalance as number) / getCostPerPassUsd()),
       }),
     };
   } catch (err) {

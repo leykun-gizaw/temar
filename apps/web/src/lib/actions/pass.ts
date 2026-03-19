@@ -17,7 +17,16 @@ import {
   estimatedPassCostFromTokens,
   getOperationConfig,
   getActiveModels,
+  getCostPerPassUsd,
 } from '@/lib/config/ai-operations';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function usdToPass(usd: number): number {
+  return Math.floor(usd / getCostPerPassUsd());
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -47,7 +56,7 @@ export async function getPassBalance(): Promise<PassBalanceInfo> {
 
   const [row] = await dbClient
     .select({
-      balance: passBalance.balance,
+      balanceUsd: passBalance.balanceUsd,
       plan: user.plan,
     })
     .from(passBalance)
@@ -64,7 +73,7 @@ export async function getPassBalance(): Promise<PassBalanceInfo> {
     return { balance: 0, plan: userRow?.plan ?? 'free' };
   }
 
-  return { balance: row.balance, plan: row.plan ?? 'free' };
+  return { balance: usdToPass(row.balanceUsd), plan: row.plan ?? 'free' };
 }
 
 /** Lightweight balance-only fetch for real-time UI updates. */
@@ -73,12 +82,12 @@ export async function getPassBalanceQuick(): Promise<number> {
   if (!sessionUser) return 0;
 
   const [row] = await dbClient
-    .select({ balance: passBalance.balance })
+    .select({ balanceUsd: passBalance.balanceUsd })
     .from(passBalance)
     .where(eq(passBalance.userId, sessionUser.id))
     .limit(1);
 
-  return row?.balance ?? 0;
+  return usdToPass(row?.balanceUsd ?? 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -92,9 +101,11 @@ export async function creditPass(
   operationType = 'credit',
   paddleTransactionId?: string
 ): Promise<void> {
+  const usdAmount = amount * getCostPerPassUsd();
+
   await dbClient.transaction(async (tx) => {
     const [existing] = await tx
-      .select({ id: passBalance.id, balance: passBalance.balance })
+      .select({ id: passBalance.id, balanceUsd: passBalance.balanceUsd })
       .from(passBalance)
       .where(eq(passBalance.userId, userId))
       .limit(1);
@@ -102,15 +113,15 @@ export async function creditPass(
     if (existing) {
       await tx
         .update(passBalance)
-        .set({ balance: existing.balance + amount })
+        .set({ balanceUsd: existing.balanceUsd + usdAmount })
         .where(eq(passBalance.userId, userId));
     } else {
-      await tx.insert(passBalance).values({ userId, balance: amount });
+      await tx.insert(passBalance).values({ userId, balanceUsd: usdAmount });
     }
 
     await tx.insert(passTransaction).values({
       userId,
-      delta: amount,
+      deltaUsd: usdAmount,
       operationType,
       description,
       paddleTransactionId: paddleTransactionId ?? null,
@@ -152,44 +163,52 @@ export async function checkPassAvailability(
     return { status: 'ok', passToDeduct: 0, isByok: true };
   }
 
-  const basePassCost = await computePassCost(modelId, operationType);
+  const cpp = getCostPerPassUsd();
+
+  // computePassCost and estimatedPassCostFromTokens now return USD
+  const baseUsdCost = await computePassCost(modelId, operationType);
   const inputTokens = estimateInputTokens(inputText, provider);
 
   const models = await getActiveModels();
   const modelCfg = models.find((m) => m.modelId === modelId);
   const opCfg = await getOperationConfig(operationType);
-  const estimatedCost =
+  const estimatedUsdCost =
     modelCfg && opCfg
       ? estimatedPassCostFromTokens(inputTokens, operationType, modelCfg, opCfg)
-      : basePassCost;
+      : baseUsdCost;
 
-  const requiredCost = consentedPassCost ?? estimatedCost;
+  // consentedPassCost arrives from UI in passes — convert to USD
+  const consentedUsdCost = consentedPassCost
+    ? consentedPassCost * cpp
+    : undefined;
+  const requiredUsdCost = consentedUsdCost ?? estimatedUsdCost;
 
-  if (estimatedCost > basePassCost && !consentedPassCost) {
+  if (estimatedUsdCost > baseUsdCost && !consentedUsdCost) {
     return {
       status: 'consent_required',
-      estimatedPassCost: estimatedCost,
-      basePassCost,
+      estimatedPassCost: Math.ceil(estimatedUsdCost / cpp),
+      basePassCost: Math.ceil(baseUsdCost / cpp),
     };
   }
 
   const [balanceRow] = await dbClient
-    .select({ balance: passBalance.balance })
+    .select({ balanceUsd: passBalance.balanceUsd })
     .from(passBalance)
     .where(eq(passBalance.userId, sessionUser.id))
     .limit(1);
 
-  const currentBalance = balanceRow?.balance ?? 0;
+  const currentBalanceUsd = balanceRow?.balanceUsd ?? 0;
 
-  if (currentBalance < requiredCost) {
+  if (currentBalanceUsd < requiredUsdCost) {
     return {
       status: 'insufficient_pass',
-      balance: currentBalance,
-      required: requiredCost,
+      balance: usdToPass(currentBalanceUsd),
+      required: Math.ceil(requiredUsdCost / cpp),
     };
   }
 
-  return { status: 'ok', passToDeduct: requiredCost, isByok: false };
+  // passToDeduct carries the USD amount for downstream deduction
+  return { status: 'ok', passToDeduct: requiredUsdCost, isByok: false };
 }
 
 // ---------------------------------------------------------------------------
@@ -212,10 +231,17 @@ export async function getPassTransactions(
   const sessionUser = await getLoggedInUser();
   if (!sessionUser) return [];
 
-  return dbClient
+  const cpp = getCostPerPassUsd();
+
+  const rows = await dbClient
     .select()
     .from(passTransaction)
     .where(eq(passTransaction.userId, sessionUser.id))
     .orderBy(desc(passTransaction.createdAt))
     .limit(limit);
+
+  return rows.map((r) => ({
+    ...r,
+    delta: r.deltaUsd / cpp,
+  }));
 }

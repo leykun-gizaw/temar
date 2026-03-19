@@ -12,6 +12,7 @@ import {
 import {
   PLAN_PASS_ALLOCATIONS,
   PLAN_PASS_ROLLOVER_CAPS,
+  getCostPerPassUsd,
 } from '@/lib/config/ai-operations';
 import { EventName, type EventEntity } from '@paddle/paddle-node-sdk';
 
@@ -35,26 +36,30 @@ async function resetMonthlyPass(
   plan: string,
   nextBilledAt: string | null
 ): Promise<void> {
+  const cpp = getCostPerPassUsd();
   const allocation = PLAN_PASS_ALLOCATIONS[plan] ?? 0;
   const rolloverCap = PLAN_PASS_ROLLOVER_CAPS[plan] ?? 0;
 
+  const allocationUsd = allocation * cpp;
+  const rolloverCapUsd = rolloverCap * cpp;
+
   const [balanceRow] = await dbClient
-    .select({ balance: passBalance.balance })
+    .select({ balanceUsd: passBalance.balanceUsd })
     .from(passBalance)
     .where(eq(passBalance.userId, userId))
     .limit(1);
 
-  const currentBalance = balanceRow?.balance ?? 0;
-  const rolledOver = Math.min(currentBalance, rolloverCap);
-  const newBalance = rolledOver + allocation;
+  const currentBalanceUsd = balanceRow?.balanceUsd ?? 0;
+  const rolledOver = Math.min(currentBalanceUsd, rolloverCapUsd);
+  const newBalanceUsd = rolledOver + allocationUsd;
 
   if (balanceRow) {
     await dbClient
       .update(passBalance)
-      .set({ balance: newBalance })
+      .set({ balanceUsd: newBalanceUsd })
       .where(eq(passBalance.userId, userId));
   } else {
-    await dbClient.insert(passBalance).values({ userId, balance: newBalance });
+    await dbClient.insert(passBalance).values({ userId, balanceUsd: newBalanceUsd });
   }
 
   await dbClient
@@ -73,34 +78,34 @@ function planKeyFromPriceId(priceId: string): string | null {
 }
 
 /**
- * Debit passes from the user's balance (clamped to 0) and log a transaction.
+ * Debit USD from the user's balance (clamped to 0) and log a transaction.
  */
 async function debitPass(
   userId: string,
-  amount: number,
+  amountUsd: number,
   description: string,
   operationType: string,
   paddleTransactionId?: string
 ): Promise<void> {
   await dbClient.transaction(async (tx) => {
     const [existing] = await tx
-      .select({ id: passBalance.id, balance: passBalance.balance })
+      .select({ id: passBalance.id, balanceUsd: passBalance.balanceUsd })
       .from(passBalance)
       .where(eq(passBalance.userId, userId))
       .limit(1);
 
     if (existing) {
-      const newBalance = Math.max(0, existing.balance - amount);
+      const newBalanceUsd = Math.max(0, existing.balanceUsd - amountUsd);
       await tx
         .update(passBalance)
-        .set({ balance: newBalance })
+        .set({ balanceUsd: newBalanceUsd })
         .where(eq(passBalance.userId, userId));
     }
     // If no balance row exists, nothing to debit
 
     await tx.insert(passTransaction).values({
       userId,
-      delta: -amount,
+      deltaUsd: -amountUsd,
       operationType,
       description,
       paddleTransactionId: paddleTransactionId ?? null,
@@ -288,7 +293,7 @@ export async function POST(req: NextRequest) {
 
           // Debit the subscription allocation that was credited
           const [originalCredit] = await dbClient
-            .select({ delta: passTransaction.delta })
+            .select({ deltaUsd: passTransaction.deltaUsd })
             .from(passTransaction)
             .where(
               and(
@@ -299,21 +304,21 @@ export async function POST(req: NextRequest) {
             )
             .limit(1);
 
-          if (originalCredit && originalCredit.delta > 0) {
+          if (originalCredit && originalCredit.deltaUsd > 0) {
             await debitPass(
               userId,
-              originalCredit.delta,
-              `Refund: ${originalCredit.delta} Pass (subscription)`,
+              originalCredit.deltaUsd,
+              `Refund: $${originalCredit.deltaUsd.toFixed(2)} (subscription)`,
               'refund',
               adj.transactionId
             );
           }
         } else {
           // ---------------------------------------------------------------
-          // Top-up refund → debit the credited passes
+          // Top-up refund → debit the credited amount
           // ---------------------------------------------------------------
           const [originalCredit] = await dbClient
-            .select({ delta: passTransaction.delta })
+            .select({ deltaUsd: passTransaction.deltaUsd })
             .from(passTransaction)
             .where(
               and(
@@ -324,11 +329,11 @@ export async function POST(req: NextRequest) {
             )
             .limit(1);
 
-          if (originalCredit && originalCredit.delta > 0) {
+          if (originalCredit && originalCredit.deltaUsd > 0) {
             await debitPass(
               userId,
-              originalCredit.delta,
-              `Refund: ${originalCredit.delta} Pass (top-up)`,
+              originalCredit.deltaUsd,
+              `Refund: $${originalCredit.deltaUsd.toFixed(2)} (top-up)`,
               'refund',
               adj.transactionId
             );
