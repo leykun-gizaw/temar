@@ -66,7 +66,7 @@ export default function UnderperformingChunksCard({
   return (
     <Card
       className={cn(
-        'shadow-none h-full min-h-0 overflow-hidden flex-1 col-span-2',
+        'shadow-sm h-full min-h-0 overflow-hidden flex-1 col-span-2',
         className
       )}
     >

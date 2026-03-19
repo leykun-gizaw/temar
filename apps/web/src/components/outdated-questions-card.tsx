@@ -59,7 +59,7 @@ export default function OutdatedQuestionsCard({
 
   if (chunks.length === 0) {
     return (
-      <Card className={cn('shadow-none', className)}>
+      <Card className={cn('shadow-sm', className)}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
             <AlertTriangle className="h-4 w-4 text-green-500" />
@@ -136,7 +136,7 @@ export default function OutdatedQuestionsCard({
 
   return (
     <>
-      <Card className={cn('shadow-none flex flex-col', className)}>
+      <Card className={cn('shadow-sm flex flex-col', className)}>
         <CardHeader className="pb-2 border-b">
           <CardTitle className="flex items-center gap-2 text-sm">
             <AlertTriangle className="h-4 w-4 text-amber-500" />

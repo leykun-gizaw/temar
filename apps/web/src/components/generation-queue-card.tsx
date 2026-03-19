@@ -151,7 +151,7 @@ export default function GenerationQueueCard({
     return (
       <Card
         className={cn(
-          'shadow-none flex-1 h-full min-h-0 overflow-hidden col-span-2',
+          'shadow-sm flex-1 h-full min-h-0 overflow-hidden col-span-2',
           className
         )}
       >
@@ -182,7 +182,7 @@ export default function GenerationQueueCard({
     <>
       <Card
         className={cn(
-          'shadow-none flex-1 h-full min-h-0 overflow-hidden col-span-2',
+          'shadow-sm flex-1 h-full min-h-0 overflow-hidden col-span-2',
           className
         )}
       >

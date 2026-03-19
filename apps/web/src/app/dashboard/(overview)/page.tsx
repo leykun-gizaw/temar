@@ -52,12 +52,12 @@ export default async function Page() {
   ]);
 
   return (
-    <div className="h-[calc(100svh-var(--header-height))] overflow-hidden flex flex-col lg:grid lg:grid-cols-[1fr_1fr_1fr_1fr_400px] lg:grid-rows-[auto_1fr_1fr_1fr_300px] gap-4 p-4">
+    <div className="h-[calc(100svh-var(--header-height))] overflow-hidden flex flex-col lg:grid lg:grid-cols-[1fr_1fr_1fr_1fr_400px] lg:grid-rows-[auto_1fr_1fr_1fr_300px] gap-5 p-5">
       <EventsSummary
         dueItems={dueItems}
         className="col-start-1 col-end-2 row-start-1 row-end-2"
       />
-      <div className="flex gap-4 justify-between col-start-2 col-end-5 row-start-1 row-end-2">
+      <div className="flex gap-5 justify-between col-start-2 col-end-5 row-start-1 row-end-2">
         <TopicStats
           topicsCount={topicsCount}
           trackedCount={trackedItems.length}

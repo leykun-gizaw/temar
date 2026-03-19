@@ -72,8 +72,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         tooltip={{ children: item.title, hidden: false }}
                         isActive={!!isActive}
                         className={cn(
-                          'px-2.5 md:px-2 cursor-pointer',
-                          isActive ? 'border' : 'border-transparent'
+                          'px-2.5 md:px-2 cursor-pointer transition-colors',
+                          isActive
+                            ? 'bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary'
+                            : 'hover:bg-sidebar-accent'
                         )}
                       >
                         <item.icon />

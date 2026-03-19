@@ -12,19 +12,21 @@ export function ChunkStats({
   className?: string;
 }) {
   return (
-    <Card
-      className={cn('flex flex-col gap-1 p-3 rounded-xl border', className)}
-    >
-      <div className="flex justify-between items-center">
-        <div className="flex gap-1.5 items-center pr-2 border-r text-sm">
-          <Layers className="h-4 w-4" />
-          <span>Chunks</span>
+    <Card className={cn('flex flex-col gap-3 p-4 rounded-xl border', className)}>
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sr-due-bg shrink-0">
+          <Layers className="h-4 w-4 text-sr-due" />
         </div>
-        <span className="text-2xl font-semibold">{chunksCount}</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Chunks
+        </span>
       </div>
-      <span className="text-[11px] text-muted-foreground">
-        {dueCount} due for review
-      </span>
+      <div className="flex flex-col gap-0.5">
+        <span className="text-3xl font-bold tabular-nums">{chunksCount}</span>
+        <span className="text-xs text-muted-foreground mt-0.5">
+          {dueCount} due for review
+        </span>
+      </div>
     </Card>
   );
 }

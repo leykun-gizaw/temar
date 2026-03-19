@@ -9,20 +9,40 @@ export function ReviewItemStats({
   dueCount?: number;
   className?: string;
 }) {
+  const hasDue = (dueCount ?? 0) > 0;
   return (
-    <Card
-      className={cn('flex flex-col gap-1 p-3 rounded-xl border', className)}
-    >
-      <div className="flex justify-between items-center">
-        <div className="flex gap-1.5 items-center pr-2 border-r text-sm">
-          <TestTubeDiagonal className="h-4 w-4" />
-          <span>Reviews</span>
+    <Card className={cn('flex flex-col gap-3 p-4 rounded-xl border', className)}>
+      <div className="flex items-center gap-2">
+        <div
+          className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-lg shrink-0',
+            hasDue ? 'bg-sr-lapsed-bg' : 'bg-sr-recalled-bg'
+          )}
+        >
+          <TestTubeDiagonal
+            className={cn(
+              'h-4 w-4',
+              hasDue ? 'text-sr-lapsed' : 'text-sr-recalled'
+            )}
+          />
         </div>
-        <span className="text-2xl font-semibold">{dueCount}</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Reviews
+        </span>
       </div>
-      <span className="text-[11px] text-muted-foreground">
-        {dueCount} due for review
-      </span>
+      <div className="flex flex-col gap-0.5">
+        <span
+          className={cn(
+            'text-3xl font-bold tabular-nums',
+            hasDue && 'text-sr-lapsed'
+          )}
+        >
+          {dueCount}
+        </span>
+        <span className="text-xs text-muted-foreground mt-0.5">
+          {dueCount} due for review
+        </span>
+      </div>
     </Card>
   );
 }

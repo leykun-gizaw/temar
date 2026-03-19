@@ -10,19 +10,21 @@ export function NoteStats({
   className?: string;
 }) {
   return (
-    <Card
-      className={cn('flex flex-col gap-1 p-3 rounded-xl border', className)}
-    >
-      <div className="flex justify-between items-center">
-        <div className="flex gap-1.5 items-center pr-2 border-r text-sm">
-          <Notebook className="h-4 w-4" />
-          <span>Notes</span>
+    <Card className={cn('flex flex-col gap-3 p-4 rounded-xl border', className)}>
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sr-new-bg shrink-0">
+          <Notebook className="h-4 w-4 text-sr-new" />
         </div>
-        <span className="text-2xl font-semibold">{notesCount}</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Notes
+        </span>
       </div>
-      <span className="text-[11px] text-muted-foreground">
-        {notesCount} total
-      </span>
+      <div className="flex flex-col gap-0.5">
+        <span className="text-3xl font-bold tabular-nums">{notesCount}</span>
+        <span className="text-xs text-muted-foreground mt-0.5">
+          {notesCount} total
+        </span>
+      </div>
     </Card>
   );
 }

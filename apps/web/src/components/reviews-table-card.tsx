@@ -159,7 +159,7 @@ export default function ReviewsTableCard({
 
   return (
     <Card
-      className={cn('min-h-0 h-full shadow-none overflow-hidden', className)}
+      className={cn('min-h-0 h-full shadow-sm overflow-hidden', className)}
     >
       <CardHeader className="border-b">
         <CardTitle>Recall Items</CardTitle>
