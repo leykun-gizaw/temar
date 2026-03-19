@@ -6,6 +6,7 @@ export * from './schema/fsrs-schema';
 export * from './schema/pass-schema';
 export * from './schema/ai-pricing-schema';
 export * from './lib/ai-pricing-queries';
+export * from './lib/fetch-provider-models';
 export {
   eq,
   ne,

@@ -17,8 +17,9 @@ import { user } from './auth-schema';
 // ---------------------------------------------------------------------------
 export const aiModel = pgTable('ai_models', {
   id: text('id').primaryKey(), // e.g. 'gemini-3-flash'
-  provider: text('provider').notNull(), // 'google' | 'openai' | 'anthropic'
+  provider: text('provider').notNull(), // 'google' | 'openai' | 'anthropic' | 'deepseek'
   label: text('label').notNull(),
+  providerModelId: text('provider_model_id'), // actual API model ID (e.g. 'gemini-2.0-flash'); null = same as id
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()

@@ -20,6 +20,18 @@ export async function queryActiveModels() {
     .where(eq(aiModel.isActive, true));
 }
 
+export async function queryProviderModelId(
+  pricingModelId: string
+): Promise<string> {
+  const [row] = await dbClient
+    .select({ providerModelId: aiModel.providerModelId })
+    .from(aiModel)
+    .where(eq(aiModel.id, pricingModelId))
+    .limit(1);
+  // Falls back to the pricing model ID itself when no override is set
+  return row?.providerModelId ?? pricingModelId;
+}
+
 export async function queryActivePricing(modelId: string) {
   const [row] = await dbClient
     .select()
