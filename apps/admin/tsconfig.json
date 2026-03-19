@@ -10,11 +10,7 @@
     "emitDeclarationOnly": false,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
@@ -25,22 +21,12 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "../../apps/admin/src/*"
-      ],
-      "@temar/db-client": [
-        "../../libs/db-client/src/index.ts"
-      ],
-      "@temar/shared-types": [
-        "../../libs/shared-types/src/index.ts"
-      ],
-      "@temar/pricing-service": [
-        "../../libs/pricing-service/src/index.ts"
-      ]
+      "@/*": ["../../apps/admin/src/*"],
+      "@temar/db-client": ["../../libs/db-client/src/index.ts"],
+      "@temar/shared-types": ["../../libs/shared-types/src/index.ts"],
+      "@temar/pricing-service": ["../../libs/pricing-service/src/index.ts"]
     },
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
@@ -68,5 +54,13 @@
     "../../libs/shared-types/src/**/*.test.ts",
     "../../libs/pricing-service/src/**/*.spec.ts",
     "../../libs/pricing-service/src/**/*.test.ts"
+  ],
+  "references": [
+    {
+      "path": "../../libs/shared-types"
+    },
+    {
+      "path": "../../libs/db-client"
+    }
   ]
 }

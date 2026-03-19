@@ -9,6 +9,7 @@ import {
   eq,
   isNull,
   and,
+  fetchAllProviderModels,
 } from '@temar/db-client';
 
 export async function addModel(formData: FormData) {
@@ -79,4 +80,58 @@ export async function getModelWarnings() {
   }
 
   return warnings;
+}
+
+export async function syncModelsFromProviders() {
+  const { models: fetched, errors } = await fetchAllProviderModels({
+    googleApiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+    deepseekApiKey: process.env.DEEPSEEK_API_KEY,
+  });
+
+  let inserted = 0;
+  for (const m of fetched) {
+    const result = await dbClient
+      .insert(aiModel)
+      .values({
+        id: m.id,
+        provider: m.provider,
+        label: m.label,
+        providerModelId: m.id,
+      })
+      .onConflictDoNothing()
+      .returning();
+    if (result.length > 0) inserted++;
+  }
+
+  // Seed default markup (1.0) for newly inserted models that lack one
+  for (const m of fetched) {
+    const [existing] = await dbClient
+      .select()
+      .from(aiMarkupConfig)
+      .where(
+        and(
+          eq(aiMarkupConfig.modelId, m.id),
+          isNull(aiMarkupConfig.effectiveTo)
+        )
+      )
+      .limit(1);
+    if (!existing) {
+      await dbClient
+        .insert(aiMarkupConfig)
+        .values({
+          modelId: m.id,
+          markupFactor: 1.0,
+          changeReason: 'Auto-sync — cost pass-through',
+        })
+        .onConflictDoNothing();
+    }
+  }
+
+  revalidatePath('/models');
+  return {
+    fetched: fetched.length,
+    inserted,
+    errors,
+  };
 }
