@@ -137,7 +137,7 @@ export async function checkPassAvailability(
   operationType: OperationType,
   modelId: string,
   inputText: string,
-  provider: 'google' | 'openai' | 'anthropic',
+  provider: 'google' | 'openai' | 'anthropic' | 'deepseek',
   consentedPassCost?: number
 ): Promise<CheckPassResult> {
   const sessionUser = await getLoggedInUser();

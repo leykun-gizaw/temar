@@ -51,7 +51,7 @@ const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
   {
     value: 'google',
     label: 'Google Gemini',
-    description: 'Gemini 3 Flash, 2.5 Pro, etc.',
+    description: 'Gemini 2.0 Flash, 2.5 Pro, etc.',
   },
   {
     value: 'openai',
@@ -62,6 +62,11 @@ const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
     value: 'anthropic',
     label: 'Anthropic',
     description: 'Claude Sonnet 4, Haiku 4, etc.',
+  },
+  {
+    value: 'deepseek',
+    label: 'Deepseek',
+    description: 'Deepseek Chat, Reasoner, etc.',
   },
 ];
 

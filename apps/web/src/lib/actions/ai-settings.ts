@@ -4,7 +4,7 @@ import { dbClient, user, encrypt, decrypt, eq } from '@temar/db-client';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { revalidatePath } from 'next/cache';
 
-export type AiProvider = 'google' | 'openai' | 'anthropic';
+export type AiProvider = 'google' | 'openai' | 'anthropic' | 'deepseek';
 
 export type AiSettings = {
   provider: AiProvider | null;
