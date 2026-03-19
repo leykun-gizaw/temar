@@ -162,6 +162,13 @@
       "when": 1773674412111,
       "tag": "0022_thin_absorbing_man",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1773919527348,
+      "tag": "0023_cheerful_william_stryker",
+      "breakpoints": true
     }
   ]
 }

@@ -122,7 +122,7 @@ export const aiUsageLog = pgTable(
     outputPricePer1MSnapshot: real('output_price_per_1m_snapshot').notNull(),
     markupFactorSnapshot: real('markup_factor_snapshot').notNull(),
     computedCostUsd: real('computed_cost_usd').notNull(),
-    passCharged: integer('pass_charged').notNull(),
+    amountChargedUsd: real('amount_charged_usd').notNull(),
     isByok: boolean('is_byok').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()

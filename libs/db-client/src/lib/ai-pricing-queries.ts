@@ -76,7 +76,7 @@ export interface InsertUsageLogData {
   outputPricePer1MSnapshot: number;
   markupFactorSnapshot: number;
   computedCostUsd: number;
-  passCharged: number;
+  amountChargedUsd: number;
   isByok: boolean;
 }
 
@@ -103,10 +103,10 @@ export async function decrementUserPassBalance(
   const [row] = await db
     .update(passBalance)
     .set({
-      balance: sql`GREATEST(0, ${passBalance.balance} - ${amount})`,
+      balanceUsd: sql`GREATEST(0, ${passBalance.balanceUsd} - ${amount})`,
     })
     .where(eq(passBalance.userId, userId))
-    .returning({ balance: passBalance.balance });
+    .returning({ balanceUsd: passBalance.balanceUsd });
 
   if (row) return row;
 
@@ -114,9 +114,9 @@ export async function decrementUserPassBalance(
   // The usage log still records the full passCharged for audit purposes.
   const [inserted] = await db
     .insert(passBalance)
-    .values({ userId, balance: 0 })
+    .values({ userId, balanceUsd: 0 })
     .onConflictDoNothing()
-    .returning({ balance: passBalance.balance });
+    .returning({ balanceUsd: passBalance.balanceUsd });
 
   return inserted ?? null;
 }
