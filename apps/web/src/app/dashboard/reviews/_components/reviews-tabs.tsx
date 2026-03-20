@@ -32,23 +32,23 @@ export default function ReviewsTabs({
       defaultValue={defaultTab}
       className="h-[calc(100vh-var(--header-height))] flex flex-col gap-0"
     >
-      <div className="border-b bg-card shrink-0 px-4">
-        <TabsList className="h-10 bg-transparent p-0 gap-1 rounded-none">
+      <div className="shrink-0 px-5 pt-4 pb-2">
+        <TabsList className="h-9 bg-muted/60 p-1 rounded-full gap-1 shadow-sm">
           <TabsTrigger
             value="active"
-            className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 gap-2 text-sm"
+            className="h-full rounded-full px-4 gap-2 text-xs font-bold data-[state=active]:bg-card data-[state=active]:shadow-sm data-[state=active]:text-primary transition-all"
           >
-            <Brain className="h-4 w-4" />
+            <Brain className="h-3.5 w-3.5" />
             Active Reviews
             {dueCount > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center rounded-full bg-primary/15 text-primary text-[11px] font-semibold px-2 py-0.5 min-w-[20px] leading-none">
+              <span className="ml-0.5 inline-flex items-center justify-center rounded-full bg-primary/15 text-primary text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] leading-none">
                 {dueCount}
               </span>
             )}
           </TabsTrigger>
           <TabsTrigger
             value="history"
-            className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 text-sm"
+            className="h-full rounded-full px-4 text-xs font-bold data-[state=active]:bg-card data-[state=active]:shadow-sm data-[state=active]:text-foreground transition-all"
           >
             History
           </TabsTrigger>
@@ -66,12 +66,16 @@ export default function ReviewsTabs({
             dueCount={dueCount}
           />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-            <Brain className="h-10 w-10 opacity-25" />
-            <p className="text-sm font-medium">No items due for review</p>
-            <p className="text-xs opacity-70">
-              Check back later or browse your review history.
-            </p>
+          <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
+            <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
+              <Brain className="h-8 w-8 opacity-30" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold">No items due for review</p>
+              <p className="text-xs opacity-70 mt-1">
+                Check back later or browse your review history.
+              </p>
+            </div>
           </div>
         )}
       </TabsContent>

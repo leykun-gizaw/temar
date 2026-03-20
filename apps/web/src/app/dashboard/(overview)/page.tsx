@@ -1,8 +1,6 @@
-import ScheduleCard from '@/components/schedule-card';
 import ReviewsTableCard from '@/components/reviews-table-card';
-import { Calendar, CalendarDayView } from '@/components/full-calendar';
 import { EventsSummary } from '@/app/dashboard/_components/events-summary';
-import { getAllCalendarEvents } from '@/lib/fetchers/events';
+import { UpcomingSessions } from '../_components/upcoming-sessions';
 import {
   getDueRecallItems,
   getDueCount,
@@ -10,19 +8,20 @@ import {
 } from '@/lib/fetchers/recall-items';
 import {
   getTrackingStatus,
-  getUnderperformingChunks,
-  getOutdatedChunks,
 } from '@/lib/actions/tracking';
 import { getTopicsCount } from '@/lib/fetchers/topics';
 import { getNotesCount } from '@/lib/fetchers/notes';
 import { getChunksCount } from '@/lib/fetchers/chunks';
 import GenerationQueueCard from '@/components/generation-queue-card';
-import UnderperformingChunksCard from '@/components/underperforming-chunks-card';
-import OutdatedQuestionsCard from '@/components/outdated-questions-card';
 import { TopicStats } from '../_components/topic-stats';
 import { NoteStats } from '../_components/note-stats';
 import { ChunkStats } from '../_components/chunk-stats';
 import { ReviewItemStats } from '../_components/review-item-stats';
+import { GrowthOverview } from '../_components/growth-overview';
+import { ConsistencyDots } from '../_components/consistency-dots';
+import Link from 'next/link';
+import { Plus, FileText } from 'lucide-react';
+import { getLoggedInUser } from '@/lib/fetchers/users';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,76 +31,82 @@ export default async function Page() {
     dueCount,
     allItemsResult,
     trackedItems,
-    calendarEvents,
     topicsCount,
     notesCount,
     chunksCount,
-    underperformingChunks,
-    outdatedChunks,
+    user,
   ] = await Promise.all([
     getDueRecallItems({ limit: 50 }),
     getDueCount(),
     getAllRecallItems({ limit: 10, offset: 0 }),
     getTrackingStatus(),
-    getAllCalendarEvents(),
     getTopicsCount(),
     getNotesCount(),
     getChunksCount(),
-    getUnderperformingChunks(),
-    getOutdatedChunks(),
+    getLoggedInUser(),
   ]);
 
   return (
-    <div className="h-[calc(100svh-var(--header-height))] overflow-hidden flex flex-col lg:grid lg:grid-cols-[1fr_1fr_1fr_1fr_400px] lg:grid-rows-[auto_1fr_1fr_1fr_300px] gap-5 p-5">
-      <EventsSummary
-        dueItems={dueItems}
-        className="col-start-1 col-end-2 row-start-1 row-end-2"
-      />
-      <div className="flex gap-5 justify-between col-start-2 col-end-5 row-start-1 row-end-2">
-        <TopicStats
-          topicsCount={topicsCount}
-          trackedCount={trackedItems.length}
-          className="flex-1"
+    <div className="flex flex-col lg:flex-row gap-6 p-5 h-[calc(100svh-var(--header-height))] overflow-auto">
+      {/* Main Column */}
+      <div className="flex-1 min-w-0 flex flex-col gap-6">
+        {/* Welcome + Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight">
+              Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}.
+            </h1>
+            <p className="text-lg text-muted-foreground mt-1">
+              Your cognitive garden is thriving today.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/materials"
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold bg-muted text-muted-foreground rounded-full hover:bg-muted/80 transition-colors active:scale-95 shadow-md"
+            >
+              <FileText className="w-4 h-4" />
+              New Note
+            </Link>
+            <Link
+              href="/dashboard/reviews"
+              className="inline-flex items-center gap-2 px-7 py-2.5 text-sm font-bold bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all shadow-md shadow-primary/25 active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              Start Session
+            </Link>
+          </div>
+        </div>
+
+        {/* Stat Cards Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <EventsSummary dueItems={dueItems} />
+          <TopicStats
+            topicsCount={topicsCount}
+            trackedCount={trackedItems.length}
+          />
+          <NoteStats notesCount={notesCount} />
+          <ChunkStats chunksCount={chunksCount} dueCount={dueCount} />
+          <ReviewItemStats dueCount={dueCount} />
+        </div>
+
+        {/* Growth Overview (visual shell) */}
+        <GrowthOverview />
+
+        {/* Recall Items Table */}
+        <ReviewsTableCard
+          items={allItemsResult.items}
+          total={allItemsResult.total}
         />
-        <NoteStats notesCount={notesCount} className="flex-1" />
-        <ChunkStats
-          chunksCount={chunksCount}
-          dueCount={dueCount}
-          className="flex-1"
-        />
-        <ReviewItemStats dueCount={dueCount} className="flex-1" />
       </div>
 
-      <div className="col-start-1 col-span-2 row-start-2 row-span-2">
-        <OutdatedQuestionsCard
-          initialChunks={outdatedChunks}
-          className="h-full"
-        />
-      </div>
+      {/* Right Sidebar Column */}
+      <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-5">
+        <ConsistencyDots />
 
-      <UnderperformingChunksCard
-        initialChunks={underperformingChunks}
-        className="col-start-3 col-end-5 row-start-2 row-end-4"
-      />
+        <UpcomingSessions dueItems={dueItems} dueCount={dueCount} />
 
-      <ReviewsTableCard
-        items={allItemsResult.items}
-        total={allItemsResult.total}
-        className="col-start-1 col-end-5 row-start-4 row-end-6"
-      />
-      <GenerationQueueCard
-        initialItems={trackedItems}
-        className="col-start-5 col-end-6 row-start-5 row-end-6"
-      />
-
-      <div className="flex-1 min-h-0 lg:row-span-4">
-        <ScheduleCard dueCount={dueCount}>
-          <Calendar events={calendarEvents}>
-            <div className="p-4 h-full min-h-0">
-              <CalendarDayView />
-            </div>
-          </Calendar>
-        </ScheduleCard>
+        <GenerationQueueCard initialItems={trackedItems} />
       </div>
     </div>
   );

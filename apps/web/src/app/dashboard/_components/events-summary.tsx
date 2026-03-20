@@ -5,7 +5,6 @@ import { Button } from '../../../components/ui/button';
 import Link from 'next/link';
 import { BellRing, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
 
 export function EventsSummary({
   dueItems,
@@ -20,66 +19,57 @@ export function EventsSummary({
   const currentItem = dueNow[0] ?? null;
 
   return (
-    <Card
+    <div
       className={cn(
-        'flex flex-col gap-3 p-4 rounded-xl border justify-between',
+        'flex flex-col gap-2 p-4 rounded-2xl bg-primary/5 shadow-md',
         className
       )}
     >
       <div className="flex items-center gap-2">
         <div
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg shrink-0',
-            currentItem ? 'bg-sr-lapsed-bg' : 'bg-sr-recalled-bg'
+            'flex h-7 w-7 items-center justify-center rounded-full shrink-0',
+            currentItem ? 'bg-destructive/15' : 'bg-secondary'
           )}
         >
           {currentItem ? (
-            <BellRing className="h-4 w-4 text-sr-lapsed" />
+            <BellRing className="h-3.5 w-3.5 text-destructive" />
           ) : (
-            <CheckCircle2 className="h-4 w-4 text-sr-recalled" />
+            <CheckCircle2 className="h-3.5 w-3.5 text-secondary-foreground" />
           )}
         </div>
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="text-[0.65rem] font-bold text-muted-foreground uppercase tracking-wider">
           Due Now
         </span>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        {currentItem ? (
-          <>
-            <span className="text-3xl font-bold tabular-nums text-sr-lapsed">
-              {dueNow.length}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              item{dueNow.length !== 1 ? 's' : ''} awaiting review
-            </span>
-          </>
-        ) : (
-          <>
-            <span className="text-3xl font-bold tabular-nums text-sr-recalled">
-              0
-            </span>
-            <span className="text-xs text-muted-foreground">
-              all caught up!
-            </span>
-          </>
+      <span
+        className={cn(
+          'text-2xl font-bold tabular-nums',
+          currentItem ? 'text-sr-lapsed' : 'text-sr-recalled'
         )}
-      </div>
+      >
+        {dueNow.length}
+      </span>
 
-      {currentItem && (
-        <Button variant="outline" size="sm" className="w-full mt-1" asChild>
-          <Link className="flex gap-2 items-center" href="/dashboard/reviews">
-            <span className="relative flex size-3.5 shrink-0">
+      {currentItem ? (
+        <Button variant="ghost" size="sm" className="w-full h-7 text-[0.65rem] px-2 bg-background/60 rounded-lg" asChild>
+          <Link className="flex gap-1.5 items-center" href="/dashboard/reviews">
+            <span className="relative flex size-2.5 shrink-0">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sr-lapsed opacity-60" />
-              <span className="relative inline-flex size-3.5 rounded-full bg-sr-lapsed" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-sr-lapsed" />
             </span>
-            <span className="truncate text-xs">
+            <span className="truncate">
               {currentItem.chunkName}
-              {dueNow.length > 1 && ` +${dueNow.length - 1} more`}
+              {dueNow.length > 1 && ` +${dueNow.length - 1}`}
             </span>
           </Link>
         </Button>
+      ) : (
+        <span className="text-[0.65rem] text-muted-foreground">
+          all caught up!
+        </span>
       )}
-    </Card>
+    </div>
   );
 }

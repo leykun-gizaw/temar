@@ -38,6 +38,11 @@ import {
   Loader2,
   Send,
   RefreshCw,
+  RotateCcw,
+  Frown,
+  Smile,
+  Rocket,
+  type LucideIcon,
 } from 'lucide-react';
 import {
   ResizablePanelGroup,
@@ -69,16 +74,25 @@ const STATE_LABELS: Record<number, string> = {
   3: 'Relearning',
 };
 
-const RATING_CONFIG = [
+const RATING_CONFIG: {
+  rating: number;
+  label: string;
+  tooltip: string;
+  shortcut: string;
+  Icon: LucideIcon;
+  color: { bg: string; text: string; hoverBg: string };
+}[] = [
   {
     rating: 1,
     label: 'Again',
     tooltip:
       "You couldn't recall the answer — this card will be shown again soon",
     shortcut: '1',
+    Icon: RotateCcw,
     color: {
       bg: 'bg-fsrs-again-bg',
       text: 'text-fsrs-again',
+      hoverBg: 'hover:bg-fsrs-again-bg/60',
     },
   },
   {
@@ -86,9 +100,11 @@ const RATING_CONFIG = [
     label: 'Hard',
     tooltip: 'You recalled with significant difficulty — shorter interval',
     shortcut: '2',
+    Icon: Frown,
     color: {
       bg: 'bg-fsrs-hard-bg',
       text: 'text-fsrs-hard',
+      hoverBg: 'hover:bg-fsrs-hard-bg/60',
     },
   },
   {
@@ -96,9 +112,11 @@ const RATING_CONFIG = [
     label: 'Good',
     tooltip: 'You recalled correctly after some thought — normal interval',
     shortcut: '3',
+    Icon: Smile,
     color: {
       bg: 'bg-fsrs-good-bg',
       text: 'text-fsrs-good',
+      hoverBg: 'hover:bg-fsrs-good-bg/60',
     },
   },
   {
@@ -106,9 +124,11 @@ const RATING_CONFIG = [
     label: 'Easy',
     tooltip: 'You recalled instantly and effortlessly — longer interval',
     shortcut: '4',
+    Icon: Rocket,
     color: {
       bg: 'bg-fsrs-easy-bg',
       text: 'text-fsrs-easy',
+      hoverBg: 'hover:bg-fsrs-easy-bg/60',
     },
   },
 ];
@@ -447,10 +467,14 @@ export default function ReviewSession({
   if (isSessionComplete) {
     return (
       <div className="flex flex-col items-center justify-center gap-6 py-20">
-        <CheckCircle2 className="h-16 w-16 text-fsrs-good" />
+        <div className="w-20 h-20 rounded-full bg-fsrs-good-bg flex items-center justify-center">
+          <CheckCircle2 className="h-10 w-10 text-fsrs-good" />
+        </div>
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-semibold">Session Complete</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-3xl font-extrabold tracking-tight">
+            Session Complete
+          </h2>
+          <p className="text-muted-foreground text-sm">
             {completedCount > 0
               ? `You reviewed ${completedCount} item${
                   completedCount !== 1 ? 's' : ''
@@ -466,41 +490,41 @@ export default function ReviewSession({
   const isCurrentReviewed = reviewedIds.has(currentItem.id);
 
   return (
-    <div className="grid grid-rows-[auto_1fr_auto] h-full">
+    <div className="grid grid-rows-[auto_1fr] h-full">
       {/* ── Top bar ── */}
-      <div className="flex items-center bg-primary/5 justify-between px-4 py-1.5 border-b shrink-0">
+      <div className="flex items-center justify-between px-5 py-2 bg-muted/30 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 bg-muted/60 rounded-full p-0.5">
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-6 w-6 rounded-full"
               onClick={handlePrev}
               disabled={currentIndex === 0 || isPending}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
-            <span className="text-xs font-medium tabular-nums text-muted-foreground px-1">
+            <span className="text-[11px] font-bold tabular-nums text-muted-foreground px-1.5">
               {currentIndex + 1}/{items.length}
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-6 w-6 rounded-full"
               onClick={handleNext}
               disabled={currentIndex >= items.length - 1 || isPending}
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5" />
             </Button>
           </div>
-          <span className="text-xs text-muted-foreground truncate max-w-[300px]">
+          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest truncate max-w-[300px]">
             {currentItem.topicName} &gt; {currentItem.noteName}
           </span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted font-medium">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted/60 font-bold text-muted-foreground">
             {STATE_LABELS[currentItem.state] ?? 'Unknown'}
           </span>
           {isCurrentReviewed && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-fsrs-good-bg text-fsrs-good font-medium flex items-center gap-1">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-fsrs-good-bg text-fsrs-good font-bold flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
               Done
             </span>
@@ -512,7 +536,7 @@ export default function ReviewSession({
             defaultValue={currentTopicId ?? 'all'}
             onValueChange={handleScopeChange}
           >
-            <SelectTrigger className="h-7 w-[200px] text-xs">
+            <SelectTrigger className="h-7 w-[180px] text-xs rounded-full">
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
             <SelectContent>
@@ -524,7 +548,7 @@ export default function ReviewSession({
               ))}
             </SelectContent>
           </Select>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-muted/60 rounded-full text-xs font-bold text-muted-foreground">
             <Brain className="h-3.5 w-3.5" />
             <span>
               {completedCount}/{dueCount}
@@ -533,7 +557,7 @@ export default function ReviewSession({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs"
+            className="h-7 text-xs rounded-full"
             onClick={handleSkip}
             disabled={isPending}
           >
@@ -543,311 +567,410 @@ export default function ReviewSession({
         </div>
       </div>
 
-      {/* ── Main: resizable two-column layout ── */}
-      <ResizablePanelGroup orientation="horizontal" className="min-h-0">
-        {/* ──── LEFT PANEL: Question + Rubric ──── */}
-        <ResizablePanel defaultSize={50} minSize={25}>
-          <div className="overflow-y-auto h-full p-5">
-            <div className="space-y-5">
-              {currentItem.questionTitle && (
-                <h2 className="text-lg font-semibold">
-                  {currentItem.questionTitle}
-                </h2>
-              )}
-              {currentItem.questionText ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <p className="font-medium leading-relaxed">
-                    {currentItem.questionText}
-                  </p>
-                </div>
-              ) : (
-                <div className="rounded-lg border p-4 bg-muted/30">
-                  <p className="text-muted-foreground text-sm italic">
-                    No question generated yet. Showing content as reference:
-                  </p>
-                  {currentItem.chunkContentMd ? (
-                    <MarkdownRenderer className="mt-3">
-                      {currentItem.chunkContentMd}
-                    </MarkdownRenderer>
-                  ) : (
-                    <p className="text-sm mt-2 font-medium">
-                      {currentItem.chunkName}
-                    </p>
-                  )}
-                </div>
-              )}
+      {/* ── Main: resizable two-column layout with card gaps ── */}
+      <div className="p-4 min-h-0 flex-1">
+        <ResizablePanelGroup orientation="horizontal" className="h-full">
+          {/* ──── LEFT PANEL: Question + Rubric ──── */}
+          <ResizablePanel defaultSize={45} minSize={25}>
+            <div className="h-full p-1">
+              <div className="h-full rounded-2xl bg-card shadow-md overflow-hidden">
+                <div className="overflow-y-auto h-full p-8 lg:p-10">
+                  <div className="space-y-8">
+                    {/* Due Today badge */}
+                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-secondary-foreground animate-pulse" />
+                      Due Today
+                    </span>
 
-              <hr />
-
-              {/* Type-specific rubric */}
-              <ReviewRubricDisplay rubric={rubric} />
-            </div>
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        {/* ──── RIGHT PANEL: Editor (top) + Results (bottom) ──── */}
-        <ResizablePanel defaultSize={50} minSize={25}>
-          <ResizablePanelGroup orientation="vertical">
-            {/* Editor section */}
-            <ResizablePanel defaultSize={70} minSize={20}>
-              <div className="flex flex-col h-full min-h-0">
-                <div className="flex items-center justify-between px-3 py-1.5 border-b shrink-0 bg-muted/30">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Your Answer
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      'h-6 text-xs px-2.5',
-                      submittedIds.has(currentItem.id) &&
-                        !dirtyIds.has(currentItem.id)
-                        ? 'bg-fsrs-good-bg text-fsrs-good border-fsrs-good/30'
-                        : ''
+                    {currentItem.questionTitle && (
+                      <h2 className="text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
+                        {currentItem.questionTitle}
+                      </h2>
                     )}
-                    onClick={handleSubmitAnswer}
-                    disabled={
-                      isSubmitting ||
-                      isPending ||
-                      (submittedIds.has(currentItem.id) &&
-                        !dirtyIds.has(currentItem.id))
-                    }
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    {currentItem.questionText ? (
+                      <p className="text-lg lg:text-xl font-semibold leading-relaxed text-muted-foreground">
+                        {currentItem.questionText}
+                      </p>
                     ) : (
-                      <Send className="h-3 w-3 mr-1" />
+                      <div className="rounded-2xl p-5 bg-muted/30">
+                        <p className="text-muted-foreground text-sm italic">
+                          No question generated yet. Showing content as
+                          reference:
+                        </p>
+                        {currentItem.chunkContentMd ? (
+                          <MarkdownRenderer className="mt-3">
+                            {currentItem.chunkContentMd}
+                          </MarkdownRenderer>
+                        ) : (
+                          <p className="text-sm mt-2 font-medium">
+                            {currentItem.chunkName}
+                          </p>
+                        )}
+                      </div>
                     )}
-                    {submittedIds.has(currentItem.id) &&
-                    !dirtyIds.has(currentItem.id)
-                      ? 'Submitted'
-                      : 'Submit'}
-                  </Button>
-                </div>
-                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                  <AnswerEditor
-                    key={currentItem.id}
-                    initialValue={answersRef.current.get(currentItem.id)}
-                    onChange={(value) => {
-                      answersRef.current.set(currentItem.id, value);
-                      persistToLocalStorage();
-                      // Mark dirty if this item was previously submitted
-                      if (submittedIds.has(currentItem.id)) {
-                        setDirtyIds((prev) => new Set(prev).add(currentItem.id));
-                      }
-                    }}
-                    placeholder="Write your answer here..."
-                  />
+                    {/* Type-specific rubric */}
+                    <ReviewRubricDisplay rubric={rubric} />
+
+                    {/* Metadata cards */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-muted/40 p-5 rounded-xl">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">
+                          Stability
+                        </p>
+                        <span className="text-xl font-extrabold text-primary tabular-nums">
+                          {currentItem.stability != null
+                            ? currentItem.stability < 1
+                              ? `${Math.round(currentItem.stability * 24)}h`
+                              : `${Math.round(currentItem.stability)}d`
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="bg-muted/40 p-5 rounded-xl">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">
+                          Reviews
+                        </p>
+                        <span className="text-xl font-extrabold tabular-nums">
+                          {currentItem.reps ?? 0}
+                        </span>
+                      </div>
+                      <div className="bg-muted/40 p-5 rounded-xl col-span-2">
+                        <div className="flex justify-between items-end mb-3">
+                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                            Session Progress
+                          </p>
+                          <span className="text-xs font-bold tabular-nums">
+                            {completedCount} / {items.length} Cards
+                          </span>
+                        </div>
+                        <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-secondary rounded-full transition-all duration-500"
+                            style={{
+                              width: `${
+                                items.length > 0
+                                  ? (completedCount / items.length) * 100
+                                  : 0
+                              }%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </ResizablePanel>
+            </div>
+          </ResizablePanel>
 
-            <ResizableHandle withHandle />
+          <ResizableHandle className="w-3 bg-transparent after:hidden border-none group/handle flex items-center justify-center">
+            <div className="w-1 h-8 rounded-full bg-border opacity-40 group-hover/handle:opacity-100 transition-opacity" />
+          </ResizableHandle>
 
-            {/* Results section — collapsible */}
-            <ResizablePanel
-              panelRef={resultsPanelRef}
-              defaultSize={30}
-              minSize={10}
-              collapsible
-              collapsedSize={0}
-              onResize={(size) => {
-                setResultsCollapsed(size.asPercentage === 0);
-              }}
-            >
-              <div className="flex flex-col h-full min-h-0">
-                <div className="flex items-center justify-between border-b shrink-0 px-3 bg-muted/30">
-                  <span className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-foreground">
+          {/* ──── RIGHT PANEL: Editor (top) + Results (bottom) ──── */}
+          <ResizablePanel defaultSize={55} minSize={25}>
+            <div className="h-full flex flex-col gap-2">
+              <ResizablePanelGroup
+                orientation="vertical"
+                className="flex-1 min-h-0"
+              >
+                {/* Editor section */}
+                <ResizablePanel defaultSize={70} minSize={20}>
+                  <div className="h-full p-1">
+                    <div className="flex flex-col h-full min-h-0 rounded-2xl bg-card shadow-md overflow-hidden">
+                      <div className="flex items-center justify-between px-5 py-2.5 shrink-0 bg-muted/20 rounded-t-2xl">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          Your Answer
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            'h-6 text-xs px-2.5 rounded-full',
+                            submittedIds.has(currentItem.id) &&
+                              !dirtyIds.has(currentItem.id)
+                              ? 'bg-fsrs-good-bg text-fsrs-good border-fsrs-good/30'
+                              : ''
+                          )}
+                          onClick={handleSubmitAnswer}
+                          disabled={
+                            isSubmitting ||
+                            isPending ||
+                            (submittedIds.has(currentItem.id) &&
+                              !dirtyIds.has(currentItem.id))
+                          }
+                        >
+                          {isSubmitting ? (
+                            <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                          ) : (
+                            <Send className="h-3 w-3 mr-1" />
+                          )}
+                          {submittedIds.has(currentItem.id) &&
+                          !dirtyIds.has(currentItem.id)
+                            ? 'Submitted'
+                            : 'Submit'}
+                        </Button>
+                      </div>
+                      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                        <AnswerEditor
+                          key={currentItem.id}
+                          initialValue={answersRef.current.get(currentItem.id)}
+                          onChange={(value) => {
+                            answersRef.current.set(currentItem.id, value);
+                            persistToLocalStorage();
+                            if (submittedIds.has(currentItem.id)) {
+                              setDirtyIds((prev) =>
+                                new Set(prev).add(currentItem.id)
+                              );
+                            }
+                          }}
+                          placeholder="Write your answer here..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </ResizablePanel>
+
+                <ResizableHandle
+                  className="bg-transparent border-none group/vhandle flex items-center justify-center"
+                  style={{ height: 12, cursor: 'row-resize' }}
+                >
+                  <div
+                    className="h-1 w-8 rounded-full bg-border opacity-40 group-hover/vhandle:opacity-100 transition-opacity"
+                    style={{ transform: 'none' }}
+                  />
+                </ResizableHandle>
+
+                {/* Results section — collapsible */}
+                <ResizablePanel
+                  panelRef={resultsPanelRef}
+                  defaultSize={30}
+                  minSize={10}
+                  collapsible
+                  collapsedSize={0}
+                  onResize={(size) => {
+                    setResultsCollapsed(size.asPercentage === 0);
+                  }}
+                >
+                  <div className="h-full p-1">
+                    <div className="flex flex-col h-full min-h-0 rounded-2xl bg-card shadow-md overflow-hidden">
+                      <div className="flex items-center justify-between shrink-0 px-5 bg-muted/20 rounded-t-2xl">
+                        <span className="flex items-center gap-1.5 py-2.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Results
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => resultsPanelRef.current?.collapse()}
+                          title="Minimize results"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto p-4">
+                        {!analysis && !isAnalyzing && !analysisError && (
+                          <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+                            <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                              <Sparkles className="h-5 w-5 opacity-50" />
+                            </div>
+                            <p className="text-xs font-medium">
+                              {submittedIds.has(currentItem.id) &&
+                              !dirtyIds.has(currentItem.id)
+                                ? 'Click Analyze to get AI feedback'
+                                : 'Submit your answer first, then analyze'}
+                            </p>
+                            <button
+                              className="group inline-flex items-center gap-2 px-5 py-2.5 bg-secondary text-secondary-foreground rounded-full font-bold text-sm hover:bg-secondary/80 transition-all active:scale-95 shadow-md disabled:opacity-50 disabled:pointer-events-none"
+                              onClick={handleAnalyze}
+                              disabled={
+                                isAnalyzing ||
+                                isPending ||
+                                !submittedIds.has(currentItem.id) ||
+                                dirtyIds.has(currentItem.id)
+                              }
+                            >
+                              {isAnalyzing ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Sparkles className="h-4 w-4" />
+                              )}
+                              Analyze Answer
+                              <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                            </button>
+                          </div>
+                        )}
+                        {isAnalyzing && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Analyzing your answer...
+                          </div>
+                        )}
+                        {analysisError && (
+                          <div className="flex flex-col items-center gap-2 py-3">
+                            <p className="text-sm text-destructive text-center">
+                              {analysisError}
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={handleAnalyze}
+                              disabled={isAnalyzing || isPending}
+                            >
+                              <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                              Retry Analysis
+                            </Button>
+                          </div>
+                        )}
+                        {analysis && (
+                          <div className="space-y-3">
+                            <ReviewAnalysis
+                              analysis={analysis}
+                              hideTitle
+                              scoreSize="sm"
+                            />
+
+                            {rubric?.type === 'mcq' && (
+                              <div className="border-t pt-3 mt-3">
+                                <h4 className="text-[10px] font-semibold text-green-600 dark:text-green-400 mb-1.5 uppercase tracking-wider">
+                                  Correct Answer
+                                </h4>
+                                <p className="text-sm font-medium mb-2">
+                                  {rubric.correctAnswer}.{' '}
+                                  {
+                                    rubric.choices.find(
+                                      (c) => c.label === rubric.correctAnswer
+                                    )?.text
+                                  }
+                                </p>
+                                {rubric.explanation && (
+                                  <p className="text-xs text-muted-foreground leading-relaxed">
+                                    {rubric.explanation}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {rubric?.keyPoints &&
+                              rubric.keyPoints.length > 0 && (
+                                <div className="border-t pt-3 mt-3">
+                                  <h4 className="text-[10px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                                    Key Points
+                                  </h4>
+                                  <ul className="space-y-1">
+                                    {rubric.keyPoints.map((kp, i) => (
+                                      <li
+                                        key={i}
+                                        className="text-xs text-muted-foreground flex items-start gap-2"
+                                      >
+                                        <span className="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                                        {kp}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Rating buttons — sticky footer inside results */}
+                      <div className="shrink-0 px-4 py-2.5 bg-card/80 backdrop-blur-sm border-t border-border/30">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5 text-center">
+                          Rate your recall difficulty
+                        </p>
+                        <div className="grid grid-cols-4 gap-1 max-w-xs mx-auto">
+                          <TooltipProvider delayDuration={200}>
+                            {RATING_CONFIG.map(
+                              ({
+                                rating,
+                                label,
+                                tooltip,
+                                shortcut,
+                                Icon,
+                                color,
+                              }) => (
+                                <Tooltip key={rating}>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      onClick={() => handleRate(rating)}
+                                      disabled={isPending}
+                                      className={cn(
+                                        'flex flex-col items-center gap-1 py-1.5 px-1 rounded-xl transition-all group disabled:opacity-50 disabled:pointer-events-none',
+                                        color.hoverBg
+                                      )}
+                                    >
+                                      <div
+                                        className={cn(
+                                          'w-9 h-9 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform',
+                                          color.bg
+                                        )}
+                                      >
+                                        <Icon
+                                          className={cn('h-4 w-4', color.text)}
+                                        />
+                                      </div>
+                                      <span className="text-[11px] font-bold">
+                                        {label}
+                                      </span>
+                                      <span className="text-[9px] text-muted-foreground font-medium">
+                                        {shortcut}
+                                      </span>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    <p className="text-xs">{tooltip}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )
+                            )}
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+
+              {/* Collapsed results expand bar — inside right panel */}
+              {resultsCollapsed && (
+                <div className="flex items-center justify-between px-4 py-1.5 bg-card rounded-2xl shadow-sm shrink-0">
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                     <Sparkles className="h-3.5 w-3.5" />
                     Results
+                    {analysis && (
+                      <span
+                        className={cn(
+                          'ml-1 text-xs font-bold',
+                          analysis.suggestedRating === 1
+                            ? 'text-fsrs-again'
+                            : analysis.suggestedRating === 2
+                            ? 'text-fsrs-hard'
+                            : analysis.suggestedRating === 3
+                            ? 'text-fsrs-good'
+                            : 'text-fsrs-easy'
+                        )}
+                      >
+                        {analysis.scorePercent}%
+                      </span>
+                    )}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
-                    onClick={() => resultsPanelRef.current?.collapse()}
-                    title="Minimize results"
+                    onClick={() => resultsPanelRef.current?.expand()}
+                    title="Expand results"
                   >
-                    <ChevronDown className="h-3.5 w-3.5" />
+                    <ChevronUp className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-
-                <div className="flex-1 overflow-y-auto p-3">
-                  {!analysis && !isAnalyzing && !analysisError && (
-                    <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
-                      <Sparkles className="h-5 w-5 opacity-40" />
-                      <p className="text-xs">
-                        {submittedIds.has(currentItem.id) &&
-                        !dirtyIds.has(currentItem.id)
-                          ? 'Click Analyze to get AI feedback'
-                          : 'Submit your answer first, then analyze'}
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs bg-sky-400/20 hover:bg-sky-400/30"
-                        onClick={handleAnalyze}
-                        disabled={
-                          isAnalyzing ||
-                          isPending ||
-                          !submittedIds.has(currentItem.id) ||
-                          dirtyIds.has(currentItem.id)
-                        }
-                      >
-                        {isAnalyzing ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                        ) : (
-                          <Sparkles className="h-3.5 w-3.5 mr-1" />
-                        )}
-                        Analyze
-                      </Button>
-                    </div>
-                  )}
-                  {isAnalyzing && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Analyzing your answer...
-                    </div>
-                  )}
-                  {analysisError && (
-                    <div className="flex flex-col items-center gap-2 py-3">
-                      <p className="text-sm text-destructive text-center">
-                        {analysisError}
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={handleAnalyze}
-                        disabled={isAnalyzing || isPending}
-                      >
-                        <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                        Retry Analysis
-                      </Button>
-                    </div>
-                  )}
-                  {analysis && (
-                    <div className="space-y-3">
-                      <ReviewAnalysis
-                        analysis={analysis}
-                        hideTitle
-                        scoreSize="sm"
-                      />
-
-                      {/* MCQ: Reveal correct answer + explanation after analysis */}
-                      {rubric?.type === 'mcq' && (
-                        <div className="border-t pt-3 mt-3">
-                          <h4 className="text-[10px] font-semibold text-green-600 dark:text-green-400 mb-1.5 uppercase tracking-wider">
-                            Correct Answer
-                          </h4>
-                          <p className="text-sm font-medium mb-2">
-                            {rubric.correctAnswer}.{' '}
-                            {
-                              rubric.choices.find(
-                                (c) => c.label === rubric.correctAnswer
-                              )?.text
-                            }
-                          </p>
-                          {rubric.explanation && (
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                              {rubric.explanation}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Key Points revealed after analysis */}
-                      {rubric?.keyPoints && rubric.keyPoints.length > 0 && (
-                        <div className="border-t pt-3 mt-3">
-                          <h4 className="text-[10px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                            Key Points
-                          </h4>
-                          <ul className="space-y-1">
-                            {rubric.keyPoints.map((kp, i) => (
-                              <li
-                                key={i}
-                                className="text-xs text-muted-foreground flex items-start gap-2"
-                              >
-                                <span className="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                                {kp}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
-
-      {/* Collapsed results expand bar — shown when results panel is collapsed */}
-      {resultsCollapsed && (
-        <div className="flex items-center justify-between px-3 py-1 border-t bg-muted/30 shrink-0">
-          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5" />
-            Results
-            {analysis && (
-              <span
-                className={cn(
-                  'ml-1 text-xs font-bold',
-                  analysis.suggestedRating === 1
-                    ? 'text-fsrs-again'
-                    : analysis.suggestedRating === 2
-                    ? 'text-fsrs-hard'
-                    : analysis.suggestedRating === 3
-                    ? 'text-fsrs-good'
-                    : 'text-fsrs-easy'
-                )}
-              >
-                {analysis.scorePercent}%
-              </span>
-            )}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => resultsPanelRef.current?.expand()}
-            title="Expand results"
-          >
-            <ChevronUp className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
-
-      {/* ── Bottom bar: Analyze + Rating buttons ── */}
-      <div className="flex items-center justify-end gap-3 p-3 border-t h-full bg-card shrink-0">
-        <TooltipProvider delayDuration={200}>
-          {RATING_CONFIG.map(({ rating, label, tooltip, shortcut, color }) => (
-            <Tooltip key={rating}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  onClick={() => handleRate(rating)}
-                  disabled={isPending}
-                  className={cn(
-                    'h-7 text-xs px-3 bg-sr-recalled-bg text-sr-recalled',
-                    color.bg
-                  )}
-                >
-                  <span className="text-[10px] opacity-50 mr-1">
-                    {shortcut}
-                  </span>
-                  <span className={color.text}>{label}</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <p className="text-xs">{tooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-        </TooltipProvider>
+              )}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
       {/* Pass consent dialog */}
       <Dialog

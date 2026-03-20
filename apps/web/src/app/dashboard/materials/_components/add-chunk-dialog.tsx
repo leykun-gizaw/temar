@@ -23,10 +23,12 @@ export default function AddChunkDialog({
   noteId,
   topicId,
   trigger,
+  onSuccess,
 }: {
   noteId: string;
   topicId: string;
   trigger?: React.ReactNode;
+  onSuccess?: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
 
@@ -35,6 +37,18 @@ export default function AddChunkDialog({
     createChunk,
     initialErrorState
   );
+
+  // Close dialog and notify parent on successful creation
+  React.useEffect(() => {
+    if (
+      errorState.message &&
+      !errorState.errors?.title &&
+      !errorState.errors?.description
+    ) {
+      setOpen(false);
+      onSuccess?.();
+    }
+  }, [errorState, onSuccess]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

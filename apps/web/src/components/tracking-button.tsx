@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Loader2, Plus, X, ArrowBigDownDashIcon } from 'lucide-react';
+import { Loader2, ArrowBigDownDashIcon } from 'lucide-react';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
 import {
   Dialog,
   DialogContent,
@@ -33,18 +32,18 @@ import { notifyPassBalanceChanged } from '@/lib/pass-events';
 const QUESTION_TYPES = [
   {
     id: 'open_ended',
-    label: 'Open-ended explainer',
-    description: 'Written explanation demonstrating understanding',
+    label: 'Open-ended',
+    description: 'Written explanation',
   },
   {
     id: 'mcq',
-    label: 'Multiple choice (MCQ)',
+    label: 'Multiple choice',
     description: 'Choose from 4 options',
   },
   {
     id: 'leetcode',
-    label: 'Algorithm / Leetcode-style',
-    description: 'Problem requiring a solution approach or code',
+    label: 'Algorithm',
+    description: 'Problem-solving / code',
   },
 ] as const;
 
@@ -54,9 +53,7 @@ interface TrackingButtonProps {
   topicId?: string;
   noteId?: string;
   isTracked: boolean;
-  /** Compact mode for card action rows (icon only, no label) */
   compact?: boolean;
-  /** Content length in characters, used to suggest question count */
   contentLength?: number;
 }
 
@@ -71,7 +68,7 @@ export default function TrackingButton({
 }: TrackingButtonProps) {
   const [tracked, setTracked] = useState(initialTracked);
   const [isPending, startTransition] = useTransition();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const [passError, setPassError] = useState<string | null>(null);
   const [consentState, setConsentState] = useState<{
     estimatedPassCost: number;
@@ -124,19 +121,23 @@ export default function TrackingButton({
         }
         if (result.status === 'success') {
           setTracked(true);
+          setPopoverOpen(false);
           if (result.newBalance != null)
             notifyPassBalanceChanged(result.newBalance);
         } else if (result.status === 'consent_required') {
+          setPopoverOpen(false);
           setConsentState({
             estimatedPassCost: result.estimatedPassCost,
             basePassCost: result.basePassCost,
             onApprove: (cost) => runTrack(types, count, cost),
           });
         } else if (result.status === 'insufficient_pass') {
+          setPopoverOpen(false);
           setPassError(
             `Not enough Pass (have ${result.balance}, need ${result.required}). Top up at /dashboard/billing.`
           );
         } else if (result.status === 'error') {
+          setPopoverOpen(false);
           setPassError(result.message);
         }
       } catch (err) {
@@ -146,7 +147,6 @@ export default function TrackingButton({
   };
 
   const handleTrackConfirm = () => {
-    setDialogOpen(false);
     const types = selectedTypes.length > 0 ? selectedTypes : undefined;
     const count = questionCount > 0 ? questionCount : undefined;
     runTrack(types, count);
@@ -163,6 +163,7 @@ export default function TrackingButton({
           await untrackChunk(entityId, noteId ?? '', topicId ?? '');
         }
         setTracked(false);
+        setPopoverOpen(false);
       } catch (err) {
         console.error('Untrack failed:', err);
       }
@@ -171,8 +172,8 @@ export default function TrackingButton({
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <PopoverTrigger asChild>
           <span
             role="button"
             tabIndex={0}
@@ -189,110 +190,106 @@ export default function TrackingButton({
               <ArrowBigDownDashIcon size={compact ? 16 : 18} />
             )}
           </span>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
-          {!tracked && (
-            <DropdownMenuItem
-              onClick={() => setDialogOpen(true)}
-              disabled={isPending}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Track for recall
-            </DropdownMenuItem>
-          )}
-          {tracked && (
-            <DropdownMenuItem
-              onClick={handleUntrack}
-              disabled={isPending}
-              className="text-destructive focus:text-destructive"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Untrack
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Configure Question Generation</DialogTitle>
-            <DialogDescription>
-              Choose question types and how many to generate for this{' '}
-              {entityType}.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-5 py-2">
+        </PopoverTrigger>
+        <PopoverContent className="w-72" align="end" sideOffset={8}>
+          {tracked ? (
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Question Types</Label>
-              {QUESTION_TYPES.map((type) => (
-                <div key={type.id} className="flex items-start gap-3">
-                  <Checkbox
-                    id={`qtype-${type.id}`}
-                    checked={selectedTypes.includes(type.id)}
-                    onCheckedChange={() => toggleType(type.id)}
-                  />
-                  <div className="grid gap-0.5 leading-none">
-                    <Label
-                      htmlFor={`qtype-${type.id}`}
-                      className="text-sm font-medium cursor-pointer"
-                    >
-                      {type.label}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {type.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              <div>
+                <p className="text-sm font-semibold">Tracking active</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  This {entityType} is being tracked for recall.
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full h-8 rounded-xl text-xs bg-destructive/10 hover:bg-destructive/20 text-destructive"
+                onClick={handleUntrack}
+                disabled={isPending}
+              >
+                {isPending && <Loader2 className="h-3 w-3 animate-spin mr-1.5" />}
+                Untrack
+              </Button>
             </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm font-semibold">Track for recall</p>
 
-            <div className="space-y-2">
-              <Label htmlFor="question-count" className="text-sm font-medium">
-                Number of Questions
-              </Label>
-              <div className="flex items-center gap-3">
-                <Input
-                  id="question-count"
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={questionCount}
-                  onChange={(e) =>
-                    setQuestionCount(
-                      Math.max(1, Math.min(20, parseInt(e.target.value) || 1))
-                    )
-                  }
-                  className="w-20"
-                />
-                <span className="text-xs text-muted-foreground">
-                  Suggested: {suggestedCount} (based on content length)
-                </span>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Question types</Label>
+                {QUESTION_TYPES.map((type) => (
+                  <div key={type.id} className="flex items-start gap-2">
+                    <Checkbox
+                      id={`qtype-${type.id}`}
+                      checked={selectedTypes.includes(type.id)}
+                      onCheckedChange={() => toggleType(type.id)}
+                      className="mt-0.5"
+                    />
+                    <div className="grid gap-0 leading-tight">
+                      <Label
+                        htmlFor={`qtype-${type.id}`}
+                        className="text-xs font-medium cursor-pointer"
+                      >
+                        {type.label}
+                      </Label>
+                      <p className="text-[0.65rem] text-muted-foreground">
+                        {type.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="question-count" className="text-xs font-medium">
+                  Questions
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="question-count"
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={questionCount}
+                    onChange={(e) =>
+                      setQuestionCount(
+                        Math.max(1, Math.min(20, parseInt(e.target.value) || 1))
+                      )
+                    }
+                    className="w-16 h-7 text-xs rounded-xl"
+                  />
+                  <span className="text-[0.65rem] text-muted-foreground">
+                    Suggested: {suggestedCount}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex-1 h-7 rounded-xl text-xs"
+                  onClick={() => setPopoverOpen(false)}
+                  disabled={isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1 h-7 rounded-xl text-xs"
+                  onClick={handleTrackConfirm}
+                  disabled={isPending || selectedTypes.length === 0}
+                >
+                  {isPending && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                  Track & Generate
+                </Button>
               </div>
             </div>
-          </div>
+          )}
+        </PopoverContent>
+      </Popover>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDialogOpen(false)}
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleTrackConfirm}
-              disabled={isPending || selectedTypes.length === 0}
-            >
-              {isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Track & Generate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Pass consent dialog */}
+      {/* Pass consent dialog (kept as dialog — rare billing confirmation) */}
       <Dialog
         open={!!consentState}
         onOpenChange={(open) => {

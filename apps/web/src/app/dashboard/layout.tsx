@@ -16,11 +16,11 @@ export default async function DashboardLayout({
         <SidebarProvider
           style={
             {
-              '--sidebar-width': 'calc(var(--spacing) * 90)',
+              '--sidebar-width': '14rem',
               '--header-height': 'calc(var(--spacing) * 12)',
             } as React.CSSProperties
           }
-          defaultOpen={true}
+          defaultOpen={false}
         >
           <AppSidebar />
           <SidebarInset>

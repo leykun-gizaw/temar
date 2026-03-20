@@ -23,9 +23,10 @@ interface NavLink {
 }
 
 const primaryLinks: NavLink[] = [
-  { href: '/#features', label: 'Features' },
-  { href: '/#methodology', label: 'Methodology' },
-  { href: '/pricing', label: 'Pricing' },
+  { href: '/', label: 'Home' },
+  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/dashboard/materials', label: 'Library' },
+  { href: '/dashboard/settings', label: 'Settings' },
 ];
 
 const authLinks: NavLink[] = [

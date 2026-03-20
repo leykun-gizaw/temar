@@ -1,54 +1,39 @@
 import {
-  BinocularsIcon,
-  CalendarDaysIcon,
-  ChartNoAxesCombinedIcon,
   Coins,
+  Home,
   LibraryBig,
+  BinocularsIcon,
   Settings,
-  Trash2,
 } from 'lucide-react';
 
 export const NAV_ITEMS = [
   {
-    title: 'Materials',
+    title: 'Home',
+    url: '/dashboard',
+    icon: Home,
+    exact: true,
+  },
+  {
+    title: 'Library',
     url: '/dashboard/materials',
     icon: LibraryBig,
-    isActive: false,
   },
   {
     title: 'Reviews',
     url: '/dashboard/reviews',
     icon: BinocularsIcon,
-    isActive: false,
   },
-  {
-    title: 'Schedules',
-    url: '#',
-    icon: CalendarDaysIcon,
-    isActive: false,
-  },
-  {
-    title: 'Analytics',
-    url: '#',
-    icon: ChartNoAxesCombinedIcon,
-    isActive: false,
-  },
+];
+
+export const BOTTOM_NAV_ITEMS = [
   {
     title: 'Billing',
     url: '/dashboard/billing',
     icon: Coins,
-    isActive: false,
   },
   {
     title: 'Settings',
     url: '/dashboard/settings',
     icon: Settings,
-    isActive: false,
-  },
-  {
-    title: 'Trash',
-    url: '#',
-    icon: Trash2,
-    isActive: false,
   },
 ];
