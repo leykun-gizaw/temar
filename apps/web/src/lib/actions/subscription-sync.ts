@@ -1,6 +1,5 @@
 'use server';
 
-import { getPaddleInstance, PADDLE_PLANS } from '@/lib/paddle';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import {
   dbClient,
@@ -13,30 +12,15 @@ import {
   PLAN_PASS_ALLOCATIONS,
   getCostPerPassUsd,
 } from '@/lib/config/ai-operations';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export interface SubscriptionInfo {
-  plan: string;
-  status: string | null; // 'active' | 'trialing' | 'past_due' | 'paused' | 'canceled' | null
-  paddleSubscriptionId: string | null;
-  nextBilledAt: string | null;
-  passResetAt: string | null;
-  balance: number;
-}
+import {
+  getActiveProvider,
+  type SubscriptionInfo,
+  type PaymentProviderKey,
+} from '@temar/payment-provider';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function planKeyFromPriceId(priceId: string): string | null {
-  const entry = Object.entries(PADDLE_PLANS).find(
-    ([, v]) => v.priceId === priceId
-  );
-  return entry ? entry[0] : null;
-}
 
 function usdToPass(usd: number): number {
   return Math.floor(usd / getCostPerPassUsd());
@@ -45,7 +29,7 @@ function usdToPass(usd: number): number {
 async function ensurePassBalance(
   userId: string,
   plan: string,
-  nextBilledAt: string | null
+  providerKey: PaymentProviderKey
 ): Promise<void> {
   const allocation = PLAN_PASS_ALLOCATIONS[plan] ?? 0;
   if (allocation === 0) return;
@@ -62,15 +46,21 @@ async function ensurePassBalance(
   if (existing) return; // Already has a balance row — don't overwrite
 
   // First-time allocation: create balance + transaction record
+  const provider = getActiveProvider();
+  const planMapping = provider
+    .getPlanMappings()
+    .find((m) => m.planKey === plan);
+  const planName = planMapping?.name ?? plan;
+
   await dbClient.transaction(async (tx) => {
-    await tx.insert(passBalance).values({ userId, balanceUsd: allocationUsd });
+    await tx
+      .insert(passBalance)
+      .values({ userId, balanceUsd: allocationUsd });
     await tx.insert(passTransaction).values({
       userId,
       deltaUsd: allocationUsd,
       operationType: 'subscription',
-      description: `${
-        PADDLE_PLANS[plan as keyof typeof PADDLE_PLANS]?.name ?? plan
-      } plan — initial ${allocation} Pass allocation`,
+      description: `${planName} plan — initial ${allocation} Pass allocation`,
     });
   });
 }
@@ -79,13 +69,13 @@ async function ensurePassBalance(
 // Main sync function — called on billing page load
 // ---------------------------------------------------------------------------
 
-export async function syncPaddleSubscription(): Promise<SubscriptionInfo> {
+export async function syncSubscription(): Promise<SubscriptionInfo> {
   const sessionUser = await getLoggedInUser();
   if (!sessionUser) {
     return {
       plan: 'free',
       status: null,
-      paddleSubscriptionId: null,
+      providerSubscriptionId: null,
       nextBilledAt: null,
       passResetAt: null,
       balance: 0,
@@ -96,8 +86,9 @@ export async function syncPaddleSubscription(): Promise<SubscriptionInfo> {
   const [userRow] = await dbClient
     .select({
       plan: user.plan,
-      paddleCustomerId: user.paddleCustomerId,
-      paddleSubscriptionId: user.paddleSubscriptionId,
+      providerKey: user.providerKey,
+      providerCustomerId: user.providerCustomerId,
+      providerSubscriptionId: user.providerSubscriptionId,
       passResetAt: user.passResetAt,
     })
     .from(user)
@@ -108,16 +99,15 @@ export async function syncPaddleSubscription(): Promise<SubscriptionInfo> {
     return {
       plan: 'free',
       status: null,
-      paddleSubscriptionId: null,
+      providerSubscriptionId: null,
       nextBilledAt: null,
       passResetAt: null,
       balance: 0,
     };
   }
 
-  // If user already has a non-free plan locally, just return current state
-  // (webhook already handled it, or a previous sync did)
-  if (userRow.plan !== 'free' && userRow.paddleSubscriptionId) {
+  // If user already has a non-free plan locally, return current state
+  if (userRow.plan !== 'free' && userRow.providerSubscriptionId) {
     const [balanceRow] = await dbClient
       .select({ balanceUsd: passBalance.balanceUsd })
       .from(passBalance)
@@ -127,7 +117,7 @@ export async function syncPaddleSubscription(): Promise<SubscriptionInfo> {
     return {
       plan: userRow.plan,
       status: 'active',
-      paddleSubscriptionId: userRow.paddleSubscriptionId,
+      providerSubscriptionId: userRow.providerSubscriptionId,
       nextBilledAt: userRow.passResetAt?.toISOString() ?? null,
       passResetAt: userRow.passResetAt?.toISOString() ?? null,
       balance: usdToPass(balanceRow?.balanceUsd ?? 0),
@@ -135,69 +125,41 @@ export async function syncPaddleSubscription(): Promise<SubscriptionInfo> {
   }
 
   // -----------------------------------------------------------------------
-  // Sync from Paddle API — covers cases where webhook didn't fire
+  // Sync from provider API — covers cases where webhook didn't fire
   // (e.g. localhost development)
   // -----------------------------------------------------------------------
-  const paddle = getPaddleInstance();
+  const providerKey = (userRow.providerKey ?? 'paddle') as PaymentProviderKey;
+  const provider = getActiveProvider();
 
   try {
-    // Step 1: Find Paddle customer by email
-    let customerId = userRow.paddleCustomerId;
+    const syncResult = await provider.syncSubscription(
+      sessionUser.email,
+      userRow.providerCustomerId
+    );
 
-    if (!customerId) {
-      const customerCollection = paddle.customers.list({
-        email: [sessionUser.email],
-      });
+    if (!syncResult || !syncResult.providerCustomerId) {
+      // No customer found in provider — return local state
+      const [balanceRow] = await dbClient
+        .select({ balanceUsd: passBalance.balanceUsd })
+        .from(passBalance)
+        .where(eq(passBalance.userId, sessionUser.id))
+        .limit(1);
 
-      for await (const customer of customerCollection) {
-        customerId = customer.id;
-        break; // Take the first matching customer
-      }
-
-      if (!customerId) {
-        // No Paddle customer found — user hasn't purchased anything
-        const [balanceRow] = await dbClient
-          .select({ balanceUsd: passBalance.balanceUsd })
-          .from(passBalance)
-          .where(eq(passBalance.userId, sessionUser.id))
-          .limit(1);
-
-        return {
-          plan: userRow.plan ?? 'free',
-          status: null,
-          paddleSubscriptionId: null,
-          nextBilledAt: null,
-          passResetAt: null,
-          balance: usdToPass(balanceRow?.balanceUsd ?? 0),
-        };
-      }
+      return {
+        plan: userRow.plan ?? 'free',
+        status: null,
+        providerSubscriptionId: null,
+        nextBilledAt: null,
+        passResetAt: null,
+        balance: usdToPass(balanceRow?.balanceUsd ?? 0),
+      };
     }
 
-    // Step 2: Find active subscription
-    const subCollection = paddle.subscriptions.list({
-      customerId: [customerId],
-      status: ['active', 'trialing', 'past_due'],
-    });
-
-    type ActiveSub = {
-      id: string;
-      status: string;
-      items: { price: { id: string } }[];
-      nextBilledAt: string | null;
-    };
-
-    let activeSub: ActiveSub | null = null;
-
-    for await (const sub of subCollection) {
-      activeSub = sub as unknown as ActiveSub;
-      break; // Take the first active subscription
-    }
-
-    if (!activeSub) {
+    if (!syncResult.providerSubscriptionId || !syncResult.planKey) {
       // Customer exists but no active subscription
       await dbClient
         .update(user)
-        .set({ paddleCustomerId: customerId })
+        .set({ providerCustomerId: syncResult.providerCustomerId })
         .where(eq(user.id, sessionUser.id));
 
       const [balanceRow] = await dbClient
@@ -209,47 +171,29 @@ export async function syncPaddleSubscription(): Promise<SubscriptionInfo> {
       return {
         plan: userRow.plan ?? 'free',
         status: null,
-        paddleSubscriptionId: null,
+        providerSubscriptionId: null,
         nextBilledAt: null,
         passResetAt: null,
         balance: usdToPass(balanceRow?.balanceUsd ?? 0),
       };
     }
 
-    // Step 3: Determine plan from subscription price
-    const priceId = activeSub.items?.[0]?.price?.id;
-    const planKey = priceId ? planKeyFromPriceId(priceId) : null;
-
-    if (!planKey) {
-      console.warn(
-        '[paddle-sync] Could not determine plan from priceId:',
-        priceId
-      );
-      return {
-        plan: userRow.plan ?? 'free',
-        status: activeSub.status,
-        paddleSubscriptionId: activeSub.id,
-        nextBilledAt: activeSub.nextBilledAt,
-        passResetAt: null,
-        balance: 0,
-      };
-    }
-
-    // Step 4: Update local DB
-    const nextBilledAt = activeSub.nextBilledAt;
+    // Update local DB with synced state
+    const nextBilledAt = syncResult.nextBilledAt;
 
     await dbClient
       .update(user)
       .set({
-        paddleCustomerId: customerId,
-        plan: planKey,
-        paddleSubscriptionId: activeSub.id,
+        providerKey: providerKey,
+        providerCustomerId: syncResult.providerCustomerId,
+        plan: syncResult.planKey,
+        providerSubscriptionId: syncResult.providerSubscriptionId,
         passResetAt: nextBilledAt ? new Date(nextBilledAt) : null,
       })
       .where(eq(user.id, sessionUser.id));
 
-    // Step 5: Ensure pass balance is allocated
-    await ensurePassBalance(sessionUser.id, planKey, nextBilledAt);
+    // Ensure pass balance is allocated
+    await ensurePassBalance(sessionUser.id, syncResult.planKey, providerKey);
 
     const [balanceRow] = await dbClient
       .select({ balanceUsd: passBalance.balanceUsd })
@@ -258,15 +202,15 @@ export async function syncPaddleSubscription(): Promise<SubscriptionInfo> {
       .limit(1);
 
     return {
-      plan: planKey,
-      status: activeSub.status,
-      paddleSubscriptionId: activeSub.id,
+      plan: syncResult.planKey,
+      status: syncResult.status,
+      providerSubscriptionId: syncResult.providerSubscriptionId,
       nextBilledAt,
       passResetAt: nextBilledAt,
       balance: usdToPass(balanceRow?.balanceUsd ?? 0),
     };
   } catch (err) {
-    console.error('[paddle-sync] Failed to sync from Paddle API:', err);
+    console.error('[subscription-sync] Failed to sync from provider API:', err);
 
     // Fall back to local DB state
     const [balanceRow] = await dbClient
@@ -278,7 +222,7 @@ export async function syncPaddleSubscription(): Promise<SubscriptionInfo> {
     return {
       plan: userRow.plan ?? 'free',
       status: null,
-      paddleSubscriptionId: userRow.paddleSubscriptionId,
+      providerSubscriptionId: userRow.providerSubscriptionId,
       nextBilledAt: userRow.passResetAt?.toISOString() ?? null,
       passResetAt: userRow.passResetAt?.toISOString() ?? null,
       balance: usdToPass(balanceRow?.balanceUsd ?? 0),

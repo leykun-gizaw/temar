@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getPaddleInstance } from '@/lib/paddle';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { dbClient, user, eq } from '@temar/db-client';
+import {
+  getProvider,
+  type PaymentProviderKey,
+} from '@temar/payment-provider';
 
 export async function POST() {
   const sessionUser = await getLoggedInUser();
@@ -10,12 +13,15 @@ export async function POST() {
   }
 
   const [userRow] = await dbClient
-    .select({ paddleSubscriptionId: user.paddleSubscriptionId })
+    .select({
+      providerKey: user.providerKey,
+      providerSubscriptionId: user.providerSubscriptionId,
+    })
     .from(user)
     .where(eq(user.id, sessionUser.id))
     .limit(1);
 
-  if (!userRow?.paddleSubscriptionId) {
+  if (!userRow?.providerSubscriptionId) {
     return NextResponse.json(
       { error: 'No active subscription' },
       { status: 400 }
@@ -23,24 +29,18 @@ export async function POST() {
   }
 
   try {
-    const paddle = getPaddleInstance();
-    const subscription = await paddle.subscriptions.get(
-      userRow.paddleSubscriptionId
+    const providerKey = (userRow.providerKey ?? 'paddle') as PaymentProviderKey;
+    const provider = getProvider(providerKey);
+    const urls = await provider.getManagementUrls(
+      userRow.providerSubscriptionId
     );
 
-    const sub = subscription as unknown as {
-      managementUrls?: {
-        updatePaymentMethod?: string;
-        cancel?: string;
-      };
-    };
-
     return NextResponse.json({
-      updatePaymentMethod: sub.managementUrls?.updatePaymentMethod ?? null,
-      cancel: sub.managementUrls?.cancel ?? null,
+      updatePaymentMethod: urls.updatePaymentMethod,
+      cancel: urls.cancel,
     });
   } catch (err) {
-    console.error('[paddle manage]', err);
+    console.error('[billing/manage]', err);
     return NextResponse.json(
       { error: 'Failed to fetch subscription details' },
       { status: 500 }

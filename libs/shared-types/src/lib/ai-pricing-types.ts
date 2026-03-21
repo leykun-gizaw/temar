@@ -57,26 +57,3 @@ export const PLAN_PASS_ROLLOVER_CAPS: Record<string, number> = {
   scholar: 100,
 };
 
-// ---------------------------------------------------------------------------
-// Runtime helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Returns the TOPUP_PACKS array by reading Paddle price IDs from
- * environment variables at runtime. Uses bracket notation to prevent
- * Next.js from statically inlining NEXT_PUBLIC_ values at build time.
- */
-export function getTopupPacks(): TopupPack[] {
-  return [
-    {
-      passAmount: 50,
-      priceUsd: 2.50,
-      priceId: process.env['NEXT_PUBLIC_PADDLE_TOPUP_50_PRICE_ID'] ?? '',
-    },
-    {
-      passAmount: 100,
-      priceUsd: 4.99,
-      priceId: process.env['NEXT_PUBLIC_PADDLE_TOPUP_100_PRICE_ID'] ?? '',
-    },
-  ];
-}

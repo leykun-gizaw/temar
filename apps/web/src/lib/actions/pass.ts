@@ -99,7 +99,7 @@ export async function creditPass(
   amount: number,
   description: string,
   operationType = 'credit',
-  paddleTransactionId?: string
+  providerTransactionId?: string
 ): Promise<void> {
   const usdAmount = amount * getCostPerPassUsd();
 
@@ -124,7 +124,7 @@ export async function creditPass(
       deltaUsd: usdAmount,
       operationType,
       description,
-      paddleTransactionId: paddleTransactionId ?? null,
+      providerTransactionId: providerTransactionId ?? null,
     });
   });
 }
@@ -221,7 +221,7 @@ export type PassTransaction = {
   delta: number;
   operationType: string;
   description: string;
-  paddleTransactionId: string | null;
+  providerTransactionId: string | null;
   createdAt: Date;
 };
 

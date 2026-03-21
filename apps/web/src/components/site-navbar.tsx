@@ -23,7 +23,6 @@ interface NavLink {
 }
 
 const primaryLinks: NavLink[] = [
-  { href: '/', label: 'Home' },
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/dashboard/materials', label: 'Library' },
   { href: '/dashboard/settings', label: 'Settings' },

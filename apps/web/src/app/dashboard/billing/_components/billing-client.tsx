@@ -1,12 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  type Environments,
-  type Paddle,
-  initializePaddle,
-} from '@paddle/paddle-js';
 import { Button } from '@/components/ui/button';
 import {
   Coins,
@@ -18,15 +13,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PassTransaction } from '@/lib/actions/pass';
-import type { SubscriptionInfo } from '@/lib/actions/paddle-sync';
-
-interface TopupPack {
-  id: string;
-  pass: number;
-  price: string;
-  priceId: string;
-  best?: boolean;
-}
+import type { SubscriptionInfo, CheckoutConfig } from '@temar/payment-provider';
+import { useCheckout } from '@/hooks/use-checkout';
 
 const PLAN_LABELS: Record<string, string> = {
   free: 'Free',
@@ -65,20 +53,11 @@ const PLAN_PASS_MONTHLY: Record<string, number> = {
   scholar: 300,
 };
 
-interface PaddleConfig {
-  clientToken: string;
-  environment: Environments;
-  starterPriceId: string;
-  hobbyistPriceId: string;
-  scholarPriceId: string;
-  topupPacks: TopupPack[];
-}
-
 interface BillingClientProps {
   subscriptionInfo: SubscriptionInfo;
   userId: string;
   transactions: PassTransaction[];
-  paddleConfig: PaddleConfig;
+  checkoutConfig: CheckoutConfig;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -94,11 +73,14 @@ export function BillingClient({
   subscriptionInfo,
   userId,
   transactions,
-  paddleConfig,
+  checkoutConfig,
 }: BillingClientProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState<string | null>(null);
-  const [paddle, setPaddle] = useState<Paddle | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const { ready: checkoutReady, loading, openCheckout } = useCheckout(
+    checkoutConfig,
+    userId
+  );
 
   const { plan, status, nextBilledAt, balance } = subscriptionInfo;
   const hasActiveSub = plan !== 'free' && !!status;
@@ -107,43 +89,10 @@ export function BillingClient({
   const usagePercent =
     passPerMonth > 0 ? Math.min(100, (balance / passPerMonth) * 100) : 0;
 
-  useEffect(() => {
-    if (paddle?.Initialized) return;
-    if (!paddleConfig.clientToken) return;
-
-    initializePaddle({
-      token: paddleConfig.clientToken,
-      environment: paddleConfig.environment,
-    }).then((instance) => {
-      if (instance) {
-        setPaddle(instance);
-      }
-    });
-  }, [paddle?.Initialized, paddleConfig.clientToken, paddleConfig.environment]);
-
-  const paddleReady = !!paddle?.Initialized;
-
-  const openCheckout = (
-    priceId: string,
-    customData?: Record<string, string>,
-    packId?: string
-  ) => {
-    if (!paddle || !paddleReady) return;
-    setLoading(packId ?? 'checkout');
-    paddle.Checkout.open({
-      items: [{ priceId, quantity: 1 }],
-      customData: { userId, ...customData },
-      settings: {
-        successUrl: `${window.location.origin}/dashboard/billing?success=1`,
-      },
-    });
-    setTimeout(() => setLoading(null), 2000);
-  };
-
   const manageSubscription = async () => {
-    setLoading('portal');
+    setPortalLoading(true);
     try {
-      const res = await fetch('/api/paddle/manage', { method: 'POST' });
+      const res = await fetch('/api/billing/manage', { method: 'POST' });
       const data = (await res.json()) as {
         updatePaymentMethod?: string | null;
         cancel?: string | null;
@@ -154,7 +103,7 @@ export function BillingClient({
         window.open(data.cancel, '_blank');
       }
     } finally {
-      setLoading(null);
+      setPortalLoading(false);
     }
   };
 
@@ -221,59 +170,45 @@ export function BillingClient({
                   )}
                   <Button
                     onClick={manageSubscription}
-                    disabled={loading === 'portal'}
+                    disabled={portalLoading}
                     className="w-full rounded-full gap-2 shadow-lg shadow-primary/25"
                   >
                     <CreditCard className="h-4 w-4" />
-                    {loading === 'portal' ? 'Opening…' : 'Manage Subscription'}
+                    {portalLoading ? 'Opening…' : 'Manage Subscription'}
                     <ExternalLink className="h-3.5 w-3.5 opacity-60" />
                   </Button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <Button
-                    className="w-full rounded-full shadow-lg shadow-primary/25"
-                    onClick={() =>
-                      openCheckout(
-                        paddleConfig.starterPriceId,
-                        undefined,
-                        'starter'
-                      )
+                  {Object.entries(checkoutConfig.plans).map(
+                    ([key, { priceId }]) => {
+                      const label = PLAN_LABELS[key] ?? key;
+                      const prices: Record<string, string> = {
+                        starter: '$4.99/mo',
+                        hobbyist: '$9.00/mo',
+                        scholar: '$14.99/mo',
+                      };
+                      const isFirst = key === 'starter';
+                      return (
+                        <Button
+                          key={key}
+                          variant={isFirst ? 'default' : 'secondary'}
+                          className={cn(
+                            'w-full rounded-full',
+                            isFirst && 'shadow-lg shadow-primary/25'
+                          )}
+                          onClick={() =>
+                            openCheckout(priceId, undefined, key)
+                          }
+                          disabled={!checkoutReady || !!loading}
+                        >
+                          {loading === key
+                            ? 'Opening…'
+                            : `${label} — ${prices[key] ?? ''}`}
+                        </Button>
+                      );
                     }
-                    disabled={!paddleReady || !!loading}
-                  >
-                    {loading === 'starter' ? 'Opening…' : 'Starter — $4.99/mo'}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="w-full rounded-full"
-                    onClick={() =>
-                      openCheckout(
-                        paddleConfig.hobbyistPriceId,
-                        undefined,
-                        'hobbyist'
-                      )
-                    }
-                    disabled={!paddleReady || !!loading}
-                  >
-                    {loading === 'hobbyist'
-                      ? 'Opening…'
-                      : 'Hobbyist — $9.00/mo'}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    className="w-full rounded-full"
-                    onClick={() =>
-                      openCheckout(
-                        paddleConfig.scholarPriceId,
-                        undefined,
-                        'scholar'
-                      )
-                    }
-                    disabled={!paddleReady || !!loading}
-                  >
-                    {loading === 'scholar' ? 'Opening…' : 'Scholar — $14.99/mo'}
-                  </Button>
+                  )}
                 </div>
               )}
             </section>
@@ -320,7 +255,7 @@ export function BillingClient({
               Top-up Packs
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {paddleConfig.topupPacks.map((pack) => (
+              {checkoutConfig.topupPacks.map((pack) => (
                 <div
                   key={pack.id}
                   className="bg-muted/40 rounded-[2rem] p-6 flex justify-between items-center group hover:bg-muted/60 transition-colors shadow-md"
@@ -334,7 +269,7 @@ export function BillingClient({
                   <Button
                     variant="secondary"
                     className="rounded-full font-bold px-6 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                    disabled={!paddleReady || !!loading}
+                    disabled={!checkoutReady || !!loading}
                     onClick={() =>
                       openCheckout(
                         pack.priceId,
@@ -349,7 +284,8 @@ export function BillingClient({
               ))}
             </div>
             <p className="mt-3 text-xs text-muted-foreground">
-              Top-up Passes expire after 12 months. Checkout powered by Paddle.
+              Top-up Passes expire after 12 months. Checkout powered by your
+              payment provider.
             </p>
           </section>
         </div>

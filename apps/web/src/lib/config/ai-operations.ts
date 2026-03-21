@@ -35,7 +35,6 @@ export {
   DEFAULT_MODEL_ID,
   PLAN_PASS_ALLOCATIONS,
   PLAN_PASS_ROLLOVER_CAPS,
-  getTopupPacks,
 } from '@temar/shared-types';
 
 // ---------------------------------------------------------------------------
