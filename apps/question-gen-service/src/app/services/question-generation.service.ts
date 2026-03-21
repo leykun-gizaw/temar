@@ -27,7 +27,8 @@ export class QuestionGenerationService {
     userId: string,
     aiConfig?: AiConfig,
     questionTypes?: QuestionType[],
-    questionCount?: number
+    questionCount?: number,
+    performanceSummary?: string
   ) {
     // Update tracking status to 'generating'
     await dbClient
@@ -112,7 +113,8 @@ export class QuestionGenerationService {
             chunkRow.topicName,
             aiConfig,
             questionTypes,
-            questionCount
+            questionCount,
+            performanceSummary
           );
           break;
         } catch (err: unknown) {

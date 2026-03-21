@@ -57,7 +57,12 @@ export class GenerationController {
     @Headers('x-ai-model') aiModel?: string,
     @Headers('x-ai-api-key') aiApiKey?: string,
     @Headers('x-byok') byok?: string,
-    @Body() body?: { questionTypes?: string[]; questionCount?: number }
+    @Body()
+    body?: {
+      questionTypes?: string[];
+      questionCount?: number;
+      performanceSummary?: string;
+    }
   ) {
     this.requireUserId(userId);
     const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey, byok);
@@ -66,7 +71,8 @@ export class GenerationController {
       userId,
       aiConfig,
       body?.questionTypes as any,
-      body?.questionCount
+      body?.questionCount,
+      body?.performanceSummary
     );
   }
 

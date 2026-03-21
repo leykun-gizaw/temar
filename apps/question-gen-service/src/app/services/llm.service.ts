@@ -3,6 +3,7 @@ import { generateText, Output } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { createDeepSeek } from '@ai-sdk/deepseek';
 import { z } from 'zod';
 
 const questionTypeEnum = z.enum(['mcq', 'open_ended', 'leetcode']);
@@ -211,8 +212,7 @@ export class LlmService {
         return { model: anthropic(sdkModelId) as any, pricingModelId };
       }
       case 'deepseek': {
-        const deepseek = createOpenAI({
-          baseURL: 'https://api.deepseek.com',
+        const deepseek = createDeepSeek({
           apiKey: config?.apiKey || process.env.DEEPSEEK_API_KEY,
         });
         const sdkModelId = config?.apiKey
@@ -305,7 +305,8 @@ export class LlmService {
     topicName: string,
     aiConfig?: AiConfig,
     questionTypes?: QuestionType[],
-    questionCount?: number
+    questionCount?: number,
+    performanceSummary?: string
   ): Promise<{
     questions: GeneratedQuestion[];
     usage: TokenUsage;
@@ -325,12 +326,16 @@ export class LlmService {
       typeDistribution.set(t, typeDistribution.get(t)! + 1);
     }
 
-    const userPrompt = `Topic: ${topicName}
+    let userPrompt = `Topic: ${topicName}
 Note: ${noteName}
 Chunk: ${chunkName}
 
 Content:
 ${chunkContent}`;
+
+    if (performanceSummary) {
+      userPrompt += `\n\n---\n${performanceSummary}`;
+    }
 
     // Fire one LLM call per type in parallel — each call's schema is locked
     // to a single question type so the output is guaranteed correct.
@@ -339,7 +344,21 @@ ${chunkContent}`;
       .map(async ([type, typeCount]) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const schema = typeSchemasMap[type] as any;
-        const systemPrompt = this.buildSystemPrompt(type, typeCount);
+        let systemPrompt = this.buildSystemPrompt(type, typeCount);
+
+        if (performanceSummary) {
+          systemPrompt += `\n\n## Previous Performance Context
+The user is regenerating questions for this chunk after completing a previous review cycle.
+Use the following performance summary to adapt your questions:
+
+### How to use this context:
+- If the user showed WEAK understanding: generate foundational questions that reinforce core concepts
+- If the user showed MODERATE understanding: generate questions that probe deeper connections and applications
+- If the user showed STRONG understanding: generate advanced questions testing synthesis, edge cases, and cross-concept reasoning
+- Target the identified GAPS specifically — create questions that address the weaknesses found in previous reviews
+- Avoid generating questions identical to ones the user already mastered (high stability, no lapses)
+- Vary question types and angles from the previous round to test understanding from different perspectives`;
+        }
 
         const result = await generateText({
           model: llmModel as Parameters<typeof generateText>[0]['model'],
