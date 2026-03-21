@@ -264,18 +264,6 @@ export default function ReviewsTableCard({
 
 function formatDueDate(due: string | Date): string {
   const d = new Date(due);
-  const now = new Date();
-  const diffMs = d.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays <= 0) {
-    // Due today or overdue — show time
-    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  }
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays <= 7) {
-    return d.toLocaleDateString([], { weekday: 'long' });
-  }
   return d.toLocaleDateString([], {
     month: 'short',
     day: 'numeric',
