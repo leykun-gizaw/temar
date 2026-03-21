@@ -177,7 +177,7 @@ export default function TrackingButton({
           <span
             role="button"
             tabIndex={0}
-            className={`transition-colors cursor-pointer ${
+            className={`inline-flex items-center gap-1 transition-colors cursor-pointer text-xs ${
               tracked
                 ? 'text-primary hover:text-primary/70'
                 : 'text-muted-foreground hover:text-primary'
@@ -188,6 +188,9 @@ export default function TrackingButton({
               <Loader2 size={compact ? 14 : 16} className="animate-spin" />
             ) : (
               <ArrowBigDownDashIcon size={compact ? 16 : 18} />
+            )}
+            {!compact && (
+              <span>{tracked ? 'Tracking' : 'Track'}</span>
             )}
           </span>
         </PopoverTrigger>

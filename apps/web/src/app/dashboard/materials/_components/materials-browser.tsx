@@ -931,13 +931,37 @@ export default function MaterialsBrowser({
               {!isTopic && <span>{chunkCount} chunk{chunkCount !== 1 ? 's' : ''}</span>}
             </div>
 
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-3 flex-wrap">
               <TrackingButton
                 entityType={selectedEntity.type}
                 entityId={selectedEntity.id}
                 {...(!isTopic && selectedEntity.topicId ? { topicId: selectedEntity.topicId } : {})}
                 isTracked={trackedChunkIds.has(selectedEntity.id)}
               />
+              {isTopic ? (
+                <AddNoteDialog
+                  topicId={selectedEntity.id}
+                  onSuccess={() => invalidateNotes(selectedEntity.id)}
+                  trigger={
+                    <Button variant="ghost" size="sm" className="bg-background/60 hover:bg-background rounded-xl">
+                      <Plus className="h-3.5 w-3.5 mr-1.5" />
+                      Add note
+                    </Button>
+                  }
+                />
+              ) : (
+                <AddChunkDialog
+                  noteId={selectedEntity.id}
+                  topicId={selectedEntity.topicId!}
+                  onSuccess={() => invalidateChunks(selectedEntity.id)}
+                  trigger={
+                    <Button variant="ghost" size="sm" className="bg-background/60 hover:bg-background rounded-xl">
+                      <Plus className="h-3.5 w-3.5 mr-1.5" />
+                      Add chunk
+                    </Button>
+                  }
+                />
+              )}
               <EditDialog
                 entityType={selectedEntity.type}
                 currentName={selectedEntity.name}
