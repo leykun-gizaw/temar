@@ -51,15 +51,10 @@ export default function OutdatedQuestionsCard({
   );
   const [isPending, startTransition] = useTransition();
   const [passError, setPassError] = useState<string | null>(null);
-  const [consentState, setConsentState] = useState<{
-    estimatedPassCost: number;
-    basePassCost: number;
-    onApprove: (cost: number) => void;
-  } | null>(null);
 
   if (chunks.length === 0) {
     return (
-      <Card className={cn('shadow-none', className)}>
+      <Card className={cn('shadow-sm', className)}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
             <AlertTriangle className="h-4 w-4 text-green-500" />
@@ -93,24 +88,15 @@ export default function OutdatedQuestionsCard({
     );
   }
 
-  const handleRegenerate = (chunkId: string, consentedPassCost?: number) => {
+  const handleRegenerate = (chunkId: string) => {
     setRegeneratingIds((prev) => new Set(prev).add(chunkId));
     startTransition(async () => {
       try {
-        const result = await regenerateChunkQuestions(
-          chunkId,
-          consentedPassCost
-        );
+        const result = await regenerateChunkQuestions(chunkId);
         if (result.status === 'success') {
           setChunks((prev) => prev.filter((c) => c.chunkId !== chunkId));
           if (result.newBalance != null)
             notifyPassBalanceChanged(result.newBalance);
-        } else if (result.status === 'consent_required') {
-          setConsentState({
-            estimatedPassCost: result.estimatedPassCost,
-            basePassCost: result.basePassCost,
-            onApprove: (cost) => handleRegenerate(chunkId, cost),
-          });
         } else if (result.status === 'insufficient_pass') {
           setPassError(
             `Not enough Pass (have ${result.balance}, need ${result.required}).`
@@ -136,7 +122,7 @@ export default function OutdatedQuestionsCard({
 
   return (
     <>
-      <Card className={cn('shadow-none flex flex-col', className)}>
+      <Card className={cn('shadow-sm flex flex-col', className)}>
         <CardHeader className="pb-2 border-b">
           <CardTitle className="flex items-center gap-2 text-sm">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
@@ -228,38 +214,6 @@ export default function OutdatedQuestionsCard({
           )}
         </CardFooter>
       </Card>
-
-      {/* Pass consent dialog */}
-      <Dialog
-        open={!!consentState}
-        onOpenChange={(open) => {
-          if (!open) setConsentState(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Extra Pass required</DialogTitle>
-            <DialogDescription>
-              This content exceeds the standard token budget. Regeneration will
-              cost <strong>{consentState?.estimatedPassCost} Pass</strong>{' '}
-              instead of the base {consentState?.basePassCost} Pass.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConsentState(null)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                consentState?.onApprove(consentState.estimatedPassCost);
-                setConsentState(null);
-              }}
-            >
-              Approve &amp; Regenerate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Pass error dialog */}
       <Dialog

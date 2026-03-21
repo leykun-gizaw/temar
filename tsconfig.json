@@ -34,7 +34,7 @@
       "path": "./apps/answer-analysis-service"
     },
     {
-      "path": "./apps/admin"
+      "path": "./libs/payment-provider"
     }
   ],
   "compilerOptions": {

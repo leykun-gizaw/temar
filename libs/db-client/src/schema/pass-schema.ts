@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   pgTable,
   uuid,
-  integer,
+  real,
   text,
   timestamp,
   index,
@@ -19,7 +19,7 @@ export const passBalance = pgTable(
       .notNull()
       .unique()
       .references(() => user.id, { onDelete: 'cascade' }),
-    balance: integer('balance').notNull().default(0),
+    balanceUsd: real('balance_usd').notNull().default(0),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
       .default(sql`now()`)
@@ -37,10 +37,10 @@ export const passTransaction = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
-    delta: integer('delta').notNull(),
+    deltaUsd: real('delta_usd').notNull(),
     operationType: text('operation_type').notNull(),
     description: text('description').notNull(),
-    paddleTransactionId: text('paddle_transaction_id'),
+    providerTransactionId: text('provider_transaction_id'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .default(sql`now()`),

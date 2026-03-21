@@ -18,7 +18,7 @@ export default async function ScheduleCard({
   dueCount?: number;
 }) {
   return (
-    <Card className="flex flex-col h-full min-h-0 w-full overflow-hidden shadow-none">
+    <Card className="flex flex-col h-full min-h-0 w-full overflow-hidden bg-muted/50 rounded-[2rem]">
       <CardHeader>
         <CardTitle>Reviews Schedule</CardTitle>
         <CardDescription>

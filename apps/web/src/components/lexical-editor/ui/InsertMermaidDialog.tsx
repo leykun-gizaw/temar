@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Popover,
+  PopoverContent,
+  PopoverAnchor,
+} from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { renderMermaid } from '../nodes/MermaidNode';
@@ -74,51 +73,75 @@ export default function InsertMermaidDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Insert Mermaid Diagram</DialogTitle>
-        </DialogHeader>
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverAnchor asChild>
+        <span className="absolute left-1/2 top-0" />
+      </PopoverAnchor>
+      <PopoverContent
+        className="w-[520px]"
+        side="bottom"
+        align="center"
+        sideOffset={12}
+        onFocusOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <div className="flex flex-col gap-3">
+          <p className="text-sm font-semibold">Mermaid Diagram</p>
+
           <div className="space-y-1.5">
-            <Label htmlFor="mermaid-code">Diagram Code</Label>
+            <Label htmlFor="mermaid-code" className="text-xs font-medium">
+              Diagram Code
+            </Label>
             <textarea
               id="mermaid-code"
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[120px] resize-y"
+              className="flex w-full rounded-xl border border-input bg-background px-3 py-2 text-xs font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[100px] resize-y"
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
           </div>
+
           <div className="space-y-1.5">
-            <Label>Preview</Label>
-            <div className="border rounded-md p-3 bg-muted/30 min-h-[100px] overflow-x-auto">
+            <Label className="text-xs font-medium">Preview</Label>
+            <div className="border rounded-xl p-3 bg-muted/30 min-h-[120px] max-h-[300px] overflow-auto">
               {previewError && (
-                <p className="text-sm text-red-500">{previewError}</p>
+                <p className="text-xs text-red-500">{previewError}</p>
               )}
               {previewSvg && (
                 <div
                   ref={previewRef}
-                  className="flex justify-center [&_svg]:max-w-full"
+                  className="flex justify-center [&_svg]:max-w-full [&_svg]:h-auto"
                   dangerouslySetInnerHTML={{ __html: previewSvg }}
                 />
               )}
               {!previewSvg && !previewError && code.trim() && (
-                <p className="text-sm text-muted-foreground text-center">
+                <p className="text-xs text-muted-foreground text-center">
                   Rendering...
                 </p>
               )}
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>
+
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="flex-1 h-7 rounded-xl text-xs"
+              onClick={onClose}
+            >
               Cancel
             </Button>
-            <Button size="sm" onClick={handleInsert} disabled={!code.trim()}>
+            <Button
+              size="sm"
+              className="flex-1 h-7 rounded-xl text-xs"
+              onClick={handleInsert}
+              disabled={!code.trim()}
+            >
               Insert
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -151,7 +151,7 @@ export default function GenerationQueueCard({
     return (
       <Card
         className={cn(
-          'shadow-none flex-1 h-full min-h-0 overflow-hidden col-span-2',
+          'min-h-0 max-h-[320px] overflow-hidden col-span-2 bg-primary/5 rounded-[2rem]',
           className
         )}
       >
@@ -182,11 +182,11 @@ export default function GenerationQueueCard({
     <>
       <Card
         className={cn(
-          'shadow-none flex-1 h-full min-h-0 overflow-hidden col-span-2',
+          'min-h-0 max-h-[320px] overflow-hidden col-span-2 bg-primary/5 rounded-[2rem]',
           className
         )}
       >
-        <CardHeader className="border-b">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             Question Generation

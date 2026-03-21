@@ -1,5 +1,5 @@
 import type { AnalysisResult } from '@/lib/actions/analysis';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ReviewAnalysis({
@@ -13,78 +13,120 @@ export function ReviewAnalysis({
   hideTitle?: boolean;
   scoreSize?: 'sm' | 'lg';
 }) {
+  const scoreColor =
+    analysis.suggestedRating === 1
+      ? 'text-fsrs-again'
+      : analysis.suggestedRating === 2
+      ? 'text-fsrs-hard'
+      : analysis.suggestedRating === 3
+      ? 'text-fsrs-good'
+      : 'text-fsrs-easy';
+
+  const barColor =
+    analysis.suggestedRating === 1
+      ? 'bg-fsrs-again'
+      : analysis.suggestedRating === 2
+      ? 'bg-fsrs-hard'
+      : analysis.suggestedRating === 3
+      ? 'bg-fsrs-good'
+      : 'bg-fsrs-easy';
+
   return (
     <div className={className}>
       {!hideTitle && (
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-3 flex items-center gap-1.5">
           <Sparkles className="h-3.5 w-3.5" />
-          Analysis Results
+          AI Analysis
         </h3>
       )}
       <div
         className={cn(
-          'space-y-3',
-          !hideTitle && 'rounded-md border p-4 bg-muted/20'
+          'space-y-4',
+          !hideTitle && 'rounded-2xl p-5 bg-secondary/5'
         )}
       >
-        <div className="flex items-center gap-3">
-          <span
-            className={cn(
-              'font-bold',
-              scoreSize === 'lg' ? 'text-lg' : 'text-sm',
-              analysis.suggestedRating === 1
-                ? 'text-fsrs-again'
-                : analysis.suggestedRating === 2
-                ? 'text-fsrs-hard'
-                : analysis.suggestedRating === 3
-                ? 'text-fsrs-good'
-                : 'text-fsrs-easy'
-            )}
-          >
-            {analysis.scorePercent}%
-          </span>
-          <span className="text-xs text-muted-foreground">
-            Suggested:{' '}
-            <span className="font-medium text-foreground">
-              {analysis.suggestedLabel}
-            </span>
-          </span>
+        {/* Score display */}
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+              Mastery Score
+            </p>
+            <div className="flex items-baseline gap-0.5">
+              <span
+                className={cn(
+                  'font-extrabold leading-none',
+                  scoreColor,
+                  scoreSize === 'lg' ? 'text-4xl' : 'text-2xl'
+                )}
+              >
+                {analysis.scorePercent}
+              </span>
+              <span
+                className={cn(
+                  'font-bold',
+                  scoreColor,
+                  scoreSize === 'lg' ? 'text-lg' : 'text-sm'
+                )}
+              >
+                %
+              </span>
+            </div>
+          </div>
+          <div className="w-28 h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              className={cn('h-full rounded-full transition-all', barColor)}
+              style={{ width: `${analysis.scorePercent}%` }}
+            />
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {analysis.reasoning}
+
+        {/* Suggested rating */}
+        <p className="text-xs text-muted-foreground">
+          Suggested:{' '}
+          <span className={cn('font-bold', scoreColor)}>
+            {analysis.suggestedLabel}
+          </span>
         </p>
-        <div className="grid grid-cols-2 gap-3">
-          {analysis.strengths && analysis.strengths.length > 0 && (
-            <div>
-              <h4 className="text-[10px] font-semibold text-green-600 dark:text-green-400 mb-1 uppercase tracking-wider">
-                Strengths
-              </h4>
-              <ul className="text-xs text-muted-foreground space-y-0.5">
-                {analysis.strengths.map((s, i) => (
-                  <li key={i} className="flex items-start gap-1">
-                    <span className="text-fsrs-good shrink-0">+</span>
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {analysis.weaknesses && analysis.weaknesses.length > 0 && (
-            <div>
-              <h4 className="text-[10px] font-semibold text-red-600 dark:text-red-400 mb-1 uppercase tracking-wider">
-                Weaknesses
-              </h4>
-              <ul className="text-xs text-muted-foreground space-y-0.5">
-                {analysis.weaknesses.map((w, i) => (
-                  <li key={i} className="flex items-start gap-1">
-                    <span className="text-fsrs-again shrink-0">-</span>
-                    {w}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+
+        {/* Strengths */}
+        {analysis.strengths && analysis.strengths.length > 0 && (
+          <div>
+            <p className="text-xs font-bold mb-1.5">Strengths</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {analysis.strengths.join('. ')}.
+            </p>
+          </div>
+        )}
+
+        {/* Reasoning as recommendation */}
+        {analysis.reasoning && (
+          <div className="p-4 bg-card rounded-xl shadow-sm">
+            <p className="text-xs font-bold text-primary mb-1.5 flex items-center gap-1">
+              <Lightbulb className="h-3.5 w-3.5" />
+              Feedback
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed italic">
+              &ldquo;{analysis.reasoning}&rdquo;
+            </p>
+          </div>
+        )}
+
+        {/* Weaknesses */}
+        {analysis.weaknesses && analysis.weaknesses.length > 0 && (
+          <div>
+            <p className="text-xs font-bold text-fsrs-again mb-1.5">
+              Areas to improve
+            </p>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              {analysis.weaknesses.map((w, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-fsrs-again/50" />
+                  {w}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

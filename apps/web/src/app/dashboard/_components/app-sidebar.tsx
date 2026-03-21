@@ -5,6 +5,7 @@ import * as React from 'react';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -17,69 +18,68 @@ import Link from 'next/link';
 import Logo from '@/assets/logo';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
-// import { TopicsSidebarPanel } from '@/components/sidebar/topics-sidebar-panel';
-import { NAV_ITEMS } from '../_constants/ITEMS';
+import { NAV_ITEMS, BOTTOM_NAV_ITEMS } from '../_constants/ITEMS';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { setOpen, setOpenMobile, isMobile } = useSidebar();
-  // No per-tab title here; Topics panel renders its own header/content.
 
-  // Path-driven default behavior: closed on /dashboard, open on /dashboard/materials
   React.useEffect(() => {
     if (pathname === '/dashboard') {
       isMobile ? setOpenMobile(false) : setOpen(false);
       return;
     }
-    if (pathname === '/dashboard/materials') {
-      isMobile ? setOpenMobile(true) : setOpen(true);
-      return;
-    }
-    // For other paths, do not auto-toggle; keep user choice.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, isMobile]);
 
   return (
-    <Sidebar
-      collapsible="none"
-      className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
-    >
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="md:h-8 md:p-0">
-              <Link href="/dashboard">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/" className="flex items-center gap-2">
+                <div className="text-primary-foreground flex aspect-square size-10 items-center justify-center rounded-lg shrink-0">
                   <Logo />
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-bold text-sm">Temar</span>
+                  <span className="text-[0.65rem] text-muted-foreground">
+                    Deep Cognition
+                  </span>
                 </div>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupContent className="px-1.5 md:px-0">
+          <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS?.map((item) => {
-                const isActive = pathname?.startsWith(
-                  item.url.replace(/\/$/, '')
-                );
+              {NAV_ITEMS.map((item) => {
+                const isActive = item.exact
+                  ? pathname === item.url
+                  : pathname?.startsWith(item.url.replace(/\/$/, ''));
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <Link href={item.url}>
-                      <SidebarMenuButton
-                        tooltip={{ children: item.title, hidden: false }}
-                        isActive={!!isActive}
-                        className={cn(
-                          'px-2.5 md:px-2 cursor-pointer',
-                          isActive ? 'border' : 'border-transparent'
-                        )}
-                      >
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={{ children: item.title, hidden: false }}
+                      isActive={!!isActive}
+                      className={cn(
+                        'cursor-pointer transition-colors',
+                        isActive
+                          ? 'bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary'
+                          : 'hover:bg-sidebar-accent'
+                      )}
+                    >
+                      <Link href={item.url} className="">
                         <item.icon />
                         <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </Link>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
               })}
@@ -87,6 +87,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          {BOTTOM_NAV_ITEMS.map((item) => {
+            const isActive = pathname?.startsWith(item.url.replace(/\/$/, ''));
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={{ children: item.title, hidden: false }}
+                  isActive={!!isActive}
+                  className={cn(
+                    'cursor-pointer transition-colors',
+                    isActive
+                      ? 'bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary'
+                      : 'hover:bg-sidebar-accent'
+                  )}
+                >
+                  <Link href={item.url}>
+                    <item.icon className="size-5" />
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

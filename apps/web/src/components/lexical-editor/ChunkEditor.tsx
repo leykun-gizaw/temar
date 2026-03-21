@@ -24,7 +24,7 @@ export default function ChunkEditor({
       showToolbar
       editable={editable}
       className={editable ? 'bg-card border-r border-l rounded-md' : ''}
-      editorClassName="prose prose-sm dark:prose-invert max-w-none"
+      editorClassName="max-w-none"
     />
   );
 }

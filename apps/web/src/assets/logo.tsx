@@ -4,23 +4,20 @@ export interface LogoProps {
   size?: number | string;
   className?: string;
   title?: string;
-  accentColorVar?: string;
 }
 
 export default function Logo({
-  size = 32,
+  size = 38,
   className = '',
   title = 'Temar Logo',
-  accentColorVar = '--primary',
 }: LogoProps) {
   const dimension = typeof size === 'number' ? `${size}px` : size;
-  const accent = `var(${accentColorVar})`;
 
   return (
     <svg
       width={dimension}
       height={dimension}
-      viewBox="0 0 24 24"
+      viewBox="0 0 100 100"
       fill="none"
       role="img"
       aria-label={title}
@@ -28,50 +25,47 @@ export default function Logo({
       xmlns="http://www.w3.org/2000/svg"
     >
       <title>{title}</title>
-
-      {/* Background Card (Oldest Memory) - Fanned wide left */}
+      <defs>
+        <linearGradient
+          id="temar-logo-grad"
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="100%"
+        >
+          <stop offset="0%" stopColor="#f97316" />
+          <stop offset="100%" stopColor="#ef4444" />
+        </linearGradient>
+      </defs>
       <rect
         x="8"
-        y="3"
-        width="12"
-        height="15"
-        rx="3"
-        fill="currentColor"
-        opacity="0.3"
-        transform="rotate(-24 8 18)"
+        y="8"
+        width="84"
+        height="84"
+        rx="20"
+        fill="url(#temar-logo-grad)"
       />
-
-      {/* Middle Card (Reviewing) - Fanned slightly left */}
-      <rect
-        x="8"
-        y="3"
-        width="12"
-        height="15"
-        rx="3"
-        fill="currentColor"
-        opacity="0.6"
-        transform="rotate(-12 8 18)"
-      />
-
-      {/* Front Card (Active Recall) - Straight and clear */}
-      <g>
-        {/* Solid body of the front card */}
+      <g transform="rotate(45,50,50) translate(-2,5.5)">
+        <rect x="40" y="24" width="20" height="32" rx="4" fill="#fff" />
+        <polygon points="42,58 58,58 50,72" fill="rgba(255,255,255,0.9)" />
+        <circle cx="50" cy="74" r="3" fill="#fff" opacity="0.9" />
+        <circle cx="50" cy="74" r="6" fill="#fff" opacity="0.25" />
+        <circle cx="50" cy="74" r="10" fill="#fff" opacity="0.08" />
         <rect
-          x="8"
-          y="3"
-          width="12"
-          height="15"
+          x="39"
+          y="17"
+          width="22"
+          height="6"
           rx="3"
-          fill="currentColor"
-          stroke={accent}
-          strokeWidth="1.5"
+          fill="rgba(255,255,255,0.65)"
         />
-        {/* Abstract note lines - Cutout effect using the accent color */}
-        <path
-          d="M11 7.5H15M11 11H13.5"
-          stroke={accent}
-          strokeWidth="1.5"
-          strokeLinecap="round"
+        <rect
+          x="61"
+          y="18"
+          width="4"
+          height="24"
+          rx="2"
+          fill="rgba(255,255,255,0.55)"
         />
       </g>
     </svg>

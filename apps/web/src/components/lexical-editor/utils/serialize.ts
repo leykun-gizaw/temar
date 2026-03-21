@@ -49,12 +49,17 @@ function nodeToMarkdown(node: SerializedLexicalNode): string {
 
     case 'code': {
       const language = (n.language as string) ?? '';
-      const codeText = children
-        .map((c) => {
-          const cn = c as Record<string, unknown>;
-          return (cn.text as string) ?? '';
-        })
-        .join('\n');
+      let codeText = '';
+      for (const c of children) {
+        const cn = c as Record<string, unknown>;
+        if (cn.type === 'linebreak') {
+          codeText += '\n';
+        } else if (cn.type === 'tab') {
+          codeText += '\t';
+        } else {
+          codeText += (cn.text as string) ?? '';
+        }
+      }
       return `\`\`\`${language}\n${codeText}\n\`\`\`\n`;
     }
 

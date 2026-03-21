@@ -1,42 +1,11 @@
 'use client';
 
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from '@/components/ui/pagination';
-import { BinocularsIcon, Play, Loader2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { BinocularsIcon, Play, Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from './ui/input';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import type { RecallItemDue } from '@/lib/fetchers/recall-items';
 import {
   searchRecallItemsAction,
@@ -51,11 +20,24 @@ const STATE_LABELS: Record<number, string> = {
   3: 'Relearning',
 };
 
+const STATE_STYLES: Record<number, string> = {
+  0: 'bg-primary/10 text-primary',
+  1: 'bg-accent-orange-bg text-primary',
+  2: 'bg-secondary/30 text-secondary-foreground',
+  3: 'bg-destructive/10 text-destructive',
+};
+
 const PAGE_SIZE = 10;
 
 function retrievabilityPercent(stability: number): number {
   if (!stability) return 0;
   return Math.min(100, Math.round((stability / (stability + 1)) * 100));
+}
+
+function retrievabilityColor(pct: number): string {
+  if (pct >= 70) return 'bg-secondary-foreground';
+  if (pct >= 40) return 'bg-primary';
+  return 'bg-muted-foreground/40';
 }
 
 export default function ReviewsTableCard({
@@ -126,192 +108,165 @@ export default function ReviewsTableCard({
   }, [isSearchMode, searchResults, currentItems, page]);
 
   const displayTotal = isSearchMode ? searchResults?.length ?? 0 : currentTotal;
-  const displayTotalPages = Math.max(1, Math.ceil(displayTotal / PAGE_SIZE));
-
-  const handlePageChange = useCallback(
-    (newPage: number) => {
-      if (newPage < 1 || newPage > displayTotalPages) return;
-      setPage(newPage);
-    },
-    [displayTotalPages]
-  );
-
-  // Generate page numbers to show
-  const pageNumbers = useMemo(() => {
-    const pages: (number | 'ellipsis')[] = [];
-    if (displayTotalPages <= 5) {
-      for (let i = 1; i <= displayTotalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (page > 3) pages.push('ellipsis');
-      for (
-        let i = Math.max(2, page - 1);
-        i <= Math.min(displayTotalPages - 1, page + 1);
-        i++
-      ) {
-        pages.push(i);
-      }
-      if (page < displayTotalPages - 2) pages.push('ellipsis');
-      pages.push(displayTotalPages);
-    }
-    return pages;
-  }, [page, displayTotalPages]);
 
   return (
     <Card
-      className={cn('min-h-0 h-full shadow-none overflow-hidden', className)}
+      className={cn(
+        'min-h-0 overflow-hidden rounded-[2.5rem] bg-card p-8',
+        className
+      )}
     >
-      <CardHeader className="border-b">
-        <CardTitle>Recall Items</CardTitle>
-        <CardAction>
-          <div className="mt-2 relative flex gap-2">
-            <Input
-              placeholder="Search all recall items..."
-              aria-label="Search recall items"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {isPending && (
-              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-            )}
-            <Button asChild variant={'default'}>
-              <Link href="/dashboard/reviews">
-                <BinocularsIcon />
-              </Link>
-            </Button>
-          </div>
-        </CardAction>
-        <CardDescription>
-          {displayTotal > 0
-            ? `${displayTotal} tracked item${displayTotal !== 1 ? 's' : ''}${
-                isSearchMode ? ' matching search' : ''
-              }`
-            : isSearchMode
-            ? 'No items match your search'
-            : 'No tracked items'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="overflow-y-auto min-h-0 flex-1">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Item</TableHead>
-              <TableHead>State</TableHead>
-              <TableHead>Reps</TableHead>
-              <TableHead>Retrievability</TableHead>
-              <TableHead>Due</TableHead>
-              <TableHead className="text-center">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Recall Items</h2>
+          <p className="text-muted-foreground text-sm">
+            {displayTotal > 0
+              ? `${displayTotal} tracked item${displayTotal !== 1 ? 's' : ''}${
+                  isSearchMode ? ' matching search' : ' in your workspace'
+                }`
+              : isSearchMode
+              ? 'No items match your search'
+              : 'No tracked items'}
+          </p>
+        </div>
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search items..."
+            aria-label="Search recall items"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-11 bg-muted/50 border-none rounded-2xl h-11"
+          />
+          {isPending && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-separate border-spacing-y-2">
+          <thead className="text-left text-[0.65rem] font-bold text-muted-foreground uppercase tracking-widest">
+            <tr>
+              <th className="px-4 pb-2">Item</th>
+              <th className="px-4 pb-2">State</th>
+              <th className="px-4 pb-2">Reps</th>
+              <th className="px-4 pb-2">Retrievability</th>
+              <th className="px-4 pb-2">Due</th>
+              <th className="px-4 pb-2 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody className="text-sm">
             {displayItems.length === 0 && (
-              <TableRow>
-                <TableCell
+              <tr>
+                <td
                   colSpan={6}
-                  className="text-center text-muted-foreground py-8"
+                  className="text-center text-muted-foreground py-12"
                 >
                   No recall items found
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             )}
             {displayItems.map((item) => {
               const ret = retrievabilityPercent(item.stability);
               const isDue = new Date(item.due).getTime() <= Date.now();
               return (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium">
-                        {item.questionTitle || item.chunkName}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {item.topicName} &gt; {item.noteName}
-                      </span>
+                <tr
+                  key={item.id}
+                  className="group hover:bg-muted/50 transition-colors"
+                >
+                  <td className="px-4 py-4 rounded-l-2xl">
+                    <div className="font-semibold">
+                      {item.questionTitle || item.chunkName}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
+                    <div className="text-[0.65rem] text-muted-foreground">
+                      {item.topicName} &gt; {item.noteName}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span
+                      className={cn(
+                        'px-3 py-1 rounded-full text-[0.65rem] font-bold uppercase',
+                        STATE_STYLES[item.state] ??
+                          'bg-muted text-muted-foreground'
+                      )}
+                    >
                       {STATE_LABELS[item.state] ?? 'Unknown'}
                     </span>
-                  </TableCell>
-                  <TableCell>{item.reps}</TableCell>
-                  <TableCell className="w-48">
+                  </td>
+                  <td className="px-4 py-4 font-medium">{item.reps}</td>
+                  <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
-                      <Progress value={ret} className="h-2 flex-1" />
-                      <span className="text-xs text-muted-foreground w-10 text-right">
-                        {ret}%
-                      </span>
+                      <div className="w-28 bg-muted h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            'h-full rounded-full transition-all',
+                            retrievabilityColor(ret)
+                          )}
+                          style={{ width: `${ret}%` }}
+                        />
+                      </div>
+                      {ret > 0 && (
+                        <span className="text-[0.65rem] font-bold text-muted-foreground">
+                          {ret}%
+                        </span>
+                      )}
                     </div>
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-4 py-4">
                     <span
-                      className={`text-xs ${
-                        isDue
-                          ? 'text-destructive font-medium'
-                          : 'text-muted-foreground'
-                      }`}
+                      className={cn(
+                        'text-sm font-medium',
+                        isDue ? 'text-destructive' : 'text-muted-foreground'
+                      )}
                     >
-                      {new Date(item.due).toLocaleString()}
+                      {formatDueDate(item.due)}
                     </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Button size="sm" variant="outline" asChild>
+                  </td>
+                  <td className="px-4 py-4 text-right rounded-r-2xl">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="rounded-full hover:bg-muted text-primary"
+                      asChild
+                    >
                       <Link href="/dashboard/reviews">
-                        <Play className="h-3.5 w-3.5" />
+                        <Play className="h-4 w-4" fill="currentColor" />
                       </Link>
                     </Button>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               );
             })}
-          </TableBody>
-        </Table>
-        {displayTotalPages > 1 && (
-          <Pagination className="mt-4">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  size="default"
-                  onClick={() => handlePageChange(page - 1)}
-                  className={
-                    page <= 1
-                      ? 'pointer-events-none opacity-50'
-                      : 'cursor-pointer'
-                  }
-                />
-              </PaginationItem>
-              {pageNumbers.map((p, i) =>
-                p === 'ellipsis' ? (
-                  <PaginationItem key={`ellipsis-${i}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={p}>
-                    <PaginationLink
-                      isActive={p === page}
-                      onClick={() => handlePageChange(p)}
-                      className="cursor-pointer"
-                    >
-                      {p}
-                    </PaginationLink>
-                  </PaginationItem>
-                )
-              )}
-              <PaginationItem>
-                <PaginationNext
-                  size="default"
-                  onClick={() => handlePageChange(page + 1)}
-                  className={
-                    page >= displayTotalPages
-                      ? 'pointer-events-none opacity-50'
-                      : 'cursor-pointer'
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
-      </CardContent>
+          </tbody>
+        </table>
+      </div>
+
+      {/* View All button */}
+      <Button
+        variant="ghost"
+        className="w-fit bg-muted/50 text-muted-foreground font-bold text-sm hover:bg-muted"
+        asChild
+      >
+        <Link
+          href="/dashboard/reviews"
+          className="flex rounded-full items-center gap-2"
+        >
+          <BinocularsIcon className="h-4 w-4" />
+          View All Recall Items
+        </Link>
+      </Button>
     </Card>
   );
+}
+
+function formatDueDate(due: string | Date): string {
+  const d = new Date(due);
+  return d.toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }

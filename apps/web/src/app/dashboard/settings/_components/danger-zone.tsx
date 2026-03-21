@@ -1,13 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertTriangle, Loader2, Trash2 } from 'lucide-react';
@@ -39,19 +32,19 @@ export function DangerZone() {
   };
 
   return (
-    <Card className="border-destructive/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-destructive">
+    <section className="bg-destructive/5 rounded-[2rem] p-8 shadow-md">
+      <div className="mb-6">
+        <h3 className="text-xl font-bold flex items-center gap-2 text-destructive">
           <AlertTriangle className="h-5 w-5" />
           Danger Zone
-        </CardTitle>
-        <CardDescription>
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1">
           Permanently delete all your data and start from scratch. This cannot
           be undone.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4 space-y-2">
+        </p>
+      </div>
+      <div className="space-y-4">
+        <div className="rounded-xl bg-destructive/10 p-5 space-y-2">
           <h4 className="text-sm font-semibold">Reset All Data</h4>
           <p className="text-xs text-muted-foreground leading-relaxed">
             This will permanently delete:
@@ -115,7 +108,7 @@ export function DangerZone() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

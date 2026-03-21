@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   dbClient,
   recallItem,
+  reviewLog,
   chunk,
   note,
   topic,
@@ -14,7 +15,16 @@ import {
   lte,
   sql,
   count,
+  desc,
+  inArray,
 } from '@temar/db-client';
+
+const RATING_LABELS: Record<number, string> = {
+  1: 'Again',
+  2: 'Hard',
+  3: 'Good',
+  4: 'Easy',
+};
 
 @Injectable()
 export class RecallItemService {
@@ -688,6 +698,91 @@ export class RecallItemService {
     return results;
   }
 
+  /**
+   * Build a natural-language performance summary from review history.
+   * Must be called BEFORE deleting recall items (review_log cascades).
+   */
+  private async buildPerformanceSummary(
+    chunkId: string,
+    userId: string
+  ): Promise<string | null> {
+    const items = await dbClient
+      .select()
+      .from(recallItem)
+      .where(
+        and(eq(recallItem.chunkId, chunkId), eq(recallItem.userId, userId))
+      );
+
+    if (items.length === 0) return null;
+
+    const itemIds = items.map((i) => i.id);
+    const logs = await dbClient
+      .select()
+      .from(reviewLog)
+      .where(inArray(reviewLog.recallItemId, itemIds))
+      .orderBy(desc(reviewLog.reviewedAt));
+
+    if (logs.length === 0) return null;
+
+    // Rating distribution
+    const ratingCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const log of logs) ratingCounts[log.rating]++;
+
+    const totalReviews = logs.length;
+    const goodEasyRatio =
+      (ratingCounts[3] + ratingCounts[4]) / totalReviews;
+    const totalLapses = items.reduce((sum, i) => sum + i.lapses, 0);
+
+    // Knowledge level
+    let knowledgeLevel: string;
+    if (goodEasyRatio >= 0.8 && totalLapses <= 1) {
+      knowledgeLevel = 'STRONG';
+    } else if (goodEasyRatio >= 0.6) {
+      knowledgeLevel = 'MODERATE';
+    } else if (goodEasyRatio >= 0.35) {
+      knowledgeLevel = 'DEVELOPING';
+    } else {
+      knowledgeLevel = 'WEAK';
+    }
+
+    // Per-question summaries
+    const questionSummaries: string[] = [];
+    for (const item of items) {
+      const itemLogs = logs.filter((l) => l.recallItemId === item.id);
+      if (itemLogs.length === 0) continue;
+
+      const ratings = itemLogs.map((l) => RATING_LABELS[l.rating]).join(', ');
+
+      // Extract strengths/weaknesses from analysisJson
+      const strengths: string[] = [];
+      const weaknesses: string[] = [];
+      for (const log of itemLogs) {
+        const analysis = log.analysisJson as {
+          strengths?: string[];
+          weaknesses?: string[];
+        } | null;
+        if (analysis?.strengths) strengths.push(...analysis.strengths);
+        if (analysis?.weaknesses) weaknesses.push(...analysis.weaknesses);
+      }
+
+      let summary = `- Q: "${item.questionTitle}" | Ratings: [${ratings}] | Reps: ${item.reps}, Lapses: ${item.lapses}, Stability: ${item.stability.toFixed(1)}d`;
+      if (strengths.length > 0)
+        summary += `\n  Strengths: ${[...new Set(strengths)].slice(0, 3).join('; ')}`;
+      if (weaknesses.length > 0)
+        summary += `\n  Weaknesses: ${[...new Set(weaknesses)].slice(0, 3).join('; ')}`;
+
+      questionSummaries.push(summary);
+    }
+
+    return `## User Performance Summary
+Overall knowledge level: ${knowledgeLevel}
+Total reviews: ${totalReviews} | Rating distribution: Again=${ratingCounts[1]}, Hard=${ratingCounts[2]}, Good=${ratingCounts[3]}, Easy=${ratingCounts[4]}
+Total lapses: ${totalLapses} | Good+Easy ratio: ${(goodEasyRatio * 100).toFixed(0)}%
+
+### Per-Question Breakdown
+${questionSummaries.join('\n')}`;
+  }
+
   async regenerateChunk(
     chunkId: string,
     userId: string,
@@ -698,6 +793,12 @@ export class RecallItemService {
       byok?: boolean;
     }
   ) {
+    // Build performance summary BEFORE deleting (review_log cascades on delete)
+    const performanceSummary = await this.buildPerformanceSummary(
+      chunkId,
+      userId
+    );
+
     // Retire ALL existing non-retired recall items for this chunk
     const now = new Date();
     const oldRecallItems = await dbClient
@@ -733,7 +834,14 @@ export class RecallItemService {
       );
 
     // Trigger question generation synchronously
-    const qgenResult = await this.triggerQuestionGen(chunkId, userId, aiConfig);
+    const qgenResult = await this.triggerQuestionGen(
+      chunkId,
+      userId,
+      aiConfig,
+      undefined,
+      undefined,
+      performanceSummary
+    );
 
     this.logger.log(`Regeneration triggered for chunk ${chunkId}`);
     return {
@@ -808,11 +916,13 @@ export class RecallItemService {
       byok?: boolean;
     },
     questionTypes?: string[],
-    questionCount?: number
+    questionCount?: number,
+    performanceSummary?: string | null
   ): Promise<Record<string, unknown>> {
     const body: Record<string, unknown> = {};
     if (questionTypes?.length) body.questionTypes = questionTypes;
     if (questionCount != null) body.questionCount = questionCount;
+    if (performanceSummary) body.performanceSummary = performanceSummary;
 
     return this.callQuestionGenService(
       `/generate/${chunkId}`,

@@ -140,7 +140,7 @@ export async function getOperationConfig(
 // Public API — pass cost computation
 // ---------------------------------------------------------------------------
 
-function getCostPerPassUsd(): number {
+export function getCostPerPassUsd(): number {
   const envVal = process.env['COST_PER_PASS_USD'];
   return envVal ? parseFloat(envVal) || 0.05 : 0.05;
 }
@@ -157,15 +157,13 @@ export async function computePassCost(
   const pricing = await getActivePricing(modelId);
   const markup = await getActiveMarkup(modelId);
   const opConfig = await getOperationConfig(operationType);
-  const costPerPass = getCostPerPassUsd();
 
   const inputCost =
     (opConfig.maxInputTokens / 1_000_000) * pricing.inputPricePer1M;
   const outputCost =
     (opConfig.maxOutputTokens / 1_000_000) * pricing.outputPricePer1M;
-  const totalCost = (inputCost + outputCost) * markup.markupFactor;
 
-  return Math.max(1, Math.ceil(totalCost / costPerPass));
+  return (inputCost + outputCost) * markup.markupFactor;
 }
 
 /**
@@ -179,18 +177,16 @@ export function estimatedPassCostFromTokens(
   modelConfig: ModelConfig,
   opConfig: OperationConfig
 ): number {
-  const costPerPass = getCostPerPassUsd();
   const inputCost =
     (opConfig.maxInputTokens / 1_000_000) * modelConfig.inputPricePer1M;
   const outputCost =
     (opConfig.maxOutputTokens / 1_000_000) * modelConfig.outputPricePer1M;
   const baseCost =
     (inputCost + outputCost) * modelConfig.markupFactor;
-  const basePass = Math.max(1, Math.ceil(baseCost / costPerPass));
 
-  if (inputTokens <= opConfig.maxInputTokens) return basePass;
+  if (inputTokens <= opConfig.maxInputTokens) return baseCost;
   const overageRatio = inputTokens / opConfig.maxInputTokens;
-  return Math.ceil(basePass * overageRatio);
+  return baseCost * overageRatio;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,20 +209,17 @@ export interface RecordUsageParams {
  */
 export async function recordUsage(
   params: RecordUsageParams
-): Promise<{ passCharged: number; newBalance: number | null }> {
+): Promise<{ amountChargedUsd: number; newBalance: number | null }> {
   const { userId, modelId, operationType, inputTokens, outputTokens, isByok } =
     params;
 
   const pricing = await getActivePricing(modelId);
   const markup = await getActiveMarkup(modelId);
-  const costPerPass = getCostPerPassUsd();
 
   const inputCost = (inputTokens / 1_000_000) * pricing.inputPricePer1M;
   const outputCost = (outputTokens / 1_000_000) * pricing.outputPricePer1M;
   const computedCostUsd = (inputCost + outputCost) * markup.markupFactor;
-  const passCharged = isByok
-    ? 0
-    : Math.max(1, Math.ceil(computedCostUsd / costPerPass));
+  const amountChargedUsd = isByok ? 0 : computedCostUsd;
 
   return withTransaction(async (tx) => {
     await insertUsageLog(
@@ -240,19 +233,19 @@ export async function recordUsage(
         outputPricePer1MSnapshot: pricing.outputPricePer1M,
         markupFactorSnapshot: markup.markupFactor,
         computedCostUsd,
-        passCharged,
+        amountChargedUsd,
         isByok,
       },
       tx
     );
 
     let newBalance: number | null = null;
-    if (!isByok && passCharged > 0) {
-      const result = await decrementUserPassBalance(userId, passCharged, tx);
-      newBalance = result?.balance ?? null;
+    if (!isByok && amountChargedUsd > 0) {
+      const result = await decrementUserPassBalance(userId, amountChargedUsd, tx);
+      newBalance = result?.balanceUsd ?? null;
     }
 
-    return { passCharged, newBalance };
+    return { amountChargedUsd, newBalance };
   });
 }
 

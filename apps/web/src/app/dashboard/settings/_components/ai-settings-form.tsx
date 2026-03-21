@@ -1,13 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+// Card imports removed — using borderless sections
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -51,7 +45,7 @@ const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
   {
     value: 'google',
     label: 'Google Gemini',
-    description: 'Gemini 3 Flash, 2.5 Pro, etc.',
+    description: 'Gemini 2.0 Flash, 2.5 Pro, etc.',
   },
   {
     value: 'openai',
@@ -62,6 +56,11 @@ const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
     value: 'anthropic',
     label: 'Anthropic',
     description: 'Claude Sonnet 4, Haiku 4, etc.',
+  },
+  {
+    value: 'deepseek',
+    label: 'Deepseek',
+    description: 'Deepseek Chat, Reasoner, etc.',
   },
 ];
 
@@ -145,18 +144,18 @@ export function AiSettingsForm({
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <section className="bg-muted/40 rounded-[2rem] p-8 shadow-md">
+        <div className="mb-6">
+          <h3 className="text-xl font-bold flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
             AI Model Configuration
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">
             Choose your preferred AI provider and model for question generation
             and answer analysis.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          </p>
+        </div>
+        <div className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Provider</label>
             <Select value={provider} onValueChange={handleProviderChange}>
@@ -195,7 +194,7 @@ export function AiSettingsForm({
           </div>
 
           {/* BYOK toggle + API key */}
-          <div className="rounded-lg border p-4 space-y-4">
+          <div className="rounded-xl bg-background/60 p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <label className="text-sm font-medium flex items-center gap-1.5">
@@ -249,7 +248,7 @@ export function AiSettingsForm({
           </div>
 
           {/* Pass cost preview */}
-          <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+          <div className="rounded-xl bg-background/60 p-5 space-y-3">
             <div className="flex items-center gap-1.5">
               <Coins className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">Pass Cost Preview</span>
@@ -309,26 +308,30 @@ export function AiSettingsForm({
           </div>
 
           <div className="flex items-center gap-3 pt-2">
-            <Button onClick={handleSave} disabled={isPending}>
+            <Button
+              onClick={handleSave}
+              disabled={isPending}
+              className="rounded-full px-6 shadow-lg shadow-primary/25"
+            >
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Save Settings
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <section className="bg-muted/40 rounded-[2rem] p-8 shadow-md">
+        <div className="mb-6">
+          <h3 className="text-xl font-bold flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
             Question Rotation
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">
             After a question has been reviewed this many times, it will be
             retired and you&apos;ll be notified to regenerate fresh questions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </div>
+        <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">
               Max reviews per question
@@ -361,12 +364,13 @@ export function AiSettingsForm({
               });
             }}
             disabled={isPending}
+            className="rounded-full px-6 shadow-lg shadow-primary/25"
           >
             {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             Save
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </>
   );
 }

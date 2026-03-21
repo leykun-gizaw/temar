@@ -3,15 +3,10 @@
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
@@ -23,8 +18,6 @@ interface EditDialogProps {
   onSave: (name: string, description: string) => Promise<void>;
   trigger: React.ReactNode;
 }
-
-const emojiMap = { topic: '📚', note: '📗', chunk: '📄' } as const;
 
 export default function EditDialog({
   entityType,
@@ -61,56 +54,64 @@ export default function EditDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex flex-col items-center gap-2">
-            <span className="text-5xl">{emojiMap[entityType]}</span>
-            Edit {entityType.charAt(0).toUpperCase() + entityType.slice(1)}
-          </DialogTitle>
-          <DialogDescription className="text-center">
-            Update the name and description.
-          </DialogDescription>
-        </DialogHeader>
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent className="w-80" align="end" sideOffset={8}>
+        <div className="space-y-3">
+          <p className="text-sm font-semibold">
+            Edit {entityType}
+          </p>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="edit-name">Name</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-name" className="text-xs">
+              Name
+            </Label>
             <Input
               id="edit-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              className="h-8 text-sm rounded-xl"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-description">Description</Label>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-description" className="text-xs">
+              Description
+            </Label>
             <textarea
               id="edit-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              rows={3}
+              className="flex min-h-[60px] w-full rounded-xl bg-muted/50 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
-        </div>
 
-        {error && (
-          <p className="text-sm text-destructive pt-1">{error}</p>
-        )}
+          {error && (
+            <p className="text-xs text-destructive">{error}</p>
+          )}
 
-        <DialogFooter className="gap-2">
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 rounded-xl text-xs"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
-          </DialogClose>
-          <Button onClick={handleSave} disabled={isPending}>
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isPending ? 'Saving...' : 'Save'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <Button
+              size="sm"
+              className="h-7 rounded-xl text-xs"
+              onClick={handleSave}
+              disabled={isPending}
+            >
+              {isPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+              {isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

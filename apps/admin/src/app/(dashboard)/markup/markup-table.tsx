@@ -38,16 +38,14 @@ interface MarkupHistoryRow {
   changeReason: string | null;
 }
 
-function computePassCostPreview(
+function computeCostPreviewUsd(
   inputPricePer1M: number,
   outputPricePer1M: number,
-  markupFactor: number,
-  costPerPass = 0.005
+  markupFactor: number
 ): number {
   const inputCost = (4000 / 1_000_000) * inputPricePer1M;
   const outputCost = (2000 / 1_000_000) * outputPricePer1M;
-  const total = (inputCost + outputCost) * markupFactor;
-  return Math.max(1, Math.ceil(total / costPerPass));
+  return (inputCost + outputCost) * markupFactor;
 }
 
 interface MarkupTableProps {
@@ -167,13 +165,12 @@ export function MarkupTable({ models, costTiers, rawCosts }: MarkupTableProps) {
               </div>
 
               <div className="rounded-md border bg-muted/50 p-3 text-sm">
-                <strong>Pass cost preview:</strong>{' '}
-                {computePassCostPreview(
+                <strong>Cost per request preview:</strong> $
+                {computeCostPreviewUsd(
                   editModel.inputPricePer1M,
                   editModel.outputPricePer1M,
                   previewFactor
-                )}{' '}
-                passes
+                ).toFixed(6)}
               </div>
 
               <div className="space-y-2">

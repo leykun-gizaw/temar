@@ -13,6 +13,7 @@ import { AlertTriangle } from 'lucide-react';
 import { getAllModels, getModelWarnings } from './actions';
 import { AddModelDialog } from './add-model-dialog';
 import { ModelToggle } from './model-toggle';
+import { SyncModelsButton } from './sync-models-button';
 
 export default async function ModelsPage() {
   const [models, warnings] = await Promise.all([
@@ -29,7 +30,10 @@ export default async function ModelsPage() {
             Manage registered AI models
           </p>
         </div>
-        <AddModelDialog />
+        <div className="flex items-center gap-2">
+          <SyncModelsButton />
+          <AddModelDialog />
+        </div>
       </div>
 
       <Table>

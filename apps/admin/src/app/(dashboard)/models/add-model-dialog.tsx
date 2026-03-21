@@ -71,6 +71,7 @@ export function AddModelDialog() {
                 <SelectItem value="google">Google</SelectItem>
                 <SelectItem value="openai">OpenAI</SelectItem>
                 <SelectItem value="anthropic">Anthropic</SelectItem>
+                <SelectItem value="deepseek">Deepseek</SelectItem>
               </SelectContent>
             </Select>
           </div>

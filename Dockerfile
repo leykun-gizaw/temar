@@ -21,6 +21,7 @@ COPY apps/answer-analysis-service/package.json apps/answer-analysis-service/
 COPY apps/admin/package.json apps/admin/
 COPY libs/db-client/package.json libs/db-client/
 COPY libs/pricing-service/package.json libs/pricing-service/
+COPY libs/payment-provider/package.json libs/payment-provider/
 COPY libs/shared-types/package.json libs/shared-types/
 RUN pnpm install --frozen-lockfile
 
@@ -35,6 +36,7 @@ COPY tsconfig.base.json ./
 COPY eslint.config.mjs ./
 COPY libs/db-client ./libs/db-client
 COPY libs/pricing-service ./libs/pricing-service
+COPY libs/payment-provider ./libs/payment-provider
 COPY libs/shared-types ./libs/shared-types
 # Remove workspace symlinks so webpack bundles @temar/* from source via tsconfig paths
 RUN rm -rf node_modules/@temar
@@ -97,6 +99,7 @@ COPY tsconfig.base.json ./
 COPY eslint.config.mjs ./
 COPY libs/db-client ./libs/db-client
 COPY libs/pricing-service ./libs/pricing-service
+COPY libs/payment-provider ./libs/payment-provider
 COPY libs/shared-types ./libs/shared-types
 RUN rm -rf node_modules/@temar
 RUN NX_DAEMON=false pnpm nx build admin --prod --verbose

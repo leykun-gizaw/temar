@@ -34,7 +34,13 @@
   ],
   "references": [
     {
+      "path": "../../libs/pricing-service"
+    },
+    {
       "path": "../../libs/db-client"
+    },
+    {
+      "path": "../../libs/shared-types"
     }
   ]
 }

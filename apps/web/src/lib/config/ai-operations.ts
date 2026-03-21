@@ -14,6 +14,7 @@ import {
   updateMarkup as _updateMarkup,
   updateProviderPricing as _updateProviderPricing,
   invalidateModelCache as _invalidateModelCache,
+  getCostPerPassUsd as _getCostPerPassUsd,
 } from '@temar/pricing-service';
 
 import type { RecordUsageParams as _RecordUsageParams } from '@temar/pricing-service';
@@ -34,7 +35,6 @@ export {
   DEFAULT_MODEL_ID,
   PLAN_PASS_ALLOCATIONS,
   PLAN_PASS_ROLLOVER_CAPS,
-  getTopupPacks,
 } from '@temar/shared-types';
 
 // ---------------------------------------------------------------------------
@@ -50,6 +50,7 @@ export const recordUsage = _recordUsage;
 export const updateMarkup = _updateMarkup;
 export const updateProviderPricing = _updateProviderPricing;
 export const invalidateModelCache = _invalidateModelCache;
+export const getCostPerPassUsd = _getCostPerPassUsd;
 
 export type RecordUsageParams = _RecordUsageParams;
 

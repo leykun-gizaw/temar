@@ -5,12 +5,15 @@ import {
   AccountSettings,
   SecuritySettings,
 } from './_components/account-settings';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   getActiveModels,
   computePassCost,
   type OperationType,
 } from '@/lib/config/ai-operations';
+import { AppearanceSettings } from './_components/appearance-settings';
+import { NotificationPreferences } from './_components/notification-preferences';
+import { Sprout } from 'lucide-react';
+import { SettingsShell } from './_components/settings-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,38 +38,55 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-semibold">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manage your account, security, AI configuration, and data.
+    <div className="flex flex-col gap-8 px-8 py-10 max-w-6xl">
+      <header>
+        <h1 className="text-4xl font-extrabold tracking-tight">
+          Account Settings
+        </h1>
+        <p className="text-muted-foreground mt-2 text-base">
+          Personalize your learning experience and manage your identity.
         </p>
-      </div>
+      </header>
 
-      <Tabs defaultValue="account" className="w-full">
-        <TabsList>
-          <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="ai">AI &amp; Data</TabsTrigger>
-        </TabsList>
+      <SettingsShell>
+        {{
+          account: (
+            <>
+              <AccountSettings />
+              <NotificationPreferences />
 
-        <TabsContent value="account" className="mt-6 space-y-6">
-          <AccountSettings />
-        </TabsContent>
-
-        <TabsContent value="security" className="mt-6 space-y-6">
-          <SecuritySettings />
-        </TabsContent>
-
-        <TabsContent value="ai" className="mt-6 space-y-6">
-          <AiSettingsForm
-            initialSettings={aiSettings}
-            modelConfigs={modelConfigs}
-            passCosts={passCosts}
-          />
-          <DangerZone />
-        </TabsContent>
-      </Tabs>
+              {/* Motivational quote */}
+              <section className="bg-muted/40 rounded-[2rem] p-10 flex flex-col md:flex-row items-center gap-8 overflow-hidden shadow-md">
+                <div className="flex-1">
+                  <div className="text-primary/40 text-5xl mb-3">&ldquo;</div>
+                  <p className="text-xl font-light italic leading-relaxed text-foreground">
+                    &ldquo;The sanctuary of learning is where focus meets
+                    intention. Your environment shapes your growth.&rdquo;
+                  </p>
+                  <p className="text-sm text-primary font-bold mt-4">
+                    — Temar Guide
+                  </p>
+                </div>
+                <div className="shrink-0 w-32 h-32 rounded-full bg-secondary flex items-center justify-center">
+                  <Sprout className="w-14 h-14 text-secondary-foreground" />
+                </div>
+              </section>
+            </>
+          ),
+          security: <SecuritySettings />,
+          ai: (
+            <>
+              <AiSettingsForm
+                initialSettings={aiSettings}
+                modelConfigs={modelConfigs}
+                passCosts={passCosts}
+              />
+              <DangerZone />
+            </>
+          ),
+          appearance: <AppearanceSettings />,
+        }}
+      </SettingsShell>
     </div>
   );
 }

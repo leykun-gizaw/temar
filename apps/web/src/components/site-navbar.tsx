@@ -23,9 +23,9 @@ interface NavLink {
 }
 
 const primaryLinks: NavLink[] = [
-  { href: '/#features', label: 'Features' },
-  { href: '/#methodology', label: 'Methodology' },
-  { href: '/pricing', label: 'Pricing' },
+  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/dashboard/materials', label: 'Library' },
+  { href: '/dashboard/settings', label: 'Settings' },
 ];
 
 const authLinks: NavLink[] = [
@@ -126,7 +126,7 @@ export function SiteNavbar() {
               className="flex items-center gap-2"
               aria-label="Temar home"
             >
-              <Logo />
+              <Logo size={44} />
               <span className="hidden sm:inline font-bold text-xl">Temar</span>
             </Link>
             <nav

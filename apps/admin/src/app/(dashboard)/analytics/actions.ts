@@ -32,7 +32,7 @@ export async function fetchAnalyticsSummary() {
     .from(aiUsageLog);
 
   const [totalPasses] = await dbClient
-    .select({ total: sql<string>`sum(${aiUsageLog.passCharged})` })
+    .select({ total: sql<string>`sum(${aiUsageLog.amountChargedUsd})` })
     .from(aiUsageLog);
 
   return {
@@ -41,7 +41,7 @@ export async function fetchAnalyticsSummary() {
     totalInputTokens: parseInt(String(totalInputTokens?.total ?? '0'), 10),
     totalOutputTokens: parseInt(String(totalOutputTokens?.total ?? '0'), 10),
     uniqueUsers: Number(uniqueUsers?.total ?? 0),
-    totalPasses: parseInt(String(totalPasses?.total ?? '0'), 10),
+    totalPasses: parseFloat(String(totalPasses?.total ?? '0')),
   };
 }
 
@@ -89,7 +89,7 @@ export async function fetchTopUsersByUsage() {
       userId: aiUsageLog.userId,
       requests: count(),
       totalCost: sql<string>`sum(${aiUsageLog.computedCostUsd})`,
-      totalPasses: sql<string>`sum(${aiUsageLog.passCharged})`,
+      totalPasses: sql<string>`sum(${aiUsageLog.amountChargedUsd})`,
     })
     .from(aiUsageLog)
     .groupBy(aiUsageLog.userId)
@@ -100,7 +100,7 @@ export async function fetchTopUsersByUsage() {
     userId: r.userId,
     requests: r.requests,
     totalCost: parseFloat(String(r.totalCost ?? '0')),
-    totalPasses: parseInt(String(r.totalPasses ?? '0'), 10),
+    totalPasses: parseFloat(String(r.totalPasses ?? '0')),
   }));
 }
 

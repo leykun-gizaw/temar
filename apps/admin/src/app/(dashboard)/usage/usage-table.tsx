@@ -33,7 +33,7 @@ interface UsageRow {
   markupFactorSnapshot: number;
   inputPricePer1MSnapshot: number;
   outputPricePer1MSnapshot: number;
-  passCharged: number;
+  amountChargedUsd: number;
   isByok: boolean;
   createdAt: Date | null;
 }
@@ -185,7 +185,7 @@ export function UsageTable({
             <TableHead>Output Tokens</TableHead>
             <TableHead>Raw Cost</TableHead>
             <TableHead>Marked-Up Cost</TableHead>
-            <TableHead>Passes</TableHead>
+            <TableHead>Charged (USD)</TableHead>
             <TableHead>BYOK</TableHead>
           </TableRow>
         </TableHeader>
@@ -208,7 +208,7 @@ export function UsageTable({
               <TableCell className="text-xs">
                 ${row.computedCostUsd.toFixed(6)}
               </TableCell>
-              <TableCell>{row.passCharged}</TableCell>
+              <TableCell className="text-xs">${row.amountChargedUsd.toFixed(6)}</TableCell>
               <TableCell>
                 {row.isByok ? <Badge variant="secondary">BYOK</Badge> : '—'}
               </TableCell>
