@@ -19,6 +19,7 @@ const config: typeof Config = {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
   },
   moduleNameMapper: {
+    '\\.(png|jpg|jpeg|gif|svg|webp)$': '<rootDir>/specs/__mocks__/image-stub.ts',
     '^better-auth/react$': '<rootDir>/specs/__mocks__/better-auth-react.ts',
     '^@/components/knowledge-network-wrapper$':
       '<rootDir>/specs/__mocks__/knowledge-network-wrapper.tsx',
