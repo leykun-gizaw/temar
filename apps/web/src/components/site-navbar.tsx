@@ -127,7 +127,7 @@ export function SiteNavbar() {
               className="flex items-center gap-2"
               aria-label="Temar home"
             >
-              <Logo />
+              <Logo size={44} />
               <span className="hidden sm:inline font-bold text-xl">Temar</span>
             </Link>
             <nav

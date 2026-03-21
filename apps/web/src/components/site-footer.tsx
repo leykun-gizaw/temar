@@ -13,7 +13,7 @@ export default function SiteFooter({ className }: { className?: string }) {
       <div className="mx-auto max-w-6xl px-6 flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
         {/* Logo + brand */}
         <div className="flex items-center gap-2 text-primary">
-          <Logo size={42} className="text-white" accentColorVar="--primary" />
+          <Logo size={42} />
           <span className="text-2xl font-semibold tracking-tight">Temar</span>
         </div>
 

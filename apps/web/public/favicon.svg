@@ -1,10 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
-    <rect x="8" y="3" width="12" height="15" rx="3" fill="#4D7358" opacity="0.4" transform="rotate(-24 8 18)" />
-
-    <rect x="8" y="3" width="12" height="15" rx="3" fill="#4D7358" opacity="0.7" transform="rotate(-12 8 18)" />
-
-    <g>
-        <rect x="8" y="3" width="12" height="15" rx="3" fill="#4D7358" stroke="#F5F2E9" stroke-width="1.5" />
-        <path d="M11 7.5H15M11 11H13.5" stroke="#F5F2E9" stroke-width="1.5" stroke-linecap="round" />
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 100 100" fill="none">
+    <defs>
+        <linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f97316"/>
+            <stop offset="100%" stop-color="#ef4444"/>
+        </linearGradient>
+    </defs>
+    <rect x="8" y="8" width="84" height="84" rx="20" fill="url(#fg)"/>
+    <g transform="rotate(45,50,50) translate(-2,5.5)">
+        <rect x="40" y="24" width="20" height="32" rx="4" fill="#fff"/>
+        <polygon points="42,58 58,58 50,72" fill="rgba(255,255,255,0.9)"/>
+        <circle cx="50" cy="74" r="3" fill="#fff" opacity="0.9"/>
+        <circle cx="50" cy="74" r="6" fill="#fff" opacity="0.25"/>
+        <circle cx="50" cy="74" r="10" fill="#fff" opacity="0.08"/>
+        <rect x="39" y="17" width="22" height="6" rx="3" fill="rgba(255,255,255,0.65)"/>
+        <rect x="61" y="18" width="4" height="24" rx="2" fill="rgba(255,255,255,0.55)"/>
     </g>
 </svg>

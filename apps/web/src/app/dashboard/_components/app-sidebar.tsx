@@ -39,7 +39,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/" className="flex items-center gap-2">
-                <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg shrink-0">
+                <div className="text-primary-foreground flex aspect-square size-10 items-center justify-center rounded-lg shrink-0">
                   <Logo />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
@@ -75,8 +75,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           : 'hover:bg-sidebar-accent'
                       )}
                     >
-                      <Link href={item.url}>
-                        <item.icon className="size-4" />
+                      <Link href={item.url} className="">
+                        <item.icon />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -106,7 +106,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   )}
                 >
                   <Link href={item.url}>
-                    <item.icon className="size-4" />
+                    <item.icon className="size-5" />
                     <span>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
