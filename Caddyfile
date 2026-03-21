@@ -1,7 +1,7 @@
 {$DOMAIN:localhost} {
-	# Notion webhook endpoint — forwarded to the sync service
-	handle /api/webhook/* {
-		reverse_proxy notion_sync-service:3333
+	# Payment provider webhooks — forwarded to the web app
+	handle /api/webhooks/* {
+		reverse_proxy web:5173
 	}
 
 	# Next.js web app (everything else)
