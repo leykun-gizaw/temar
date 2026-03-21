@@ -9,24 +9,12 @@ import {
 } from '@paddle/paddle-js';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
   Coins,
   CreditCard,
-  ArrowUpCircle,
   Zap,
   ExternalLink,
   CalendarClock,
   CheckCircle2,
-  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PassTransaction } from '@/lib/actions/pass';
@@ -47,11 +35,34 @@ const PLAN_LABELS: Record<string, string> = {
   scholar: 'Scholar',
 };
 
-const PLAN_BADGE_COLORS: Record<string, string> = {
-  free: 'bg-muted text-muted-foreground',
-  starter: 'bg-primary text-primary-foreground',
-  hobbyist: 'bg-blue-600 text-white',
-  scholar: 'bg-violet-600 text-white',
+const PLAN_FEATURES: Record<string, string[]> = {
+  free: [
+    'BYOK — use your own AI API key',
+    'Spaced repetition (FSRS)',
+    'Unlimited topics & notes',
+  ],
+  starter: [
+    '100 Pass per month',
+    'Managed AI — no API key required',
+    'Economy & Standard model tiers',
+  ],
+  hobbyist: [
+    '200 Pass per month',
+    'All Starter features included',
+    'Economy & Standard model tiers',
+  ],
+  scholar: [
+    '300 Pass per month',
+    'Access to Premium model tier',
+    'Priority support',
+  ],
+};
+
+const PLAN_PASS_MONTHLY: Record<string, number> = {
+  free: 0,
+  starter: 100,
+  hobbyist: 200,
+  scholar: 300,
 };
 
 interface PaddleConfig {
@@ -91,6 +102,10 @@ export function BillingClient({
 
   const { plan, status, nextBilledAt, balance } = subscriptionInfo;
   const hasActiveSub = plan !== 'free' && !!status;
+  const planFeatures = PLAN_FEATURES[plan] ?? [];
+  const passPerMonth = PLAN_PASS_MONTHLY[plan] ?? 0;
+  const usagePercent =
+    passPerMonth > 0 ? Math.min(100, (balance / passPerMonth) * 100) : 0;
 
   useEffect(() => {
     if (paddle?.Initialized) return;
@@ -144,235 +159,269 @@ export function BillingClient({
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">Billing &amp; Pass</h1>
-        <p className="text-muted-foreground mt-1">
+    <div className="w-full p-8">
+      {/* Header */}
+      <header className="mb-12">
+        <h1 className="text-4xl font-extrabold tracking-tight">
+          Billing &amp; Usage
+        </h1>
+        <p className="text-muted-foreground mt-2 text-base">
           Manage your subscription and Pass balance.
         </p>
-      </div>
+      </header>
 
-      {/* Current Plan card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              Current Plan
-            </span>
-            <Badge className={cn('capitalize', PLAN_BADGE_COLORS[plan])}>
-              {PLAN_LABELS[plan] ?? plan}
-            </Badge>
-          </CardTitle>
-          {hasActiveSub ? (
-            <CardDescription className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-              Active subscription
-            </CardDescription>
-          ) : (
-            <CardDescription>
-              You are on the free plan. Upgrade to get monthly Pass.
-            </CardDescription>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {hasActiveSub && nextBilledAt && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarClock className="h-4 w-4" />
-              <span>
-                Next renewal:{' '}
-                <span className="font-medium text-foreground">
-                  {formatDate(nextBilledAt)}
-                </span>
-              </span>
-            </div>
-          )}
-
-          {hasActiveSub && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={manageSubscription}
-              disabled={loading === 'portal'}
-              className="gap-2"
-            >
-              <CreditCard className="h-4 w-4" />
-              {loading === 'portal' ? 'Opening…' : 'Manage subscription'}
-              <ExternalLink className="h-3.5 w-3.5 opacity-60" />
-            </Button>
-          )}
-
-          {!hasActiveSub && (
-            <div className="flex gap-3 flex-wrap">
-              <Button
-                size="sm"
-                onClick={() =>
-                  openCheckout(
-                    paddleConfig.starterPriceId,
-                    undefined,
-                    'starter'
-                  )
-                }
-                disabled={!paddleReady || !!loading}
-              >
-                {loading === 'starter'
-                  ? 'Opening…'
-                  : 'Starter — $4.99/mo'}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  openCheckout(
-                    paddleConfig.hobbyistPriceId,
-                    undefined,
-                    'hobbyist'
-                  )
-                }
-                disabled={!paddleReady || !!loading}
-              >
-                {loading === 'hobbyist'
-                  ? 'Opening…'
-                  : 'Hobbyist — $9.00/mo'}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  openCheckout(
-                    paddleConfig.scholarPriceId,
-                    undefined,
-                    'scholar'
-                  )
-                }
-                disabled={!paddleReady || !!loading}
-              >
-                {loading === 'scholar' ? 'Opening…' : 'Scholar — $14.99/mo'}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Balance card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Coins className="h-5 w-5 text-primary" />
-            Pass Balance
-          </CardTitle>
-          <CardDescription>
-            Pass is used for AI operations.
-            {hasActiveSub
-              ? ' Renews monthly with your plan.'
-              : ' Purchase a plan or top-up pack to get Pass.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-end gap-2">
-            <span className="text-5xl font-bold tabular-nums">{balance}</span>
-            <span className="mb-1 text-lg text-muted-foreground">Pass</span>
-          </div>
-        </CardContent>
-        {hasActiveSub && nextBilledAt && (
-          <CardFooter className="text-xs text-muted-foreground border-t pt-4">
-            Your balance will reset on {formatDate(nextBilledAt)} with your plan
-            renewal.
-          </CardFooter>
-        )}
-      </Card>
-
-      {/* Top-up packs */}
-      <div>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <ArrowUpCircle className="h-5 w-5 text-primary" />
-          Top-up Packs
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {paddleConfig.topupPacks.map((pack) => (
-            <Card
-              key={pack.id}
-              className={cn(
-                'relative flex flex-col items-center text-center py-5 px-4',
-                pack.best && 'ring-2 ring-primary/50'
-              )}
-            >
-              {pack.best && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-semibold text-primary-foreground">
-                  <Zap className="h-3 w-3" /> Best value
-                </span>
-              )}
-              <Coins className="h-7 w-7 text-primary mb-2" />
-              <p className="text-2xl font-bold">{pack.pass}</p>
-              <p className="text-xs text-muted-foreground mb-1">Pass</p>
-              <p className="text-base font-semibold mb-4">{pack.price}</p>
-              <Button
-                className="w-full"
-                variant="outline"
-                size="sm"
-                disabled={!paddleReady || !!loading}
-                onClick={() =>
-                  openCheckout(
-                    pack.priceId,
-                    { topupPassAmount: String(pack.pass) },
-                    pack.id
-                  )
-                }
-              >
-                {loading === pack.id ? 'Opening…' : 'Buy'}
-              </Button>
-            </Card>
-          ))}
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Top-up Passes expire after 12 months. Checkout powered by Paddle.
-        </p>
-      </div>
-
-      <Separator />
-
-      {/* Transaction history */}
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Transaction History</h2>
-        {transactions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No transactions yet.</p>
-        ) : (
-          <div className="space-y-1">
-            {transactions.map((tx) => (
-              <div
-                key={tx.id}
-                className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm hover:bg-muted/40 transition-colors"
-              >
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-medium">{tx.description}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(tx.createdAt).toLocaleString()}
+      {/* Two-column layout: Left (plan/balance/topup) + Right (transactions) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 items-start">
+        {/* Left column */}
+        <div className="space-y-8">
+          {/* Subscription + Balance Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Current Plan Card */}
+            <section className="bg-muted/50 rounded-[2rem] p-9 flex flex-col justify-between relative overflow-hidden shadow-md">
+              {hasActiveSub && (
+                <div className="absolute top-6 right-6">
+                  <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold">
+                    Active Plan
                   </span>
                 </div>
-                <span
-                  className={cn(
-                    'tabular-nums font-semibold text-sm',
-                    tx.delta > 0
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-muted-foreground'
-                  )}
-                >
-                  {tx.delta > 0 ? '+' : ''}
-                  {tx.delta}
+              )}
+
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
+                  Your Subscription
                 </span>
+                <h2 className="text-4xl font-bold text-primary mb-5">
+                  {PLAN_LABELS[plan] ?? plan}
+                </h2>
+                <ul className="space-y-2.5 mb-8">
+                  {planFeatures.map((f) => (
+                    <li
+                      key={f}
+                      className="flex items-center gap-2.5 text-[0.9rem]"
+                    >
+                      <CheckCircle2 className="h-4.5 w-4.5 text-primary shrink-0" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ))}
+
+              {hasActiveSub ? (
+                <div className="space-y-3">
+                  {nextBilledAt && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <CalendarClock className="h-3.5 w-3.5" />
+                      <span>
+                        Next renewal:{' '}
+                        <span className="font-medium text-foreground">
+                          {formatDate(nextBilledAt)}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                  <Button
+                    onClick={manageSubscription}
+                    disabled={loading === 'portal'}
+                    className="w-full rounded-full gap-2 shadow-lg shadow-primary/25"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    {loading === 'portal' ? 'Opening…' : 'Manage Subscription'}
+                    <ExternalLink className="h-3.5 w-3.5 opacity-60" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <Button
+                    className="w-full rounded-full shadow-lg shadow-primary/25"
+                    onClick={() =>
+                      openCheckout(
+                        paddleConfig.starterPriceId,
+                        undefined,
+                        'starter'
+                      )
+                    }
+                    disabled={!paddleReady || !!loading}
+                  >
+                    {loading === 'starter' ? 'Opening…' : 'Starter — $4.99/mo'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="w-full rounded-full"
+                    onClick={() =>
+                      openCheckout(
+                        paddleConfig.hobbyistPriceId,
+                        undefined,
+                        'hobbyist'
+                      )
+                    }
+                    disabled={!paddleReady || !!loading}
+                  >
+                    {loading === 'hobbyist'
+                      ? 'Opening…'
+                      : 'Hobbyist — $9.00/mo'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="w-full rounded-full"
+                    onClick={() =>
+                      openCheckout(
+                        paddleConfig.scholarPriceId,
+                        undefined,
+                        'scholar'
+                      )
+                    }
+                    disabled={!paddleReady || !!loading}
+                  >
+                    {loading === 'scholar' ? 'Opening…' : 'Scholar — $14.99/mo'}
+                  </Button>
+                </div>
+              )}
+            </section>
+
+            {/* Pass Balance Card */}
+            <section className="bg-muted/40 rounded-[2rem] p-9 flex flex-col justify-center items-center text-center shadow-md">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-3">
+                Pass Balance
+              </span>
+              <div className="text-7xl font-black tracking-tighter">
+                {balance}
+              </div>
+              <span className="text-base font-medium text-primary/80">
+                Pass remaining
+              </span>
+
+              {passPerMonth > 0 && (
+                <div className="w-full h-3 bg-background/60 rounded-full overflow-hidden mt-6 mb-3">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all duration-1000"
+                    style={{ width: `${usagePercent}%` }}
+                  />
+                </div>
+              )}
+
+              <p className="text-sm text-muted-foreground max-w-[240px] mt-3">
+                {hasActiveSub
+                  ? 'Used for AI-powered question generation and answer analysis.'
+                  : 'Purchase a plan or top-up pack to get Pass.'}
+              </p>
+
+              {hasActiveSub && nextBilledAt && (
+                <p className="text-xs text-muted-foreground/70 mt-3">
+                  Renews on {formatDate(nextBilledAt)}
+                </p>
+              )}
+            </section>
           </div>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-3 gap-2 text-xs"
-          onClick={() => router.push('/pricing')}
-        >
-          View pricing &amp; plans
-          <ExternalLink className="h-3.5 w-3.5" />
-        </Button>
+
+          {/* Top-up Packs */}
+          <section>
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Top-up Packs
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {paddleConfig.topupPacks.map((pack) => (
+                <div
+                  key={pack.id}
+                  className="bg-muted/40 rounded-[2rem] p-6 flex justify-between items-center group hover:bg-muted/60 transition-colors shadow-md"
+                >
+                  <div>
+                    <h4 className="font-bold text-lg">{pack.pass} Pass</h4>
+                    <p className="text-sm text-muted-foreground">
+                      One-time purchase
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="rounded-full font-bold px-6 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                    disabled={!paddleReady || !!loading}
+                    onClick={() =>
+                      openCheckout(
+                        pack.priceId,
+                        { topupPassAmount: String(pack.pass) },
+                        pack.id
+                      )
+                    }
+                  >
+                    {loading === pack.id ? 'Opening…' : pack.price}
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Top-up Passes expire after 12 months. Checkout powered by Paddle.
+            </p>
+          </section>
+        </div>
+
+        {/* Right column — Transaction History */}
+        <section>
+          <h3 className="text-xl font-bold mb-6">Transaction History</h3>
+          {transactions.length === 0 ? (
+            <div className="bg-muted/40 rounded-[2rem] p-8 text-center shadow-md">
+              <Coins className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">
+                No transactions yet.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-muted/40 rounded-[2rem] overflow-hidden shadow-md">
+              <table className="w-full text-[0.9rem]">
+                <thead>
+                  <tr className="border-b border-border/40">
+                    <th className="px-5 py-4 font-bold text-muted-foreground text-left">
+                      Description
+                    </th>
+                    <th className="px-5 py-4 font-bold text-muted-foreground text-right">
+                      Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/20">
+                  {transactions.map((tx) => (
+                    <tr
+                      key={tx.id}
+                      className="hover:bg-background/30 transition-colors"
+                    >
+                      <td className="px-5 py-4">
+                        <span className="font-medium block">
+                          {tx.description}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(tx.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </td>
+                      <td
+                        className={cn(
+                          'px-5 py-4 text-right font-bold tabular-nums whitespace-nowrap',
+                          tx.delta > 0
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-muted-foreground'
+                        )}
+                      >
+                        {tx.delta > 0 ? '+' : ''}
+                        {tx.delta}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-4 gap-2 text-xs rounded-xl"
+            onClick={() => router.push('/pricing')}
+          >
+            View pricing &amp; plans
+            <ExternalLink className="h-3.5 w-3.5" />
+          </Button>
+        </section>
       </div>
     </div>
   );
