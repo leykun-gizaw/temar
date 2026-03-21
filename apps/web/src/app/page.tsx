@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import heroImg from '@/assets/hero_img.png';
 import {
   CalendarCheck,
   BrainCircuit,
@@ -59,7 +60,7 @@ export default function Index() {
           <div className="lg:col-span-5 relative hidden lg:block">
             <div className="aspect-square rounded-[3rem] overflow-hidden relative">
               <Image
-                src="/hero-desk.svg"
+                src={heroImg}
                 alt="Peaceful desk with a lamp, books, and plant"
                 fill
                 className="object-cover"
