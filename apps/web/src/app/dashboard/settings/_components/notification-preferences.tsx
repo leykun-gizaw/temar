@@ -1,6 +1,5 @@
 'use client';
 
-import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Bell } from 'lucide-react';
@@ -32,27 +31,27 @@ export function NotificationPreferences() {
   ];
 
   return (
-    <Card className="p-5 rounded-2xl bg-muted/50">
-      <div className="flex items-center gap-2 mb-4">
-        <Bell className="w-4 h-4 text-primary" />
-        <h3 className="text-sm font-semibold">Notification Preferences</h3>
+    <section className="bg-muted/40 rounded-[2rem] p-8 shadow-md">
+      <div className="flex items-center gap-3 mb-6">
+        <Bell className="w-5 h-5 text-primary" />
+        <h3 className="text-xl font-bold">Notification Preferences</h3>
       </div>
       <div className="space-y-4">
         {notifications.map((n) => (
           <div
             key={n.id}
-            className="flex items-center justify-between py-2 border-b border-border last:border-0"
+            className="flex items-center justify-between p-4 bg-background/60 rounded-xl"
           >
             <div className="space-y-0.5">
-              <Label htmlFor={n.id} className="text-sm font-medium">
+              <Label htmlFor={n.id} className="text-sm font-bold">
                 {n.title}
               </Label>
-              <p className="text-xs text-muted-foreground">{n.description}</p>
+              <p className="text-sm text-muted-foreground">{n.description}</p>
             </div>
             <Switch id={n.id} defaultChecked={n.defaultChecked} />
           </div>
         ))}
       </div>
-    </Card>
+    </section>
   );
 }
