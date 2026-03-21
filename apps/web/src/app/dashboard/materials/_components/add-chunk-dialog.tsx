@@ -33,6 +33,10 @@ export default function AddChunkDialog({
     initialErrorState
   );
 
+  // Keep a stable ref to onSuccess so the effect doesn't re-fire on callback identity changes
+  const onSuccessRef = React.useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
+
   // Close popover and notify parent on successful creation
   React.useEffect(() => {
     if (
@@ -41,9 +45,9 @@ export default function AddChunkDialog({
       !errorState.errors?.description
     ) {
       setOpen(false);
-      onSuccess?.();
+      onSuccessRef.current?.();
     }
-  }, [errorState, onSuccess]);
+  }, [errorState]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

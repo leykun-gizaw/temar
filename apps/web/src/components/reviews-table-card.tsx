@@ -5,12 +5,7 @@ import { Card } from '@/components/ui/card';
 import { BinocularsIcon, Play, Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from './ui/input';
-import {
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import type { RecallItemDue } from '@/lib/fetchers/recall-items';
 import {
   searchRecallItemsAction,
@@ -194,7 +189,8 @@ export default function ReviewsTableCard({
                     <span
                       className={cn(
                         'px-3 py-1 rounded-full text-[0.65rem] font-bold uppercase',
-                        STATE_STYLES[item.state] ?? 'bg-muted text-muted-foreground'
+                        STATE_STYLES[item.state] ??
+                          'bg-muted text-muted-foreground'
                       )}
                     >
                       {STATE_LABELS[item.state] ?? 'Unknown'}
@@ -223,9 +219,7 @@ export default function ReviewsTableCard({
                     <span
                       className={cn(
                         'text-sm font-medium',
-                        isDue
-                          ? 'text-destructive'
-                          : 'text-muted-foreground'
+                        isDue ? 'text-destructive' : 'text-muted-foreground'
                       )}
                     >
                       {formatDueDate(item.due)}
@@ -253,10 +247,13 @@ export default function ReviewsTableCard({
       {/* View All button */}
       <Button
         variant="ghost"
-        className="w-full mt-4 py-5 rounded-2xl bg-muted/50 text-muted-foreground font-bold text-sm hover:bg-muted"
+        className="w-fit bg-muted/50 text-muted-foreground font-bold text-sm hover:bg-muted"
         asChild
       >
-        <Link href="/dashboard/reviews" className="flex items-center gap-2">
+        <Link
+          href="/dashboard/reviews"
+          className="flex rounded-full items-center gap-2"
+        >
           <BinocularsIcon className="h-4 w-4" />
           View All Recall Items
         </Link>
@@ -279,5 +276,9 @@ function formatDueDate(due: string | Date): string {
   if (diffDays <= 7) {
     return d.toLocaleDateString([], { weekday: 'long' });
   }
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }

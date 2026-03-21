@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   CalendarCheck,
@@ -56,13 +57,15 @@ export default function Index() {
           </div>
 
           <div className="lg:col-span-5 relative hidden lg:block">
-            <div className="aspect-square bg-muted/60 rounded-[3rem] overflow-hidden relative flex items-center justify-center">
-              {/* Abstract illustration */}
-              <div className="relative w-3/4 h-3/4">
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-[60%] bg-secondary/40 rounded-t-2xl" />
-                <div className="absolute bottom-[55%] left-[15%] w-[35%] h-[25%] bg-primary/15 rounded-xl" />
-                <div className="absolute bottom-[45%] right-[10%] w-[30%] h-[20%] bg-primary/10 rounded-lg" />
-              </div>
+            <div className="aspect-square rounded-[3rem] overflow-hidden relative">
+              <Image
+                src="/hero-desk.svg"
+                alt="Peaceful desk with a lamp, books, and plant"
+                fill
+                className="object-cover"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
             </div>
 
             {/* Floating Active Recall card */}
