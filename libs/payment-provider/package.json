@@ -1,0 +1,9 @@
+{
+  "name": "@temar/payment-provider",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/index.ts",
+  "dependencies": {
+    "@paddle/paddle-node-sdk": "^1.10.0"
+  }
+}

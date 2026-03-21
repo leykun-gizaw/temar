@@ -906,6 +906,12 @@ importers:
         specifier: ^8.16.0
         version: 8.16.0
 
+  libs/payment-provider:
+    dependencies:
+      '@paddle/paddle-node-sdk':
+        specifier: ^1.10.0
+        version: 1.10.0(encoding@0.1.13)
+
   libs/pricing-service: {}
 
   libs/shared-types: {}

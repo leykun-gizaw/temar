@@ -24,7 +24,8 @@
       "@/*": ["../../apps/admin/src/*"],
       "@temar/db-client": ["../../libs/db-client/src/index.ts"],
       "@temar/shared-types": ["../../libs/shared-types/src/index.ts"],
-      "@temar/pricing-service": ["../../libs/pricing-service/src/index.ts"]
+      "@temar/pricing-service": ["../../libs/pricing-service/src/index.ts"],
+      "@temar/payment-provider": ["../../libs/payment-provider/src/index.ts"]
     },
     "types": ["node"],
     "outDir": "dist",
