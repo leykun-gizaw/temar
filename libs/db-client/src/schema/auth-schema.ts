@@ -33,9 +33,10 @@ export const user = pgTable('user', {
   aiApiKeyEncrypted: text('ai_api_key_encrypted'),
   useByok: boolean('use_byok').notNull().default(false),
   maxQuestionReviews: integer('max_question_reviews').notNull().default(5),
-  paddleCustomerId: text('paddle_customer_id').unique(),
+  providerKey: text('provider_key').default('paddle'),
+  providerCustomerId: text('provider_customer_id'),
   plan: text('plan').notNull().default('free'),
-  paddleSubscriptionId: text('paddle_subscription_id'),
+  providerSubscriptionId: text('provider_subscription_id'),
   passResetAt: timestamp('pass_reset_at', { withTimezone: true }),
 });
 

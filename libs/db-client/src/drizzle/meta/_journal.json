@@ -183,6 +183,13 @@
       "when": 1773946720177,
       "tag": "0025_round_garia",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1774091400479,
+      "tag": "0026_luxuriant_dazzler",
+      "breakpoints": true
     }
   ]
 }

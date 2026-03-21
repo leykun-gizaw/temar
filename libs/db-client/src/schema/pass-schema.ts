@@ -40,7 +40,7 @@ export const passTransaction = pgTable(
     deltaUsd: real('delta_usd').notNull(),
     operationType: text('operation_type').notNull(),
     description: text('description').notNull(),
-    paddleTransactionId: text('paddle_transaction_id'),
+    providerTransactionId: text('provider_transaction_id'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .default(sql`now()`),
