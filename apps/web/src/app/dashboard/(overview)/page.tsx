@@ -12,13 +12,14 @@ import {
 import { getTopicsCount } from '@/lib/fetchers/topics';
 import { getNotesCount } from '@/lib/fetchers/notes';
 import { getChunksCount } from '@/lib/fetchers/chunks';
+import { getDashboardStats } from '@/lib/fetchers/dashboard-stats';
 import GenerationQueueCard from '@/components/generation-queue-card';
 import { TopicStats } from '../_components/topic-stats';
 import { NoteStats } from '../_components/note-stats';
 import { ChunkStats } from '../_components/chunk-stats';
 import { ReviewItemStats } from '../_components/review-item-stats';
 import { GrowthOverview } from '../_components/growth-overview';
-import { ConsistencyDots } from '../_components/consistency-dots';
+import { ConsistencyCard } from '../_components/consistency-card';
 import Link from 'next/link';
 import { Plus, FileText } from 'lucide-react';
 import { getLoggedInUser } from '@/lib/fetchers/users';
@@ -26,24 +27,28 @@ import { getLoggedInUser } from '@/lib/fetchers/users';
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
+  const loggedInUser = await getLoggedInUser();
+
   const [
     dueItems,
     dueCount,
     allItemsResult,
+    scheduleItemsResult,
     trackedItems,
     topicsCount,
     notesCount,
     chunksCount,
-    user,
+    dashboardStats,
   ] = await Promise.all([
     getDueRecallItems({ limit: 50 }),
     getDueCount(),
     getAllRecallItems({ limit: 10, offset: 0 }),
+    getAllRecallItems({ limit: 500 }),
     getTrackingStatus(),
     getTopicsCount(),
     getNotesCount(),
     getChunksCount(),
-    getLoggedInUser(),
+    loggedInUser ? getDashboardStats(loggedInUser.id) : null,
   ]);
 
   return (
@@ -54,7 +59,7 @@ export default async function Page() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight">
-              Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}.
+              Welcome back{loggedInUser?.name ? `, ${loggedInUser.name.split(' ')[0]}` : ''}.
             </h1>
             <p className="text-lg text-muted-foreground mt-1">
               Your cognitive garden is thriving today.
@@ -90,8 +95,10 @@ export default async function Page() {
           <ReviewItemStats dueCount={dueCount} />
         </div>
 
-        {/* Growth Overview (visual shell) */}
-        <GrowthOverview />
+        {/* Growth Overview */}
+        {dashboardStats && (
+          <GrowthOverview stats={dashboardStats.growth} />
+        )}
 
         {/* Recall Items Table */}
         <ReviewsTableCard
@@ -102,9 +109,15 @@ export default async function Page() {
 
       {/* Right Sidebar Column */}
       <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-5">
-        <ConsistencyDots />
+        {dashboardStats && (
+          <ConsistencyCard stats={dashboardStats.consistency} />
+        )}
 
-        <UpcomingSessions dueItems={dueItems} dueCount={dueCount} />
+        <UpcomingSessions
+          allItems={scheduleItemsResult.items}
+          dueItems={dueItems}
+          dueCount={dueCount}
+        />
 
         <GenerationQueueCard initialItems={trackedItems} />
       </div>
