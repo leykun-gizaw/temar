@@ -21,7 +21,7 @@ export default function AnswerEditor({
       placeholder={placeholder}
       showToolbar
       className="bg-card border-0 h-full"
-      editorClassName="prose prose-sm dark:prose-invert max-w-none"
+      editorClassName="max-w-none"
     />
   );
 }

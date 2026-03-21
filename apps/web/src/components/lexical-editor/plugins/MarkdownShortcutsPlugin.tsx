@@ -22,6 +22,7 @@ import {
   type TextMatchTransformer,
   type Transformer,
 } from '@lexical/markdown';
+import { CodeNode, $createCodeNode, $isCodeNode } from '@lexical/code';
 import {
   HorizontalRuleNode,
   $createHorizontalRuleNode,
@@ -116,6 +117,34 @@ const BLOCK_EQUATION: ElementTransformer = {
   type: 'element',
 };
 
+/**
+ * Single-line code block shortcut: typing ``` (optionally followed by a
+ * language name) immediately creates a CodeNode instead of waiting for a
+ * closing ``` delimiter, which left residual backtick text in the editor.
+ * The built-in CODE transformer is kept in the list only for
+ * markdown import/export (paste & serialize).
+ */
+const CODE_SHORTCUT: ElementTransformer = {
+  dependencies: [CodeNode],
+  export: (node) => {
+    if (!$isCodeNode(node)) return null;
+    const textContent = node.getTextContent();
+    return (
+      '```' +
+      (node.getLanguage() || '') +
+      (textContent ? '\n' + textContent : '') +
+      '\n```'
+    );
+  },
+  regExp: /^```(\w+)?\s?$/,
+  replace: (parentNode, _children, match) => {
+    const codeNode = $createCodeNode(match[1] || undefined);
+    parentNode.replace(codeNode);
+    codeNode.selectEnd();
+  },
+  type: 'element',
+};
+
 const INLINE_EQUATION: TextMatchTransformer = {
   dependencies: [EquationNode],
   export: (node) => {
@@ -143,7 +172,8 @@ export const ALL_TRANSFORMERS: Transformer[] = [
   INLINE_EQUATION,
   HEADING,
   QUOTE,
-  CODE,
+  CODE_SHORTCUT,
+  CODE, // multi-line import/export (paste & serialize)
   UNORDERED_LIST,
   ORDERED_LIST,
   CHECK_LIST,
