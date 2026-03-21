@@ -27,6 +27,11 @@ export default function ReviewsTabs({
 }: ReviewsTabsProps) {
   const defaultTab = dueCount > 0 ? 'active' : 'history';
 
+  // Hide due items from history to prevent answer leakage (key points, past
+  // answers, rubric details). They reappear once the session completes.
+  const dueItemIds = new Set(dueItems.map((i) => i.id));
+  const historyItems = allItems.filter((i) => !dueItemIds.has(i.id));
+
   return (
     <Tabs
       defaultValue={defaultTab}
@@ -82,7 +87,7 @@ export default function ReviewsTabs({
 
       <TabsContent value="history" className="flex-1 min-h-0 mt-0">
         <ReviewHistory
-          allItems={allItems}
+          allItems={historyItems}
           topics={topics}
           currentTopicId={currentTopicId}
         />
