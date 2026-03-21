@@ -3,6 +3,7 @@ import { generateText, Output } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { createDeepSeek } from '@ai-sdk/deepseek';
 import { z } from 'zod';
 
 const analysisSchema = z.object({
@@ -87,8 +88,7 @@ export class LlmService {
         return { model: anthropic(sdkModelId) as any, pricingModelId };
       }
       case 'deepseek': {
-        const deepseek = createOpenAI({
-          baseURL: 'https://api.deepseek.com',
+        const deepseek = createDeepSeek({
           apiKey: config?.apiKey || process.env.DEEPSEEK_API_KEY,
         });
         const sdkModelId = config?.apiKey
