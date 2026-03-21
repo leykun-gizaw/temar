@@ -159,12 +159,6 @@ export default function MaterialsBrowser({
   const [outdatedChunks, setOutdatedChunks] = useState(initialOutdatedChunks);
   const [regeneratingIds, setRegeneratingIds] = useState<Set<string>>(new Set());
   const [passError, setPassError] = useState<string | null>(null);
-  const [consentState, setConsentState] = useState<{
-    estimatedPassCost: number;
-    basePassCost: number;
-    onApprove: (cost: number) => void;
-  } | null>(null);
-
   // ── Entity selection (topic/note detail in right panel) ──
   const [selectedEntity, setSelectedEntity] = useState<{
     type: 'topic' | 'note';
@@ -181,9 +175,9 @@ export default function MaterialsBrowser({
   );
 
   const handleRegenerate = useCallback(
-    (chunkId: string, consentedPassCost?: number) => {
+    (chunkId: string) => {
       setRegeneratingIds((prev) => new Set(prev).add(chunkId));
-      regenerateChunkQuestions(chunkId, consentedPassCost)
+      regenerateChunkQuestions(chunkId)
         .then((result) => {
           if (result.status === 'success') {
             setOutdatedChunks((prev) =>
@@ -191,12 +185,6 @@ export default function MaterialsBrowser({
             );
             if (result.newBalance != null)
               notifyPassBalanceChanged(result.newBalance);
-          } else if (result.status === 'consent_required') {
-            setConsentState({
-              estimatedPassCost: result.estimatedPassCost,
-              basePassCost: result.basePassCost,
-              onApprove: (cost) => handleRegenerate(chunkId, cost),
-            });
           } else if (result.status === 'insufficient_pass') {
             setPassError(
               `Not enough Pass (have ${result.balance}, need ${result.required}).`
@@ -1055,38 +1043,6 @@ export default function MaterialsBrowser({
         {treeSidebar}
         {contentPanel}
       </div>
-
-      {/* Pass consent dialog */}
-      <Dialog
-        open={!!consentState}
-        onOpenChange={(open) => {
-          if (!open) setConsentState(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Extra Pass required</DialogTitle>
-            <DialogDescription>
-              This content exceeds the standard token budget. Regeneration will
-              cost <strong>{consentState?.estimatedPassCost} Pass</strong>{' '}
-              instead of the base {consentState?.basePassCost} Pass.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConsentState(null)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                consentState?.onApprove(consentState.estimatedPassCost);
-                setConsentState(null);
-              }}
-            >
-              Approve &amp; Regenerate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Pass error dialog */}
       <Dialog

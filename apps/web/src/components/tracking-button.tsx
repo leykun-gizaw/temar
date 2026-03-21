@@ -70,11 +70,7 @@ export default function TrackingButton({
   const [isPending, startTransition] = useTransition();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [passError, setPassError] = useState<string | null>(null);
-  const [consentState, setConsentState] = useState<{
-    estimatedPassCost: number;
-    basePassCost: number;
-    onApprove: (cost: number) => void;
-  } | null>(null);
+  const [errorIsPassInsufficient, setErrorIsPassInsufficient] = useState(false);
 
   const suggestedCount = Math.min(
     Math.max(Math.ceil((contentLength ?? 1500) / 500), 2),
@@ -93,21 +89,19 @@ export default function TrackingButton({
 
   const runTrack = (
     types: string[] | undefined,
-    count: number | undefined,
-    consentedPassCost?: number
+    count: number | undefined
   ) => {
     startTransition(async () => {
       let result;
       try {
         if (entityType === 'topic') {
-          result = await trackTopic(entityId, types, count, consentedPassCost);
+          result = await trackTopic(entityId, types, count);
         } else if (entityType === 'note') {
           result = await trackNote(
             entityId,
             topicId ?? '',
             types,
-            count,
-            consentedPassCost
+            count
           );
         } else {
           result = await trackChunk(
@@ -115,8 +109,7 @@ export default function TrackingButton({
             noteId ?? '',
             topicId ?? '',
             types,
-            count,
-            consentedPassCost
+            count
           );
         }
         if (result.status === 'success') {
@@ -124,20 +117,15 @@ export default function TrackingButton({
           setPopoverOpen(false);
           if (result.newBalance != null)
             notifyPassBalanceChanged(result.newBalance);
-        } else if (result.status === 'consent_required') {
-          setPopoverOpen(false);
-          setConsentState({
-            estimatedPassCost: result.estimatedPassCost,
-            basePassCost: result.basePassCost,
-            onApprove: (cost) => runTrack(types, count, cost),
-          });
         } else if (result.status === 'insufficient_pass') {
           setPopoverOpen(false);
+          setErrorIsPassInsufficient(true);
           setPassError(
             `Not enough Pass (have ${result.balance}, need ${result.required}). Top up at /dashboard/billing.`
           );
         } else if (result.status === 'error') {
           setPopoverOpen(false);
+          setErrorIsPassInsufficient(false);
           setPassError(result.message);
         }
       } catch (err) {
@@ -292,42 +280,7 @@ export default function TrackingButton({
         </PopoverContent>
       </Popover>
 
-      {/* Pass consent dialog (kept as dialog — rare billing confirmation) */}
-      <Dialog
-        open={!!consentState}
-        onOpenChange={(open) => {
-          if (!open) setConsentState(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Extra Pass required</DialogTitle>
-            <DialogDescription>
-              This content is larger than the standard budget. Question
-              generation will cost{' '}
-              <strong>{consentState?.estimatedPassCost} Pass</strong> instead of
-              the base {consentState?.basePassCost} Pass.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConsentState(null)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (consentState) {
-                  consentState.onApprove(consentState.estimatedPassCost);
-                  setConsentState(null);
-                }
-              }}
-            >
-              Approve &amp; Generate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Pass insufficient error dialog */}
+      {/* Error dialog — contextual title based on error type */}
       <Dialog
         open={!!passError}
         onOpenChange={(open) => {
@@ -336,16 +289,20 @@ export default function TrackingButton({
       >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Not enough Pass</DialogTitle>
+            <DialogTitle>
+              {errorIsPassInsufficient ? 'Not enough Pass' : 'Generation failed'}
+            </DialogTitle>
             <DialogDescription>{passError}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPassError(null)}>
               Close
             </Button>
-            <Button asChild>
-              <a href="/dashboard/billing">Top up Pass</a>
-            </Button>
+            {errorIsPassInsufficient && (
+              <Button asChild>
+                <a href="/dashboard/billing">Top up Pass</a>
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

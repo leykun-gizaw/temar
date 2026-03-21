@@ -39,12 +39,7 @@ export type PassBalanceInfo = {
 
 export type CheckPassResult =
   | { status: 'ok'; passToDeduct: number; isByok: boolean }
-  | { status: 'insufficient_pass'; balance: number; required: number }
-  | {
-      status: 'consent_required';
-      estimatedPassCost: number;
-      basePassCost: number;
-    };
+  | { status: 'insufficient_pass'; balance: number; required: number };
 
 // ---------------------------------------------------------------------------
 // Balance queries
@@ -137,8 +132,7 @@ export async function checkPassAvailability(
   operationType: OperationType,
   modelId: string,
   inputText: string,
-  provider: 'google' | 'openai' | 'anthropic' | 'deepseek',
-  consentedPassCost?: number
+  provider: 'google' | 'openai' | 'anthropic' | 'deepseek'
 ): Promise<CheckPassResult> {
   const sessionUser = await getLoggedInUser();
   if (!sessionUser) {
@@ -177,19 +171,7 @@ export async function checkPassAvailability(
       ? estimatedPassCostFromTokens(inputTokens, operationType, modelCfg, opCfg)
       : baseUsdCost;
 
-  // consentedPassCost arrives from UI in passes — convert to USD
-  const consentedUsdCost = consentedPassCost
-    ? consentedPassCost * cpp
-    : undefined;
-  const requiredUsdCost = consentedUsdCost ?? estimatedUsdCost;
-
-  if (estimatedUsdCost > baseUsdCost && !consentedUsdCost) {
-    return {
-      status: 'consent_required',
-      estimatedPassCost: Math.ceil(estimatedUsdCost / cpp),
-      basePassCost: Math.ceil(baseUsdCost / cpp),
-    };
-  }
+  const requiredUsdCost = Math.max(baseUsdCost, estimatedUsdCost);
 
   const [balanceRow] = await dbClient
     .select({ balanceUsd: passBalance.balanceUsd })

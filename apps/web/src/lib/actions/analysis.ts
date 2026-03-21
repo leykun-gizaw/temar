@@ -14,8 +14,10 @@ async function getAiHeaders(): Promise<Record<string, string>> {
   const config = await getUserAiConfig();
   const settings = await getAiSettings();
   const isByok = settings.useByok && settings.hasApiKey;
+  // Use BYOK config provider first, then user's selected provider from settings
+  const provider = config?.provider || settings.provider;
   return {
-    ...(config?.provider && { 'x-ai-provider': config.provider }),
+    ...(provider && { 'x-ai-provider': provider }),
     // Always send the pricing model ID so services can record usage correctly.
     'x-ai-model': config?.model || settings.model || DEFAULT_MODEL_ID,
     ...(config?.apiKey && { 'x-ai-api-key': config.apiKey }),
@@ -38,11 +40,6 @@ export type AnalyzeAnswerResult =
       data: AnalysisResult;
       passDeducted: number;
     }
-  | {
-      status: 'consent_required';
-      estimatedPassCost: number;
-      basePassCost: number;
-    }
   | { status: 'insufficient_pass'; balance: number; required: number }
   | { status: 'error'; message: string };
 
@@ -51,15 +48,15 @@ export async function analyzeAnswer(
   questionTitle: string,
   questionText: string,
   criteria: string[],
-  keyPoints: string[],
-  consentedPassCost?: number
+  keyPoints: string[]
 ): Promise<AnalyzeAnswerResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) return { status: 'error', message: 'User not logged in' };
 
   const aiConfig = await getUserAiConfig();
-  const provider = (aiConfig?.provider ?? 'google') as AiProvider;
-  const modelId = aiConfig?.model ?? DEFAULT_MODEL_ID;
+  const settings = await getAiSettings();
+  const provider = (aiConfig?.provider ?? settings.provider ?? 'google') as AiProvider;
+  const modelId = aiConfig?.model || settings.model || DEFAULT_MODEL_ID;
 
   const inputText = [
     answer,
@@ -75,8 +72,7 @@ export async function analyzeAnswer(
     'answer_analysis',
     modelId,
     inputText,
-    provider,
-    consentedPassCost
+    provider
   );
 
   if (passCheck.status !== 'ok') {

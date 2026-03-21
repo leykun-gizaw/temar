@@ -13,18 +13,15 @@ export type TrackResult<T = unknown> =
   | { status: 'success'; data: T; newBalance?: number }
   | { status: 'error'; message: string }
   | { status: 'insufficient_pass'; balance: number; required: number }
-  | {
-      status: 'consent_required';
-      estimatedPassCost: number;
-      basePassCost: number;
-    };
 
 async function getAiHeaders(): Promise<Record<string, string>> {
   const config = await getUserAiConfig();
   const settings = await getAiSettings();
   const isByok = settings.useByok && settings.hasApiKey;
+  // Use BYOK config provider first, then user's selected provider from settings
+  const provider = config?.provider || settings.provider;
   return {
-    ...(config?.provider && { 'x-ai-provider': config.provider }),
+    ...(provider && { 'x-ai-provider': provider }),
     // Always send the pricing model ID so services can record usage correctly.
     // Falls back to DEFAULT_MODEL_ID when the user has no custom setting.
     'x-ai-model': config?.model || settings.model || DEFAULT_MODEL_ID,
@@ -35,21 +32,20 @@ async function getAiHeaders(): Promise<Record<string, string>> {
 
 async function passCheckForGeneration(
   inputText: string,
-  consentedPassCost?: number,
   chunkCount = 1
 ): Promise<
   { ok: true; passToDeduct: number } | { ok: false; result: TrackResult }
 > {
   const aiConfig = await getUserAiConfig();
-  const provider = (aiConfig?.provider ?? 'google') as AiProvider;
-  const modelId = aiConfig?.model ?? DEFAULT_MODEL_ID;
+  const settings = await getAiSettings();
+  const provider = (aiConfig?.provider ?? settings.provider ?? 'google') as AiProvider;
+  const modelId = aiConfig?.model || settings.model || DEFAULT_MODEL_ID;
 
   const passResult = await checkPassAvailability(
     'question_generation',
     modelId,
     inputText,
-    provider,
-    consentedPassCost
+    provider
   );
 
   if (passResult.status === 'ok') {
@@ -66,25 +62,13 @@ async function passCheckForGeneration(
       },
     };
   }
-  // Scale consent_required costs by chunk count
-  if (passResult.status === 'consent_required' && chunkCount > 1) {
-    return {
-      ok: false,
-      result: {
-        ...passResult,
-        estimatedPassCost: passResult.estimatedPassCost * chunkCount,
-        basePassCost: passResult.basePassCost * chunkCount,
-      },
-    };
-  }
   return { ok: false, result: passResult as TrackResult };
 }
 
 export async function trackTopic(
   topicId: string,
   questionTypes?: string[],
-  questionCount?: number,
-  consentedPassCost?: number
+  questionCount?: number
 ): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
@@ -97,7 +81,7 @@ export async function trackTopic(
     .where(eq(note.topicId, topicId));
   const numChunks = chunkCountRow?.value ?? 1;
 
-  const passCheck = await passCheckForGeneration('', consentedPassCost, Math.max(1, numChunks));
+  const passCheck = await passCheckForGeneration('', Math.max(1, numChunks));
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
@@ -138,8 +122,7 @@ export async function trackNote(
   noteId: string,
   topicId: string,
   questionTypes?: string[],
-  questionCount?: number,
-  consentedPassCost?: number
+  questionCount?: number
 ): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
@@ -151,7 +134,7 @@ export async function trackNote(
     .where(eq(chunk.noteId, noteId));
   const numChunks = chunkCountRow?.value ?? 1;
 
-  const passCheck = await passCheckForGeneration('', consentedPassCost, Math.max(1, numChunks));
+  const passCheck = await passCheckForGeneration('', Math.max(1, numChunks));
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
@@ -193,8 +176,7 @@ export async function trackChunk(
   noteId: string,
   topicId: string,
   questionTypes?: string[],
-  questionCount?: number,
-  consentedPassCost?: number
+  questionCount?: number
 ): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
@@ -206,7 +188,7 @@ export async function trackChunk(
     .limit(1);
   const inputText = chunkRow?.contentMd ?? '';
 
-  const passCheck = await passCheckForGeneration(inputText, consentedPassCost);
+  const passCheck = await passCheckForGeneration(inputText);
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
@@ -383,8 +365,7 @@ export async function getOutdatedChunks(): Promise<OutdatedChunk[]> {
 }
 
 export async function regenerateChunkQuestions(
-  chunkId: string,
-  consentedPassCost?: number
+  chunkId: string
 ): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
@@ -396,7 +377,7 @@ export async function regenerateChunkQuestions(
     .limit(1);
   const inputText = chunkRow?.contentMd ?? '';
 
-  const passCheck = await passCheckForGeneration(inputText, consentedPassCost);
+  const passCheck = await passCheckForGeneration(inputText);
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
