@@ -23,7 +23,7 @@ export default async function DashboardLayout({
           }
           defaultOpen={false}
         >
-          <AppSidebar />
+          <AppSidebar variant="floating" />
           <SidebarInset>
             <SiteHeader />
             {children}
