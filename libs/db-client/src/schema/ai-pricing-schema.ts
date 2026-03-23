@@ -84,13 +84,11 @@ export const aiMarkupConfig = pgTable(
 );
 
 // ---------------------------------------------------------------------------
-// operation_configs — operation type definitions and token budgets
+// operation_configs — operation type definitions
 // ---------------------------------------------------------------------------
 export const operationConfig = pgTable('operation_configs', {
   operationType: text('operation_type').primaryKey(),
   label: text('label').notNull(),
-  maxInputTokens: integer('max_input_tokens').notNull(),
-  maxOutputTokens: integer('max_output_tokens').notNull(),
   isCurrentFeature: boolean('is_current_feature').notNull().default(false),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true })

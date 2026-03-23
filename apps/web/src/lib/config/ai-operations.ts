@@ -8,8 +8,6 @@ import {
   getActivePricing as _getActivePricing,
   getActiveMarkup as _getActiveMarkup,
   getOperationConfig as _getOperationConfig,
-  computePassCost as _computePassCost,
-  estimatedPassCostFromTokens as _estimatedPassCostFromTokens,
   recordUsage as _recordUsage,
   updateMarkup as _updateMarkup,
   updateProviderPricing as _updateProviderPricing,
@@ -44,8 +42,6 @@ export const getActiveModels = _getActiveModels;
 export const getActivePricing = _getActivePricing;
 export const getActiveMarkup = _getActiveMarkup;
 export const getOperationConfig = _getOperationConfig;
-export const computePassCost = _computePassCost;
-export const estimatedPassCostFromTokens = _estimatedPassCostFromTokens;
 export const recordUsage = _recordUsage;
 export const updateMarkup = _updateMarkup;
 export const updateProviderPricing = _updateProviderPricing;

@@ -12,11 +12,6 @@ import { getLoggedInUser } from '@/lib/fetchers/users';
 import type { OperationType } from '@/lib/config/ai-operations';
 import {
   isByokFree,
-  estimateInputTokens,
-  computePassCost,
-  estimatedPassCostFromTokens,
-  getOperationConfig,
-  getActiveModels,
   getCostPerPassUsd,
 } from '@/lib/config/ai-operations';
 
@@ -129,10 +124,7 @@ export async function creditPass(
 // ---------------------------------------------------------------------------
 
 export async function checkPassAvailability(
-  operationType: OperationType,
-  modelId: string,
-  inputText: string,
-  provider: 'google' | 'openai' | 'anthropic' | 'deepseek'
+  operationType: OperationType
 ): Promise<CheckPassResult> {
   const sessionUser = await getLoggedInUser();
   if (!sessionUser) {
@@ -143,7 +135,6 @@ export async function checkPassAvailability(
     .select({
       aiApiKeyEncrypted: user.aiApiKeyEncrypted,
       useByok: user.useByok,
-      plan: user.plan,
     })
     .from(user)
     .where(eq(user.id, sessionUser.id))
@@ -157,22 +148,6 @@ export async function checkPassAvailability(
     return { status: 'ok', passToDeduct: 0, isByok: true };
   }
 
-  const cpp = getCostPerPassUsd();
-
-  // computePassCost and estimatedPassCostFromTokens now return USD
-  const baseUsdCost = await computePassCost(modelId, operationType);
-  const inputTokens = estimateInputTokens(inputText, provider);
-
-  const models = await getActiveModels();
-  const modelCfg = models.find((m) => m.modelId === modelId);
-  const opCfg = await getOperationConfig(operationType);
-  const estimatedUsdCost =
-    modelCfg && opCfg
-      ? estimatedPassCostFromTokens(inputTokens, operationType, modelCfg, opCfg)
-      : baseUsdCost;
-
-  const requiredUsdCost = Math.max(baseUsdCost, estimatedUsdCost);
-
   const [balanceRow] = await dbClient
     .select({ balanceUsd: passBalance.balanceUsd })
     .from(passBalance)
@@ -181,16 +156,15 @@ export async function checkPassAvailability(
 
   const currentBalanceUsd = balanceRow?.balanceUsd ?? 0;
 
-  if (currentBalanceUsd < requiredUsdCost) {
+  if (currentBalanceUsd <= 0) {
     return {
       status: 'insufficient_pass',
-      balance: usdToPass(currentBalanceUsd),
-      required: Math.ceil(requiredUsdCost / cpp),
+      balance: 0,
+      required: 1,
     };
   }
 
-  // passToDeduct carries the USD amount for downstream deduction
-  return { status: 'ok', passToDeduct: requiredUsdCost, isByok: false };
+  return { status: 'ok', passToDeduct: 0, isByok: false };
 }
 
 // ---------------------------------------------------------------------------

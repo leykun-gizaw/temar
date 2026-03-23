@@ -21,8 +21,6 @@ export interface ModelConfig {
 
 export interface OperationConfig {
   label: string;
-  maxInputTokens: number;
-  maxOutputTokens: number;
   isCurrentFeature: boolean;
 }
 

@@ -130,8 +130,6 @@ export async function getOperationConfig(
     );
   return {
     label: row.label,
-    maxInputTokens: row.maxInputTokens,
-    maxOutputTokens: row.maxOutputTokens,
     isCurrentFeature: row.isCurrentFeature,
   };
 }
@@ -143,50 +141,6 @@ export async function getOperationConfig(
 export function getCostPerPassUsd(): number {
   const envVal = process.env['COST_PER_PASS_USD'];
   return envVal ? parseFloat(envVal) || 0.05 : 0.05;
-}
-
-/**
- * Compute the Pass cost for an operation + model (async, DB-driven).
- * Formula: ((input * inputPrice + output * outputPrice) * markup) / COST_PER_PASS
- * Minimum 1 Pass.
- */
-export async function computePassCost(
-  modelId: string,
-  operationType: OperationType
-): Promise<number> {
-  const pricing = await getActivePricing(modelId);
-  const markup = await getActiveMarkup(modelId);
-  const opConfig = await getOperationConfig(operationType);
-
-  const inputCost =
-    (opConfig.maxInputTokens / 1_000_000) * pricing.inputPricePer1M;
-  const outputCost =
-    (opConfig.maxOutputTokens / 1_000_000) * pricing.outputPricePer1M;
-
-  return (inputCost + outputCost) * markup.markupFactor;
-}
-
-/**
- * Estimate Pass cost for a specific amount of input tokens (may exceed the
- * base budget defined in the operation config). Synchronous version that
- * accepts pre-fetched config.
- */
-export function estimatedPassCostFromTokens(
-  inputTokens: number,
-  operationType: OperationType,
-  modelConfig: ModelConfig,
-  opConfig: OperationConfig
-): number {
-  const inputCost =
-    (opConfig.maxInputTokens / 1_000_000) * modelConfig.inputPricePer1M;
-  const outputCost =
-    (opConfig.maxOutputTokens / 1_000_000) * modelConfig.outputPricePer1M;
-  const baseCost =
-    (inputCost + outputCost) * modelConfig.markupFactor;
-
-  if (inputTokens <= opConfig.maxInputTokens) return baseCost;
-  const overageRatio = inputTokens / opConfig.maxInputTokens;
-  return baseCost * overageRatio;
 }
 
 // ---------------------------------------------------------------------------

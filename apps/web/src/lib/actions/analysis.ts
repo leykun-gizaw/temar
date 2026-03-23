@@ -68,12 +68,7 @@ export async function analyzeAnswer(
   const estimatedTokens = estimateInputTokens(inputText, provider);
 
   // Step 1: Check if user can afford this operation (no deduction yet)
-  const passCheck = await checkPassAvailability(
-    'answer_analysis',
-    modelId,
-    inputText,
-    provider
-  );
+  const passCheck = await checkPassAvailability('answer_analysis');
 
   if (passCheck.status !== 'ok') {
     return passCheck as AnalyzeAnswerResult;

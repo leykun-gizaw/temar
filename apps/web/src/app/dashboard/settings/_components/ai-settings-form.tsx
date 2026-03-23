@@ -18,28 +18,16 @@ import {
   Sparkles,
   Trash2,
   Shield,
-  Coins,
   Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AiSettings, AiProvider } from '@/lib/actions/ai-settings';
-import {
-  DEFAULT_MODEL_ID,
-  type OperationType,
-  type ModelConfig,
-} from '@temar/shared-types';
+import { DEFAULT_MODEL_ID, type ModelConfig } from '@temar/shared-types';
 import {
   saveAiSettings,
   clearAiApiKey,
   saveMaxQuestionReviews,
 } from '@/lib/actions/ai-settings';
-
-const OP_LABELS: Record<string, string> = {
-  question_generation: 'Question Generation',
-  answer_analysis: 'Answer Analysis',
-  chunk_enhancement: 'Chunk Enhancement',
-  content_generation: 'Content Generation',
-};
 
 const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
   {
@@ -67,11 +55,9 @@ const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
 export function AiSettingsForm({
   initialSettings,
   modelConfigs,
-  passCosts,
 }: {
   initialSettings: AiSettings;
   modelConfigs: ModelConfig[];
-  passCosts: Record<string, Record<string, number>>;
 }) {
   const defaultModel = modelConfigs.find((m) => m.modelId === DEFAULT_MODEL_ID);
   const [provider, setProvider] = useState<AiProvider>(
@@ -89,17 +75,6 @@ export function AiSettingsForm({
   const [isPending, startTransition] = useTransition();
 
   const providerModels = modelConfigs.filter((m) => m.provider === provider);
-  const effectiveModel = model || DEFAULT_MODEL_ID;
-  const isByokActive = useByok && (hasExistingKey || !!apiKey);
-
-  const CURRENT_OPS: OperationType[] = [
-    'question_generation',
-    'answer_analysis',
-  ];
-  const FUTURE_OPS: OperationType[] = [
-    'chunk_enhancement',
-    'content_generation',
-  ];
 
   const handleProviderChange = (value: string) => {
     const p = value as AiProvider;
@@ -245,66 +220,6 @@ export function AiSettingsForm({
                 Your API key is encrypted at rest using AES-256-GCM.
               </p>
             </div>
-          </div>
-
-          {/* Pass cost preview */}
-          <div className="rounded-xl bg-background/60 p-5 space-y-3">
-            <div className="flex items-center gap-1.5">
-              <Coins className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Pass Cost Preview</span>
-            </div>
-            {isByokActive ? (
-              <div className="flex items-start gap-2 text-sm text-green-600 dark:text-green-400">
-                <Shield className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>
-                  BYOK active — current AI features (question generation &amp;
-                  answer analysis) are <strong>free</strong> with your own API
-                  key.
-                </span>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {CURRENT_OPS.map((op) => {
-                  const cost = passCosts[effectiveModel]?.[op] ?? 1;
-                  const label = OP_LABELS[op];
-                  return (
-                    <div key={op} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{label}</span>
-                      <span className="font-medium tabular-nums">
-                        {cost} Pass
-                      </span>
-                    </div>
-                  );
-                })}
-                <div className="border-t pt-2 mt-2">
-                  {FUTURE_OPS.map((op) => {
-                    const cost = passCosts[effectiveModel]?.[op] ?? 1;
-                    const label = OP_LABELS[op];
-                    return (
-                      <div
-                        key={op}
-                        className="flex justify-between text-sm opacity-50"
-                      >
-                        <span className="text-muted-foreground">
-                          {label} (coming soon)
-                        </span>
-                        <span className="font-medium tabular-nums">
-                          {cost} Pass
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            {!isByokActive && (
-              <p className="text-xs text-muted-foreground flex items-start gap-1">
-                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                {hasExistingKey
-                  ? 'BYOK is toggled off — using your Pass balance. Toggle on above to use your API key instead.'
-                  : 'No API key set — uses your Pass balance. Add a key and enable BYOK for free access.'}
-              </p>
-            )}
           </div>
 
           <div className="flex items-center gap-3 pt-2">
