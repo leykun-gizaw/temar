@@ -5,7 +5,7 @@ import { getLoggedInUser } from '@/lib/fetchers/users';
 import { fsrsServiceFetch } from '../fsrs-service';
 import { getUserAiConfig, getAiSettings } from './ai-settings';
 import { checkPassAvailability } from './pass';
-import { dbClient, chunk, note, eq, count } from '@temar/db-client';
+import { dbClient, chunk, note, chunkTracking, eq, and } from '@temar/db-client';
 import type { AiProvider } from '@/lib/config/ai-operations';
 import { DEFAULT_MODEL_ID, getCostPerPassUsd } from '@/lib/config/ai-operations';
 
@@ -30,39 +30,87 @@ async function getAiHeaders(): Promise<Record<string, string>> {
   };
 }
 
-async function passCheckForGeneration(
-  inputText: string,
-  chunkCount = 1
-): Promise<
-  { ok: true; passToDeduct: number } | { ok: false; result: TrackResult }
+async function passCheckForGeneration(): Promise<
+  { ok: true } | { ok: false; result: TrackResult }
 > {
-  const aiConfig = await getUserAiConfig();
-  const settings = await getAiSettings();
-  const provider = (aiConfig?.provider ?? settings.provider ?? 'google') as AiProvider;
-  const modelId = aiConfig?.model || settings.model || DEFAULT_MODEL_ID;
-
-  const passResult = await checkPassAvailability(
-    'question_generation',
-    modelId,
-    inputText,
-    provider
-  );
+  const passResult = await checkPassAvailability('question_generation');
 
   if (passResult.status === 'ok') {
-    const totalCost = passResult.passToDeduct * chunkCount;
-    return { ok: true, passToDeduct: totalCost };
-  }
-  // Scale insufficient_pass required amount by chunk count
-  if (passResult.status === 'insufficient_pass' && chunkCount > 1) {
-    return {
-      ok: false,
-      result: {
-        ...passResult,
-        required: passResult.required * chunkCount,
-      },
-    };
+    return { ok: true };
   }
   return { ok: false, result: passResult as TrackResult };
+}
+
+export interface CascadeChunkInfo {
+  id: string;
+  name: string;
+  isTracked: boolean;
+}
+
+export interface CascadeInfo {
+  total: number;
+  tracked: number;
+  untracked: number;
+  chunks: CascadeChunkInfo[];
+}
+
+/** Returns the tracked/untracked breakdown for all chunks under a topic or note. */
+export async function getCascadeInfo(
+  entityType: 'topic' | 'note',
+  entityId: string
+): Promise<CascadeInfo> {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) throw new Error('User not logged in');
+
+  const rows =
+    entityType === 'topic'
+      ? await dbClient
+          .select({
+            id: chunk.id,
+            name: chunk.name,
+            trackingStatus: chunkTracking.status,
+          })
+          .from(chunk)
+          .innerJoin(note, eq(chunk.noteId, note.id))
+          .leftJoin(
+            chunkTracking,
+            and(
+              eq(chunkTracking.chunkId, chunk.id),
+              eq(chunkTracking.userId, loggedInUser.id)
+            )
+          )
+          .where(eq(note.topicId, entityId))
+      : await dbClient
+          .select({
+            id: chunk.id,
+            name: chunk.name,
+            trackingStatus: chunkTracking.status,
+          })
+          .from(chunk)
+          .leftJoin(
+            chunkTracking,
+            and(
+              eq(chunkTracking.chunkId, chunk.id),
+              eq(chunkTracking.userId, loggedInUser.id)
+            )
+          )
+          .where(eq(chunk.noteId, entityId));
+
+  const chunks: CascadeChunkInfo[] = rows.map((r) => ({
+    id: r.id,
+    name: r.name ?? 'Untitled',
+    isTracked:
+      r.trackingStatus != null && r.trackingStatus !== 'untracked',
+  }));
+
+  const tracked = chunks.filter((c) => c.isTracked).length;
+
+  return {
+    total: chunks.length,
+    tracked,
+    untracked: chunks.length - tracked,
+    chunks,
+  };
 }
 
 export async function trackTopic(
@@ -73,15 +121,15 @@ export async function trackTopic(
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
-  // Count chunks under this topic for accurate cost estimation
-  const [chunkCountRow] = await dbClient
-    .select({ value: count() })
-    .from(chunk)
-    .innerJoin(note, eq(chunk.noteId, note.id))
-    .where(eq(note.topicId, topicId));
-  const numChunks = chunkCountRow?.value ?? 1;
+  // Count only UNTRACKED chunks for accurate cost estimation
+  const info = await getCascadeInfo('topic', topicId);
+  const numNewChunks = info.untracked;
 
-  const passCheck = await passCheckForGeneration('', Math.max(1, numChunks));
+  if (numNewChunks === 0) {
+    return { status: 'success', data: { message: 'All chunks already tracked' } };
+  }
+
+  const passCheck = await passCheckForGeneration();
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
@@ -127,14 +175,15 @@ export async function trackNote(
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
 
-  // Count chunks under this note for accurate cost estimation
-  const [chunkCountRow] = await dbClient
-    .select({ value: count() })
-    .from(chunk)
-    .where(eq(chunk.noteId, noteId));
-  const numChunks = chunkCountRow?.value ?? 1;
+  // Count only UNTRACKED chunks for accurate cost estimation
+  const info = await getCascadeInfo('note', noteId);
+  const numNewChunks = info.untracked;
 
-  const passCheck = await passCheckForGeneration('', Math.max(1, numChunks));
+  if (numNewChunks === 0) {
+    return { status: 'success', data: { message: 'All chunks already tracked' } };
+  }
+
+  const passCheck = await passCheckForGeneration();
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
@@ -188,7 +237,7 @@ export async function trackChunk(
     .limit(1);
   const inputText = chunkRow?.contentMd ?? '';
 
-  const passCheck = await passCheckForGeneration(inputText);
+  const passCheck = await passCheckForGeneration();
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
@@ -223,6 +272,56 @@ export async function trackChunk(
         err instanceof Error ? err.message : 'Question generation failed',
     };
   }
+}
+
+export interface ChunkTrackConfig {
+  chunkId: string;
+  questionTypes: string[];
+  questionCount: number;
+}
+
+/** Track multiple chunks individually with per-chunk question type configs. */
+export async function trackChunksBatch(
+  configs: ChunkTrackConfig[]
+): Promise<TrackResult> {
+  const loggedInUser = await getLoggedInUser();
+  if (!loggedInUser) throw new Error('User not logged in');
+
+  if (configs.length === 0) {
+    return { status: 'success', data: { message: 'No chunks to track' } };
+  }
+
+  const passCheck = await passCheckForGeneration();
+  if (!passCheck.ok) return passCheck.result;
+
+  const aiHeaders = await getAiHeaders();
+  let lastBalance: number | null = null;
+
+  for (const cfg of configs) {
+    const data = await fsrsServiceFetch<Record<string, unknown>>(
+      `track/chunk/${cfg.chunkId}`,
+      {
+        method: 'POST',
+        userId: loggedInUser.id,
+        headers: aiHeaders,
+        body: {
+          questionTypes: cfg.questionTypes,
+          questionCount: cfg.questionCount,
+        },
+      }
+    );
+    if (data?.newBalance != null) lastBalance = data.newBalance as number;
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/materials');
+  return {
+    status: 'success',
+    data: { tracked: configs.length },
+    ...(lastBalance != null && {
+      newBalance: Math.floor(lastBalance / getCostPerPassUsd()),
+    }),
+  };
 }
 
 export async function untrackTopic(topicId: string) {
@@ -377,7 +476,7 @@ export async function regenerateChunkQuestions(
     .limit(1);
   const inputText = chunkRow?.contentMd ?? '';
 
-  const passCheck = await passCheckForGeneration(inputText);
+  const passCheck = await passCheckForGeneration();
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
