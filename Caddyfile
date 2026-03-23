@@ -20,7 +20,15 @@
 	}
 }
 
-# AppSmith setup
-admin.temar.leyk14.com {
-	reverse_proxy appsmith:80
+# Admin panel
+admin.temar.app {
+	reverse_proxy admin:{$ADMIN_PORT:3000}
+
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+	}
 }
