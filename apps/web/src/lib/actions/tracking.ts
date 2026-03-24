@@ -6,7 +6,6 @@ import { fsrsServiceFetch } from '../fsrs-service';
 import { getUserAiConfig, getAiSettings } from './ai-settings';
 import { checkPassAvailability } from './pass';
 import { dbClient, chunk, note, chunkTracking, eq, and } from '@temar/db-client';
-import type { AiProvider } from '@/lib/config/ai-operations';
 import { DEFAULT_MODEL_ID, getCostPerPassUsd } from '@/lib/config/ai-operations';
 
 export type TrackResult<T = unknown> =
@@ -229,13 +228,6 @@ export async function trackChunk(
 ): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
-
-  const [chunkRow] = await dbClient
-    .select({ contentMd: chunk.contentMd })
-    .from(chunk)
-    .where(eq(chunk.id, chunkId))
-    .limit(1);
-  const inputText = chunkRow?.contentMd ?? '';
 
   const passCheck = await passCheckForGeneration();
   if (!passCheck.ok) return passCheck.result;
@@ -468,13 +460,6 @@ export async function regenerateChunkQuestions(
 ): Promise<TrackResult> {
   const loggedInUser = await getLoggedInUser();
   if (!loggedInUser) throw new Error('User not logged in');
-
-  const [chunkRow] = await dbClient
-    .select({ contentMd: chunk.contentMd })
-    .from(chunk)
-    .where(eq(chunk.id, chunkId))
-    .limit(1);
-  const inputText = chunkRow?.contentMd ?? '';
 
   const passCheck = await passCheckForGeneration();
   if (!passCheck.ok) return passCheck.result;

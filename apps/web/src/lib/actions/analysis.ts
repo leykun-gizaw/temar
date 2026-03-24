@@ -56,7 +56,6 @@ export async function analyzeAnswer(
   const aiConfig = await getUserAiConfig();
   const settings = await getAiSettings();
   const provider = (aiConfig?.provider ?? settings.provider ?? 'google') as AiProvider;
-  const modelId = aiConfig?.model || settings.model || DEFAULT_MODEL_ID;
 
   const inputText = [
     answer,
