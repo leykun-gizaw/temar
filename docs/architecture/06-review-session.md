@@ -71,8 +71,8 @@ sequenceDiagram
     Session->>Analyze: analyzeAnswer(recallItemId, answer,<br>questionTitle, questionText, criteria, keyPoints)
 
     %% 8. Pass availability check
-    Analyze->>Analyze: Check pass availability<br>(same flow as tracking)
-    Analyze->>Analyze: Build AI headers<br>(x-api-key, x-user-id, model config)
+    Analyze->>Analyze: checkPassAvailability('answer_analysis')<br>BYOK? free. Else balance > 0? proceed.
+    Analyze->>Analyze: Build AI headers<br>(x-ai-provider, x-ai-model, x-ai-api-key, x-byok)
 
     %% 9. Call analysis service
     Analyze->>AnalysisSvc: analysisServiceFetch('analyze', POST)<br>{ answer, questionTitle, questionText,<br>criteria, keyPoints }

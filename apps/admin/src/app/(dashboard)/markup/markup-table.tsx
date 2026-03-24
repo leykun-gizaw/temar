@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ModelConfig } from '@temar/shared-types';
 import {
   Table,
@@ -60,6 +60,33 @@ export function MarkupTable({ models, costTiers, rawCosts }: MarkupTableProps) {
   const [historyModel, setHistoryModel] = useState<string | null>(null);
   const [history, setHistory] = useState<MarkupHistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [providerFilter, setProviderFilter] = useState<string | null>(null);
+  const [tierFilter, setTierFilter] = useState<string | null>(null);
+
+  const providerCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const m of models) {
+      counts.set(m.provider, (counts.get(m.provider) ?? 0) + 1);
+    }
+    return counts;
+  }, [models]);
+
+  const tierCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const m of models) {
+      const tier = costTiers[m.modelId] ?? '—';
+      counts.set(tier, (counts.get(tier) ?? 0) + 1);
+    }
+    return counts;
+  }, [models, costTiers]);
+
+  const filteredModels = useMemo(() => {
+    return models.filter((m) => {
+      if (providerFilter && m.provider !== providerFilter) return false;
+      if (tierFilter && (costTiers[m.modelId] ?? '—') !== tierFilter) return false;
+      return true;
+    });
+  }, [models, costTiers, providerFilter, tierFilter]);
 
   function openEdit(model: ModelConfig) {
     setEditModel(model);
@@ -86,6 +113,55 @@ export function MarkupTable({ models, costTiers, rawCosts }: MarkupTableProps) {
 
   return (
     <>
+      <div className="space-y-2 mb-4">
+        <div className="flex gap-1 flex-wrap">
+          <Button
+            variant={providerFilter === null ? 'default' : 'outline'}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setProviderFilter(null)}
+          >
+            All ({models.length})
+          </Button>
+          {[...providerCounts.entries()]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([provider, count]) => (
+              <Button
+                key={provider}
+                variant={providerFilter === provider ? 'default' : 'outline'}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setProviderFilter(provider)}
+              >
+                <span className="capitalize">{provider}</span> ({count})
+              </Button>
+            ))}
+        </div>
+        <div className="flex gap-1 flex-wrap">
+          <Button
+            variant={tierFilter === null ? 'default' : 'outline'}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setTierFilter(null)}
+          >
+            All ({models.length})
+          </Button>
+          {[...tierCounts.entries()]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([tier, count]) => (
+              <Button
+                key={tier}
+                variant={tierFilter === tier ? 'default' : 'outline'}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setTierFilter(tier)}
+              >
+                {tier} ({count})
+              </Button>
+            ))}
+        </div>
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -97,7 +173,7 @@ export function MarkupTable({ models, costTiers, rawCosts }: MarkupTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {models.map((m) => (
+          {filteredModels.map((m) => (
             <TableRow key={m.modelId}>
               <TableCell className="font-mono text-sm">{m.modelId}</TableCell>
               <TableCell className="capitalize">{m.provider}</TableCell>
@@ -117,7 +193,7 @@ export function MarkupTable({ models, costTiers, rawCosts }: MarkupTableProps) {
               </TableCell>
             </TableRow>
           ))}
-          {models.length === 0 && (
+          {filteredModels.length === 0 && (
             <TableRow>
               <TableCell colSpan={5} className="text-center text-muted-foreground">
                 No active models

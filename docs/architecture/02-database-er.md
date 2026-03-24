@@ -217,8 +217,6 @@ erDiagram
     operation_configs {
         text operation_type PK
         text label
-        integer max_input_tokens
-        integer max_output_tokens
         boolean is_current_feature
         boolean is_active
         timestamp created_at
@@ -312,7 +310,7 @@ erDiagram
 | `ai_models` | Master registry of available AI models across providers |
 | `ai_model_pricing` | Versioned provider token pricing (input/output per 1M tokens); append-only with `effective_from`/`effective_to` |
 | `ai_markup_config` | Versioned per-model markup factors applied on top of provider pricing; append-only |
-| `operation_configs` | Defines operation types (question generation, answer analysis, etc.) with token budgets |
+| `operation_configs` | Defines operation types (question generation, answer analysis, etc.) with feature flags |
 | `ai_usage_log` | Append-only audit trail of every AI call; denormalizes pricing snapshots for immutable cost records |
 
 ---

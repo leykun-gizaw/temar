@@ -97,29 +97,21 @@ const OPERATIONS = [
   {
     operationType: 'question_generation',
     label: 'Question Generation',
-    maxInputTokens: 4000,
-    maxOutputTokens: 2000,
     isCurrentFeature: true,
   },
   {
     operationType: 'answer_analysis',
     label: 'Answer Analysis',
-    maxInputTokens: 2000,
-    maxOutputTokens: 1000,
     isCurrentFeature: true,
   },
   {
     operationType: 'chunk_enhancement',
     label: 'Chunk Enhancement',
-    maxInputTokens: 2000,
-    maxOutputTokens: 1000,
     isCurrentFeature: false,
   },
   {
     operationType: 'content_generation',
     label: 'Content Generation',
-    maxInputTokens: 8000,
-    maxOutputTokens: 4000,
     isCurrentFeature: false,
   },
 ];

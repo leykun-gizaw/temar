@@ -26,8 +26,6 @@ import { updateOperation } from './actions';
 interface OpRow {
   operationType: string;
   label: string;
-  maxInputTokens: number;
-  maxOutputTokens: number;
   isCurrentFeature: boolean;
   isActive: boolean;
   createdAt: Date | null;
@@ -66,8 +64,6 @@ export function OperationsTable({ operations }: { operations: OpRow[] }) {
           <TableRow>
             <TableHead>Operation Type</TableHead>
             <TableHead>Label</TableHead>
-            <TableHead>Max Input Tokens</TableHead>
-            <TableHead>Max Output Tokens</TableHead>
             <TableHead>Current Feature</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
@@ -80,8 +76,6 @@ export function OperationsTable({ operations }: { operations: OpRow[] }) {
                 {op.operationType}
               </TableCell>
               <TableCell>{op.label}</TableCell>
-              <TableCell>{op.maxInputTokens.toLocaleString()}</TableCell>
-              <TableCell>{op.maxOutputTokens.toLocaleString()}</TableCell>
               <TableCell>
                 {op.isCurrentFeature ? (
                   <Badge>Yes</Badge>
@@ -108,7 +102,7 @@ export function OperationsTable({ operations }: { operations: OpRow[] }) {
           {operations.length === 0 && (
             <TableRow>
               <TableCell
-                colSpan={7}
+                colSpan={5}
                 className="text-center text-muted-foreground"
               >
                 No operations configured
@@ -136,26 +130,6 @@ export function OperationsTable({ operations }: { operations: OpRow[] }) {
                   id="label"
                   name="label"
                   defaultValue={editOp.label}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maxInputTokens">Max Input Tokens</Label>
-                <Input
-                  id="maxInputTokens"
-                  name="maxInputTokens"
-                  type="number"
-                  defaultValue={editOp.maxInputTokens}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maxOutputTokens">Max Output Tokens</Label>
-                <Input
-                  id="maxOutputTokens"
-                  name="maxOutputTokens"
-                  type="number"
-                  defaultValue={editOp.maxOutputTokens}
                   required
                 />
               </div>

@@ -159,18 +159,30 @@ flowchart TD
 
 ### Pass pre-check at the web layer
 
-Before cascade operations reach the FSRS service, the web app counts chunks and estimates the total pass cost upfront:
+Before cascade operations reach the FSRS service, the web app counts **only untracked chunks** (via `getCascadeInfo()`) and estimates the pass cost for those. Already-tracked chunks are excluded from the cost estimate.
 
 ```mermaid
 flowchart LR
-    A["trackTopic(topicId)"] --> B["COUNT chunks<br/>under topic"]
-    B --> C["passCheckForGeneration('', numChunks)"]
-    C --> D{"passToDeduct * numChunks<br/><= balance?"}
-    D -->|Yes| E["Proceed to FSRS service"]
-    D -->|No| F["Return insufficient_pass<br/>required * numChunks"]
+    A["trackTopic(topicId)"] --> B["getCascadeInfo('topic', topicId)<br/>LEFT JOIN chunk_tracking"]
+    B --> C{"untracked == 0?"}
+    C -->|Yes| G["Return success:<br/>'All chunks already tracked'"]
+    C -->|No| D["passCheckForGeneration('', untracked)"]
+    D --> E{"passToDeduct * untracked<br/><= balance?"}
+    E -->|Yes| F["Proceed to FSRS service"]
+    E -->|No| H["Return insufficient_pass<br/>required * untracked"]
 
-    style D fill:#744210,color:#fff
+    style C fill:#744210,color:#fff
+    style E fill:#744210,color:#fff
 ```
+
+### Per-chunk tracking mode
+
+When cascade tracking a topic or note, the UI offers two modes:
+
+- **Same for all** (default): A single set of question types and count is applied to all new chunks via the cascade endpoint (`trackTopic`/`trackNote`).
+- **Per chunk**: The user configures question types and count individually for each untracked chunk. The web app calls `trackChunksBatch()`, which tracks each chunk individually via separate `POST /api/track/chunk/{chunkId}` calls with per-chunk `questionTypes` and `questionCount`.
+
+Already-tracked chunks are shown in the UI with an emerald indicator and are always skipped — they retain their existing question types and FSRS state.
 
 ---
 
@@ -380,7 +392,8 @@ flowchart TD
 
 | File | Purpose |
 |------|---------|
-| `apps/web/src/lib/actions/tracking.ts` | Server actions: trackChunk/Note/Topic, untrack, regenerate |
+| `apps/web/src/lib/actions/tracking.ts` | Server actions: trackChunk/Note/Topic, trackChunksBatch, getCascadeInfo, untrack, regenerate |
+| `apps/web/src/components/tracking-button.tsx` | TrackingButton UI with cascade info, batch/per-chunk mode toggle |
 | `apps/web/src/lib/actions/pass.ts` | checkPassAvailability, balance queries |
 | `apps/web/src/lib/actions/ai-settings.ts` | getAiHeaders, getUserAiConfig |
 | `apps/fsrs-service/src/app/services/recall-item.service.ts` | trackChunk, cascades, regenerateChunk, buildPerformanceSummary |

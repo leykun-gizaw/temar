@@ -56,7 +56,6 @@ export async function analyzeAnswer(
   const aiConfig = await getUserAiConfig();
   const settings = await getAiSettings();
   const provider = (aiConfig?.provider ?? settings.provider ?? 'google') as AiProvider;
-  const modelId = aiConfig?.model || settings.model || DEFAULT_MODEL_ID;
 
   const inputText = [
     answer,
@@ -68,12 +67,7 @@ export async function analyzeAnswer(
   const estimatedTokens = estimateInputTokens(inputText, provider);
 
   // Step 1: Check if user can afford this operation (no deduction yet)
-  const passCheck = await checkPassAvailability(
-    'answer_analysis',
-    modelId,
-    inputText,
-    provider
-  );
+  const passCheck = await checkPassAvailability('answer_analysis');
 
   if (passCheck.status !== 'ok') {
     return passCheck as AnalyzeAnswerResult;

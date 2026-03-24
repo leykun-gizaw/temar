@@ -29,31 +29,25 @@ flowchart TD
 
 ## 2. checkPassAvailability Flow
 
+The pre-check is intentionally simple — no cost estimation. Actual costs are deducted after LLM calls via `recordUsage()`.
+
 ```mermaid
 flowchart TD
-    Start(["checkPassAvailability(userId, modelId, operationType, textContent)"])
+    Start(["checkPassAvailability(operationType)"])
 
     Start --> BYOK{"Is BYOK enabled\nAND user has\nAPI key?"}
 
-    BYOK -->|Yes| ReturnOK0["Return OK\npassToDeduct = 0"]
+    BYOK -->|Yes| ReturnOK0["Return OK\npassToDeduct = 0\nisByok = true"]
     style ReturnOK0 fill:#d1fae5,stroke:#059669
 
-    BYOK -->|No| ComputeBase["Compute base USD cost:\ncomputePassCost(modelId, operationType)\nUses max token budgets\nfrom operation_configs"]
+    BYOK -->|No| FetchBalance["Fetch passBalance.balanceUsd\nfrom DB"]
 
-    ComputeBase --> EstimateInput["Estimate actual input tokens\nfrom text content length"]
+    FetchBalance --> CheckBalance{"balanceUsd > 0?"}
 
-    EstimateInput --> ComputeEstimated["Compute estimated USD cost:\nestimatedPassCostFromTokens(\n  inputTokens, operationType,\n  modelConfig, opConfig\n)"]
-
-    ComputeEstimated --> TakeMax["requiredUsdCost =\nmax(baseCost, estimatedCost)\nTake the higher to\navoid undercharging"]
-
-    TakeMax --> FetchBalance["Fetch passBalance.balanceUsd\nfrom DB"]
-
-    FetchBalance --> CheckBalance{"balanceUsd >=\nrequiredUsdCost?"}
-
-    CheckBalance -->|Yes| ReturnOK["Return OK\npassToDeduct = requiredUsdCost"]
+    CheckBalance -->|Yes| ReturnOK["Return OK\npassToDeduct = 0\nisByok = false"]
     style ReturnOK fill:#d1fae5,stroke:#059669
 
-    CheckBalance -->|No| ReturnInsufficient["Return insufficient_pass\n{ balance, required }"]
+    CheckBalance -->|No| ReturnInsufficient["Return insufficient_pass\n{ balance: 0, required: 1 }"]
     style ReturnInsufficient fill:#fee2e2,stroke:#dc2626
 ```
 
@@ -138,7 +132,7 @@ flowchart TD
 | File | Purpose |
 |------|---------|
 | `apps/web/src/lib/actions/pass.ts` | checkPassAvailability, getPassBalance, creditPass |
-| `libs/pricing-service/src/lib/pricing-service.ts` | computePassCost, recordUsage, cache, estimatedPassCostFromTokens |
+| `libs/pricing-service/src/lib/pricing-service.ts` | recordUsage, getActivePricing, getActiveMarkup, cache |
 | `libs/db-client/src/lib/ai-pricing-queries.ts` | queryActivePricing, queryActiveMarkup, insertUsageLog, decrementUserPassBalance |
 | `libs/db-client/src/schema/pass-schema.ts` | pass_balance, pass_transaction |
 | `libs/db-client/src/schema/ai-pricing-schema.ts` | ai_model_pricing, ai_markup_config, ai_usage_log, operation_configs |

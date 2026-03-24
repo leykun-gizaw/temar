@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ModelConfig } from '@temar/shared-types';
 import {
   Table,
@@ -44,6 +44,19 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
   const [historyModel, setHistoryModel] = useState<string | null>(null);
   const [history, setHistory] = useState<PricingHistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [providerFilter, setProviderFilter] = useState<string | null>(null);
+
+  const providers = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const m of models) {
+      counts.set(m.provider, (counts.get(m.provider) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [models]);
+
+  const filteredModels = providerFilter
+    ? models.filter((m) => m.provider === providerFilter)
+    : models;
 
   async function handleUpdate(formData: FormData) {
     setLoading(true);
@@ -65,6 +78,28 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
 
   return (
     <>
+      <div className="flex gap-1 mb-4">
+        <Button
+          variant={providerFilter === null ? 'default' : 'outline'}
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setProviderFilter(null)}
+        >
+          All ({models.length})
+        </Button>
+        {providers.map(([provider, count]) => (
+          <Button
+            key={provider}
+            variant={providerFilter === provider ? 'default' : 'outline'}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setProviderFilter(provider)}
+          >
+            {provider.charAt(0).toUpperCase() + provider.slice(1)} ({count})
+          </Button>
+        ))}
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -76,7 +111,7 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {models.map((m) => (
+          {filteredModels.map((m) => (
             <TableRow key={m.modelId}>
               <TableCell className="font-mono text-sm">{m.modelId}</TableCell>
               <TableCell className="capitalize">{m.provider}</TableCell>
@@ -100,7 +135,7 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
               </TableCell>
             </TableRow>
           ))}
-          {models.length === 0 && (
+          {filteredModels.length === 0 && (
             <TableRow>
               <TableCell colSpan={5} className="text-center text-muted-foreground">
                 No active models with pricing

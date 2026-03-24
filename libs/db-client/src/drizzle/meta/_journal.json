@@ -190,6 +190,13 @@
       "when": 1774091400479,
       "tag": "0026_luxuriant_dazzler",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1774305108987,
+      "tag": "0027_thin_felicia_hardy",
+      "breakpoints": true
     }
   ]
 }

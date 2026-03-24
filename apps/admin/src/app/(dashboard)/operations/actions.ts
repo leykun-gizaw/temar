@@ -14,19 +14,17 @@ export async function fetchAllOperations() {
 export async function updateOperation(formData: FormData) {
   const operationType = formData.get('operationType') as string;
   const label = formData.get('label') as string;
-  const maxInputTokens = parseInt(formData.get('maxInputTokens') as string, 10);
-  const maxOutputTokens = parseInt(formData.get('maxOutputTokens') as string, 10);
   const isCurrentFeature = formData.get('isCurrentFeature') === 'true';
   const isActive = formData.get('isActive') === 'true';
 
-  if (!operationType || !label || isNaN(maxInputTokens) || isNaN(maxOutputTokens)) {
+  if (!operationType || !label) {
     return { error: 'All fields are required' };
   }
 
   try {
     await dbClient
       .update(operationConfig)
-      .set({ label, maxInputTokens, maxOutputTokens, isCurrentFeature, isActive })
+      .set({ label, isCurrentFeature, isActive })
       .where(eq(operationConfig.operationType, operationType));
     revalidatePath('/operations');
     return { ok: true };

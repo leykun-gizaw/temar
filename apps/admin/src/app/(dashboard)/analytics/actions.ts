@@ -8,32 +8,57 @@ import {
   count,
   desc,
   sql,
+  and,
+  gte,
+  lte,
 } from '@temar/db-client';
 
-export async function fetchAnalyticsSummary() {
+function buildDateConditions(dateFrom?: string, dateTo?: string) {
+  const conditions: ReturnType<typeof gte>[] = [];
+  if (dateFrom)
+    conditions.push(gte(aiUsageLog.createdAt, new Date(dateFrom)));
+  if (dateTo)
+    conditions.push(lte(aiUsageLog.createdAt, new Date(dateTo + 'T23:59:59Z')));
+  return conditions;
+}
+
+export async function fetchAnalyticsSummary(
+  dateFrom?: string,
+  dateTo?: string
+) {
+  const conditions = buildDateConditions(dateFrom, dateTo);
+  const whereClause =
+    conditions.length > 0 ? and(...conditions) : undefined;
+
   const [totalRequests] = await dbClient
     .select({ total: count() })
-    .from(aiUsageLog);
+    .from(aiUsageLog)
+    .where(whereClause);
 
   const [totalCost] = await dbClient
     .select({ total: sql<string>`sum(${aiUsageLog.computedCostUsd})` })
-    .from(aiUsageLog);
+    .from(aiUsageLog)
+    .where(whereClause);
 
   const [totalInputTokens] = await dbClient
     .select({ total: sql<string>`sum(${aiUsageLog.inputTokens})` })
-    .from(aiUsageLog);
+    .from(aiUsageLog)
+    .where(whereClause);
 
   const [totalOutputTokens] = await dbClient
     .select({ total: sql<string>`sum(${aiUsageLog.outputTokens})` })
-    .from(aiUsageLog);
+    .from(aiUsageLog)
+    .where(whereClause);
 
   const [uniqueUsers] = await dbClient
     .select({ total: sql<number>`count(distinct ${aiUsageLog.userId})` })
-    .from(aiUsageLog);
+    .from(aiUsageLog)
+    .where(whereClause);
 
   const [totalPasses] = await dbClient
     .select({ total: sql<string>`sum(${aiUsageLog.amountChargedUsd})` })
-    .from(aiUsageLog);
+    .from(aiUsageLog)
+    .where(whereClause);
 
   return {
     totalRequests: totalRequests?.total ?? 0,
@@ -45,7 +70,14 @@ export async function fetchAnalyticsSummary() {
   };
 }
 
-export async function fetchTopModelsByUsage() {
+export async function fetchTopModelsByUsage(
+  dateFrom?: string,
+  dateTo?: string
+) {
+  const conditions = buildDateConditions(dateFrom, dateTo);
+  const whereClause =
+    conditions.length > 0 ? and(...conditions) : undefined;
+
   const rows = await dbClient
     .select({
       modelId: aiUsageLog.modelId,
@@ -53,6 +85,7 @@ export async function fetchTopModelsByUsage() {
       totalCost: sql<string>`sum(${aiUsageLog.computedCostUsd})`,
     })
     .from(aiUsageLog)
+    .where(whereClause)
     .groupBy(aiUsageLog.modelId)
     .orderBy(desc(count()))
     .limit(10);
@@ -64,7 +97,14 @@ export async function fetchTopModelsByUsage() {
   }));
 }
 
-export async function fetchTopOperationsByUsage() {
+export async function fetchTopOperationsByUsage(
+  dateFrom?: string,
+  dateTo?: string
+) {
+  const conditions = buildDateConditions(dateFrom, dateTo);
+  const whereClause =
+    conditions.length > 0 ? and(...conditions) : undefined;
+
   const rows = await dbClient
     .select({
       operationType: aiUsageLog.operationType,
@@ -72,6 +112,7 @@ export async function fetchTopOperationsByUsage() {
       totalCost: sql<string>`sum(${aiUsageLog.computedCostUsd})`,
     })
     .from(aiUsageLog)
+    .where(whereClause)
     .groupBy(aiUsageLog.operationType)
     .orderBy(desc(count()))
     .limit(10);
@@ -83,7 +124,14 @@ export async function fetchTopOperationsByUsage() {
   }));
 }
 
-export async function fetchTopUsersByUsage() {
+export async function fetchTopUsersByUsage(
+  dateFrom?: string,
+  dateTo?: string
+) {
+  const conditions = buildDateConditions(dateFrom, dateTo);
+  const whereClause =
+    conditions.length > 0 ? and(...conditions) : undefined;
+
   const rows = await dbClient
     .select({
       userId: aiUsageLog.userId,
@@ -92,6 +140,7 @@ export async function fetchTopUsersByUsage() {
       totalPasses: sql<string>`sum(${aiUsageLog.amountChargedUsd})`,
     })
     .from(aiUsageLog)
+    .where(whereClause)
     .groupBy(aiUsageLog.userId)
     .orderBy(desc(count()))
     .limit(10);

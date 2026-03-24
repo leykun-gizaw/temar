@@ -10,11 +10,13 @@ import {
   Settings2,
   ScrollText,
   BarChart3,
+  RefreshCw,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/models', label: 'Models', icon: Cpu },
   { href: '/pricing', label: 'Pricing', icon: DollarSign },
+  { href: '/pricing-sync', label: 'Pricing Sync', icon: RefreshCw },
   { href: '/markup', label: 'Markup', icon: Percent },
   { href: '/operations', label: 'Operations', icon: Settings2 },
   { href: '/usage', label: 'Usage Log', icon: ScrollText },
