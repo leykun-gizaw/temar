@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-// Card imports removed — using borderless sections
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -12,14 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Loader2,
-  Key,
-  Sparkles,
-  Trash2,
-  Shield,
-  Info,
-} from 'lucide-react';
+import { Loader2, Key, Sparkles, Trash2, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AiSettings, AiProvider } from '@/lib/actions/ai-settings';
 import { DEFAULT_MODEL_ID, type ModelConfig } from '@temar/shared-types';
@@ -34,11 +26,6 @@ const PROVIDERS: { value: AiProvider; label: string; description: string }[] = [
     value: 'google',
     label: 'Google Gemini',
     description: 'Gemini 2.0 Flash, 2.5 Pro, etc.',
-  },
-  {
-    value: 'openai',
-    label: 'OpenAI',
-    description: 'GPT-4.1, o4-mini, etc.',
   },
   {
     value: 'anthropic',
