@@ -49,13 +49,32 @@ const tiers: Tier[] = [
   },
   {
     name: 'Starter',
-    price: '$9.99',
+    price: '$4.99',
     period: '/mo',
     tagline: 'Managed AI, no key needed',
-    passPerMonth: '200 Pass/mo',
+    passPerMonth: '100 Pass/mo',
     cta: 'Start Starter',
     ctaLoggedIn: 'Upgrade to Starter',
     href: '/auth/register?plan=starter',
+    hrefLoggedIn: '/dashboard/billing',
+    features: [
+      '100 Pass per month (rolls over up to 30)',
+      'Managed AI — no API key required',
+      'Question generation & answer analysis',
+      'Economy & Standard model tiers',
+      'All Free features included',
+      'Top-up packs available',
+    ],
+  },
+  {
+    name: 'Hobbyist',
+    price: '$9.99',
+    period: '/mo',
+    tagline: 'More Pass for regular learners',
+    passPerMonth: '200 Pass/mo',
+    cta: 'Go Hobbyist',
+    ctaLoggedIn: 'Upgrade to Hobbyist',
+    href: '/auth/register?plan=hobbyist',
     hrefLoggedIn: '/dashboard/billing',
     highlighted: true,
     features: [
@@ -69,18 +88,18 @@ const tiers: Tier[] = [
   },
   {
     name: 'Scholar',
-    price: '$24.99',
+    price: '$14.99',
     period: '/mo',
     tagline: 'Power users & premium models',
-    passPerMonth: '600 Pass/mo',
+    passPerMonth: '300 Pass/mo',
     cta: 'Go Scholar',
     ctaLoggedIn: 'Upgrade to Scholar',
     href: '/auth/register?plan=scholar',
     hrefLoggedIn: '/dashboard/billing',
     features: [
-      '600 Pass per month (rolls over up to 200)',
+      '300 Pass per month (rolls over up to 100)',
       'Access to Premium model tier',
-      'All Starter features included',
+      'All Hobbyist features included',
       'Priority support',
       'Top-up packs available',
     ],
@@ -88,9 +107,8 @@ const tiers: Tier[] = [
 ];
 
 const topups = [
-  { pass: 100, price: '$3.99', perPass: '$0.040' },
-  { pass: 300, price: '$9.99', perPass: '$0.033' },
-  { pass: 600, price: '$17.99', perPass: '$0.030', best: true },
+  { pass: 50, price: '$2.49', perPass: '$0.050' },
+  { pass: 100, price: '$4.99', perPass: '$0.050', best: true },
 ];
 
 export const metadata = {
@@ -119,7 +137,7 @@ export default async function PricingPage() {
 
         {/* Tiers */}
         <section className="pb-16 md:pb-24">
-          <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-3">
+          <div className="mx-auto grid max-w-6xl gap-6 px-6 md:grid-cols-2 lg:grid-cols-4">
             {tiers.map((tier) => (
               <Card
                 key={tier.name}
@@ -187,7 +205,7 @@ export default async function PricingPage() {
                 Need more Pass mid-month? Buy once, use anytime. No expiry.
               </p>
             </div>
-            <div className="grid gap-6 sm:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 max-w-2xl mx-auto">
               {topups.map((pack) => (
                 <Card
                   key={pack.pass}
@@ -217,87 +235,6 @@ export default async function PricingPage() {
           </div>
         </section>
 
-        {/* Model cost table */}
-        <section className="py-16">
-          <div className="mx-auto max-w-3xl px-6">
-            <h2 className="text-2xl font-bold text-center mb-2">
-              Pass cost per operation
-            </h2>
-            <p className="text-center text-muted-foreground mb-8">
-              Pass costs vary by AI model tier. BYOK users pay 0 Pass for
-              current features.
-            </p>
-            <div className="overflow-x-auto rounded-lg border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50 text-left">
-                    <th className="px-4 py-3 font-semibold">Operation</th>
-                    <th className="px-4 py-3 font-semibold text-center">
-                      Economy
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-center">
-                      Standard
-                    </th>
-                    <th className="px-4 py-3 font-semibold text-center">
-                      Premium
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    {
-                      op: 'Question Generation',
-                      economy: 3,
-                      standard: 6,
-                      premium: 12,
-                    },
-                    {
-                      op: 'Answer Analysis',
-                      economy: 1,
-                      standard: 2,
-                      premium: 5,
-                    },
-                    {
-                      op: 'Chunk Enhancement ✦',
-                      economy: 2,
-                      standard: 4,
-                      premium: 8,
-                    },
-                    {
-                      op: 'Content Generation ✦',
-                      economy: 5,
-                      standard: 10,
-                      premium: 20,
-                    },
-                  ].map((row, i) => (
-                    <tr
-                      key={row.op}
-                      className={cn(
-                        'border-b last:border-0',
-                        i % 2 === 1 && 'bg-muted/20'
-                      )}
-                    >
-                      <td className="px-4 py-3 font-medium">{row.op}</td>
-                      <td className="px-4 py-3 text-center">
-                        {row.economy} Pass
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {row.standard} Pass
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {row.premium} Pass
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground text-center">
-              ✦ Coming soon. Large inputs may increase cost proportionally
-              (consent required).
-            </p>
-          </div>
-        </section>
       </main>
       <SiteFooter />
     </div>

@@ -62,7 +62,7 @@ export function getPaddleCheckoutConfig(): CheckoutConfig {
       {
         id: 'topup_50',
         pass: 50,
-        price: '$2.50',
+        price: '$2.49',
         priceId: process.env['NEXT_PUBLIC_PADDLE_TOPUP_50_PRICE_ID'] ?? '',
       },
       {
