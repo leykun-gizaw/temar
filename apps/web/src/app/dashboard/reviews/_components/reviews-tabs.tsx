@@ -27,10 +27,12 @@ export default function ReviewsTabs({
 }: ReviewsTabsProps) {
   const defaultTab = dueCount > 0 ? 'active' : 'history';
 
-  // Hide due items from history to prevent answer leakage (key points, past
-  // answers, rubric details). They reappear once the session completes.
-  const dueItemIds = new Set(dueItems.map((i) => i.id));
-  const historyItems = allItems.filter((i) => !dueItemIds.has(i.id));
+  // Hide due/overdue items from history to prevent answer leakage (key points,
+  // past answers, rubric details). Filter by due date instead of the limited
+  // dueItems list — getDueRecallItems caps at 50, so items 51+ would leak
+  // through an ID-based filter.
+  const now = new Date();
+  const historyItems = allItems.filter((i) => new Date(i.due) > now);
 
   return (
     <Tabs
@@ -90,6 +92,7 @@ export default function ReviewsTabs({
           allItems={historyItems}
           topics={topics}
           currentTopicId={currentTopicId}
+          currentNoteId={currentNoteId}
         />
       </TabsContent>
     </Tabs>

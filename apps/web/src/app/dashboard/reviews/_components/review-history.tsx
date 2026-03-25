@@ -35,6 +35,7 @@ interface ReviewHistoryProps {
   allItems: RecallItemDue[];
   topics: Array<{ id: string; name: string }>;
   currentTopicId?: string;
+  currentNoteId?: string;
   completedCount?: number;
 }
 
@@ -42,6 +43,7 @@ export default function ReviewHistory({
   allItems,
   topics,
   currentTopicId,
+  currentNoteId,
   completedCount = 0,
 }: ReviewHistoryProps) {
   const router = useRouter();
@@ -50,6 +52,23 @@ export default function ReviewHistory({
   const [reviewLogs, setReviewLogs] = useState<ReviewLogEntry[]>([]);
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [filterNoteId, setFilterNoteId] = useState<string | null>(
+    currentNoteId ?? null
+  );
+
+  // Derive unique notes from all items for note filter
+  const noteOptions = useMemo(() => {
+    const topicFiltered = currentTopicId
+      ? allItems.filter((i) => i.topicId === currentTopicId)
+      : allItems;
+    const noteMap = new Map<string, string>();
+    for (const item of topicFiltered) {
+      if (!noteMap.has(item.noteId)) {
+        noteMap.set(item.noteId, item.noteName);
+      }
+    }
+    return Array.from(noteMap.entries()).map(([id, name]) => ({ id, name }));
+  }, [allItems, currentTopicId]);
 
   // Group items by chunk
   const chunkGroups = allItems.reduce<
@@ -80,10 +99,12 @@ export default function ReviewHistory({
     ...data,
   }));
 
-  // Filter by topic
-  const filteredChunks = currentTopicId
-    ? chunks.filter((c) => c.items[0]?.topicId === currentTopicId)
-    : chunks;
+  // Filter by topic and note
+  const filteredChunks = chunks.filter((c) => {
+    if (currentTopicId && c.items[0]?.topicId !== currentTopicId) return false;
+    if (filterNoteId && c.items[0]?.noteId !== filterNoteId) return false;
+    return true;
+  });
 
   // Auto-select first chunk
   useEffect(() => {
@@ -192,8 +213,8 @@ export default function ReviewHistory({
             defaultValue={currentTopicId ?? 'all'}
             onValueChange={handleScopeChange}
           >
-            <SelectTrigger className="h-7 w-[180px] text-xs rounded-full">
-              <SelectValue placeholder="Filter" />
+            <SelectTrigger className="h-7 w-[140px] text-xs rounded-full">
+              <SelectValue placeholder="Topic" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All topics</SelectItem>
@@ -204,6 +225,28 @@ export default function ReviewHistory({
               ))}
             </SelectContent>
           </Select>
+          {noteOptions.length > 1 && (
+            <Select
+              value={filterNoteId ?? 'all'}
+              onValueChange={(v) => {
+                setFilterNoteId(v === 'all' ? null : v);
+                setSelectedChunkId(null);
+                setSelectedItemId(null);
+              }}
+            >
+              <SelectTrigger className="h-7 w-[140px] text-xs rounded-full">
+                <SelectValue placeholder="Note" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All notes</SelectItem>
+                {noteOptions.map((n) => (
+                  <SelectItem key={n.id} value={n.id}>
+                    {n.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -308,9 +351,9 @@ export default function ReviewHistory({
                 </h2>
               )}
               {selectedItem.questionText ? (
-                <p className="text-base font-medium leading-relaxed text-muted-foreground">
+                <MarkdownRenderer className="text-base font-medium leading-relaxed text-muted-foreground">
                   {selectedItem.questionText}
-                </p>
+                </MarkdownRenderer>
               ) : selectedItem.chunkContentMd ? (
                 <MarkdownRenderer>
                   {selectedItem.chunkContentMd}
