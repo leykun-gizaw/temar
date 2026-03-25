@@ -1,5 +1,9 @@
+(cloudflare_tls) {
+	tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin-key.pem
+}
+
 {$DOMAIN:localhost} {
-	tls internal
+	import cloudflare_tls
 
 	# Payment provider webhooks — forwarded to the web app
 	handle /api/webhooks/* {
@@ -24,13 +28,13 @@
 
 # Bare domain → www redirect
 temar.app {
-	tls internal
+	import cloudflare_tls
 	redir https://www.temar.app{uri} permanent
 }
 
 # Admin panel
 admin.temar.app {
-	tls internal
+	import cloudflare_tls
 	reverse_proxy admin:{$ADMIN_PORT:3000}
 
 	encode zstd gzip
