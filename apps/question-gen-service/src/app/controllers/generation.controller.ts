@@ -95,24 +95,29 @@ export class GenerationController {
   @Post('batch')
   async generateBatch(
     @Headers('x-user-id') userId: string,
+    @Headers('x-ai-provider') aiProvider?: string,
+    @Headers('x-ai-model') aiModel?: string,
+    @Headers('x-ai-api-key') aiApiKey?: string,
+    @Headers('x-byok') byok?: string,
     @Body()
-    body: {
+    body?: {
       chunkIds: string[];
       questionTypes?: string[];
       questionCount?: number;
     }
   ) {
     this.requireUserId(userId);
-    if (!Array.isArray(body.chunkIds) || body.chunkIds.length === 0) {
+    if (!Array.isArray(body?.chunkIds) || body.chunkIds.length === 0) {
       throw new HttpException(
         'chunkIds must be a non-empty array',
         HttpStatus.BAD_REQUEST
       );
     }
+    const aiConfig = this.extractAiConfig(aiProvider, aiModel, aiApiKey, byok);
     return this.generationService.generateBatch(
       body.chunkIds,
       userId,
-      undefined,
+      aiConfig,
       body.questionTypes as any,
       body.questionCount
     );

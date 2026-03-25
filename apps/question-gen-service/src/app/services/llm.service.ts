@@ -284,6 +284,7 @@ export class LlmService {
 - Each question MUST have questionType: "${type}"
 - Questions must be self-contained (answerable without seeing the original content)
 - Test understanding, application, or synthesis — not just recall of isolated facts
+- Use **Markdown formatting** in the question text where it improves clarity: code blocks (\`inline\` or fenced), tables, bullet/numbered lists, bold/italic emphasis. Plain text is fine for simple questions — only use formatting when it adds value.
 
 ## CRITICAL: Do NOT Give Away Answers
 - rubric.sections and rubric.criteria are SHOWN to the student BEFORE they answer
