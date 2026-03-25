@@ -2,28 +2,11 @@
 
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { getUserAiConfig, getAiSettings } from './ai-settings';
+import { getAiHeaders } from './ai-headers';
 import { analysisServiceFetch } from '../answer-analysis-service';
 import { checkPassAvailability } from './pass';
-import {
-  estimateInputTokens,
-  DEFAULT_MODEL_ID,
-} from '@/lib/config/ai-operations';
+import { estimateInputTokens } from '@/lib/config/ai-operations';
 import type { AiProvider } from '@/lib/config/ai-operations';
-
-async function getAiHeaders(): Promise<Record<string, string>> {
-  const config = await getUserAiConfig();
-  const settings = await getAiSettings();
-  const isByok = settings.useByok && settings.hasApiKey;
-  // Use BYOK config provider first, then user's selected provider from settings
-  const provider = config?.provider || settings.provider;
-  return {
-    ...(provider && { 'x-ai-provider': provider }),
-    // Always send the pricing model ID so services can record usage correctly.
-    'x-ai-model': config?.model || settings.model || DEFAULT_MODEL_ID,
-    ...(config?.apiKey && { 'x-ai-api-key': config.apiKey }),
-    'x-byok': isByok ? 'true' : 'false',
-  };
-}
 
 export interface AnalysisResult {
   scorePercent: number;

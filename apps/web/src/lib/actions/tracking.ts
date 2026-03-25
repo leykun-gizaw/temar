@@ -3,31 +3,15 @@
 import { revalidatePath } from 'next/cache';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 import { fsrsServiceFetch } from '../fsrs-service';
-import { getUserAiConfig, getAiSettings } from './ai-settings';
+import { getAiHeaders } from './ai-headers';
 import { checkPassAvailability } from './pass';
 import { dbClient, chunk, note, chunkTracking, eq, and } from '@temar/db-client';
-import { DEFAULT_MODEL_ID, getCostPerPassUsd } from '@/lib/config/ai-operations';
+import { getCostPerPassUsd } from '@/lib/config/ai-operations';
 
 export type TrackResult<T = unknown> =
   | { status: 'success'; data: T; newBalance?: number }
   | { status: 'error'; message: string }
   | { status: 'insufficient_pass'; balance: number; required: number }
-
-async function getAiHeaders(): Promise<Record<string, string>> {
-  const config = await getUserAiConfig();
-  const settings = await getAiSettings();
-  const isByok = settings.useByok && settings.hasApiKey;
-  // Use BYOK config provider first, then user's selected provider from settings
-  const provider = config?.provider || settings.provider;
-  return {
-    ...(provider && { 'x-ai-provider': provider }),
-    // Always send the pricing model ID so services can record usage correctly.
-    // Falls back to DEFAULT_MODEL_ID when the user has no custom setting.
-    'x-ai-model': config?.model || settings.model || DEFAULT_MODEL_ID,
-    ...(config?.apiKey && { 'x-ai-api-key': config.apiKey }),
-    'x-byok': isByok ? 'true' : 'false',
-  };
-}
 
 async function passCheckForGeneration(): Promise<
   { ok: true } | { ok: false; result: TrackResult }

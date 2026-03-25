@@ -6,6 +6,7 @@ export async function questionGenServiceFetch<T = unknown>(
     method?: string;
     body?: Record<string, unknown>;
     userId?: string;
+    headers?: Record<string, string>;
   }
 ): Promise<T> {
   const baseUrl = process.env.QUESTION_GEN_SERVICE_API_ENDPOINT;
@@ -20,6 +21,7 @@ export async function questionGenServiceFetch<T = unknown>(
       'Content-Type': 'application/json',
       ...(apiKey && { 'x-api-key': apiKey }),
       ...(options?.userId && { 'x-user-id': options.userId }),
+      ...options?.headers,
     },
     ...(options?.body && { body: JSON.stringify(options.body) }),
   });

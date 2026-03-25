@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useTransition, useCallback, useEffect } from 'react';
+import { useState, useRef, useTransition, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -139,6 +139,7 @@ export default function ReviewSession({
   initialDrafts,
   topics,
   currentTopicId,
+  currentNoteId,
   dueCount,
 }: ReviewSessionProps) {
   const router = useRouter();
@@ -225,11 +226,37 @@ export default function ReviewSession({
   const currentItem = items[currentIndex];
   const isSessionComplete = !currentItem;
 
-  const handleScopeChange = (value: string) => {
+  // Derive unique notes from items for the note filter dropdown
+  const noteOptions = useMemo(() => {
+    const noteMap = new Map<string, string>();
+    for (const item of initialItems) {
+      if (!noteMap.has(item.noteId)) {
+        noteMap.set(item.noteId, item.noteName);
+      }
+    }
+    return Array.from(noteMap.entries()).map(([id, name]) => ({ id, name }));
+  }, [initialItems]);
+
+  const handleTopicChange = (value: string) => {
     if (value === 'all') {
       router.push('/dashboard/reviews');
     } else {
       router.push(`/dashboard/reviews?topicId=${value}`);
+    }
+  };
+
+  const handleNoteChange = (value: string) => {
+    if (value === 'all') {
+      if (currentTopicId) {
+        router.push(`/dashboard/reviews?topicId=${currentTopicId}`);
+      } else {
+        router.push('/dashboard/reviews');
+      }
+    } else {
+      const params = new URLSearchParams();
+      if (currentTopicId) params.set('topicId', currentTopicId);
+      params.set('noteId', value);
+      router.push(`/dashboard/reviews?${params.toString()}`);
     }
   };
 
@@ -480,10 +507,10 @@ export default function ReviewSession({
         <div className="flex items-center gap-3">
           <Select
             defaultValue={currentTopicId ?? 'all'}
-            onValueChange={handleScopeChange}
+            onValueChange={handleTopicChange}
           >
-            <SelectTrigger className="h-7 w-[180px] text-xs rounded-full">
-              <SelectValue placeholder="Filter" />
+            <SelectTrigger className="h-7 w-[140px] text-xs rounded-full">
+              <SelectValue placeholder="Topic" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All topics</SelectItem>
@@ -494,6 +521,24 @@ export default function ReviewSession({
               ))}
             </SelectContent>
           </Select>
+          {noteOptions.length > 1 && (
+            <Select
+              defaultValue={currentNoteId ?? 'all'}
+              onValueChange={handleNoteChange}
+            >
+              <SelectTrigger className="h-7 w-[140px] text-xs rounded-full">
+                <SelectValue placeholder="Note" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All notes</SelectItem>
+                {noteOptions.map((n) => (
+                  <SelectItem key={n.id} value={n.id}>
+                    {n.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-muted/60 rounded-full text-xs font-bold text-muted-foreground">
             <Brain className="h-3.5 w-3.5" />
             <span>
@@ -534,9 +579,9 @@ export default function ReviewSession({
                       </h2>
                     )}
                     {currentItem.questionText ? (
-                      <p className="text-lg lg:text-xl font-semibold leading-relaxed text-muted-foreground">
+                      <MarkdownRenderer className="text-lg lg:text-xl font-semibold leading-relaxed text-muted-foreground">
                         {currentItem.questionText}
-                      </p>
+                      </MarkdownRenderer>
                     ) : (
                       <div className="rounded-2xl p-5 bg-muted/30">
                         <p className="text-muted-foreground text-sm italic">
