@@ -1,21 +1,12 @@
-import { getFilteredTopics } from '@/lib/fetchers/topics';
-import { getTrackingStatus, getOutdatedChunks } from '@/lib/actions/tracking';
-import MaterialsBrowser from './_components/materials-browser';
+import { BookOpen } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-
-export default async function MaterialsPage() {
-  const [topics, trackedItems, outdatedChunks] = await Promise.all([
-    getFilteredTopics(''),
-    getTrackingStatus(),
-    getOutdatedChunks(),
-  ]);
-
+export default function MaterialsPage() {
   return (
-    <MaterialsBrowser
-      topics={topics}
-      trackedItems={trackedItems}
-      outdatedChunks={outdatedChunks}
-    />
+    <div className="flex-1 flex items-center justify-center text-muted-foreground rounded-[2rem] bg-muted/30 shadow-md">
+      <div className="text-center space-y-2">
+        <BookOpen className="h-12 w-12 mx-auto opacity-30" />
+        <p className="text-sm">Select an item from the tree to view details.</p>
+      </div>
+    </div>
   );
 }
