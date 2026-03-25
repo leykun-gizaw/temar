@@ -1,4 +1,6 @@
 {$DOMAIN:localhost} {
+	tls internal
+
 	# Payment provider webhooks — forwarded to the web app
 	handle /api/webhooks/* {
 		reverse_proxy web:5173
@@ -20,8 +22,15 @@
 	}
 }
 
+# Bare domain → www redirect
+temar.app {
+	tls internal
+	redir https://www.temar.app{uri} permanent
+}
+
 # Admin panel
 admin.temar.app {
+	tls internal
 	reverse_proxy admin:{$ADMIN_PORT:3000}
 
 	encode zstd gzip
