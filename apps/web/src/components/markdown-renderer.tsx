@@ -40,7 +40,7 @@ export function MarkdownRenderer({ children, className }: MarkdownRendererProps)
       const language = match[1];
 
       return (
-        <div className="my-3 rounded-md overflow-hidden border border-border">
+        <div className="my-3 rounded-md overflow-x-auto border border-border">
           <div className="flex items-center px-3 py-1 bg-muted border-b border-border">
             <span className="text-[11px] font-mono text-muted-foreground">
               {language}
@@ -228,7 +228,7 @@ export function MarkdownRenderer({ children, className }: MarkdownRendererProps)
   };
 
   return (
-    <div className={cn('text-foreground text-sm', className)}>
+    <div className={cn('text-foreground text-sm overflow-hidden break-words', className)}>
       <Markdown remarkPlugins={[remarkGfm]} components={components}>
         {children}
       </Markdown>
