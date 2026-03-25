@@ -185,7 +185,7 @@ export function BillingClient({
                       const label = PLAN_LABELS[key] ?? key;
                       const prices: Record<string, string> = {
                         starter: '$4.99/mo',
-                        hobbyist: '$9.00/mo',
+                        hobbyist: '$9.99/mo',
                         scholar: '$14.99/mo',
                       };
                       const isFirst = key === 'starter';
