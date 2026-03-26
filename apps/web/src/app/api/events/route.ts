@@ -39,7 +39,7 @@ export async function GET() {
   const cleanup = () => {
     if (cleanedUp) return;
     cleanedUp = true;
-    client.query(`UNLISTEN "${channel}"`).catch(() => {});
+    client.query(`UNLISTEN "${channel}"`).catch(() => { /* noop */ });
     client.release();
   };
 

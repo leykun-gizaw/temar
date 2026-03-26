@@ -74,7 +74,7 @@ export class QuestionGenerationService {
         chunkId,
         chunkName: chunkRow.name ?? '',
         status: 'generating',
-      }).catch(() => {});
+      }).catch(() => { /* noop */ });
 
       const content =
         chunkRow.contentMd ||
@@ -105,7 +105,7 @@ export class QuestionGenerationService {
           chunkName: chunkRow?.name ?? '',
           status: 'failed',
           errorMessage: 'No content available',
-        }).catch(() => {});
+        }).catch(() => { /* noop */ });
         return { chunkId, questions: [], error: 'No content available' };
       }
 
@@ -185,7 +185,7 @@ export class QuestionGenerationService {
           chunkName: chunkRow.name ?? '',
           status: 'failed',
           errorMessage: 'LLM returned no questions',
-        }).catch(() => {});
+        }).catch(() => { /* noop */ });
         return { chunkId, questions: [], error: 'No questions generated' };
       }
 
@@ -266,7 +266,7 @@ export class QuestionGenerationService {
         chunkName: chunkRow.name ?? '',
         status: 'ready',
         newBalance,
-      }).catch(() => {});
+      }).catch(() => { /* noop */ });
 
       return {
         chunkId,
@@ -299,7 +299,7 @@ export class QuestionGenerationService {
         chunkName: '',
         status: 'failed',
         errorMessage: errMsg.slice(0, 500),
-      }).catch(() => {});
+      }).catch(() => { /* noop */ });
       throw err;
     }
   }
@@ -334,7 +334,7 @@ export class QuestionGenerationService {
       chunkId,
       chunkName: chunkRow?.name ?? '',
       status: 'pending',
-    }).catch(() => {});
+    }).catch(() => { /* noop */ });
 
     return this.generateForChunk(
       chunkId,

@@ -101,7 +101,7 @@ export class RecallItemService {
         chunkId,
         chunkName: chunkRow?.name ?? '',
         status: 'pending',
-      }).catch(() => {});
+      }).catch(() => { /* noop */ });
 
       // Fire-and-forget: trigger question generation in the background.
       // The question-gen-service updates chunk_tracking status and sends

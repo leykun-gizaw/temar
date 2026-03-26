@@ -93,7 +93,7 @@ export async function analyzeAnswer(
         requestId,
         status: 'error',
         message: err instanceof Error ? err.message : 'Analysis failed',
-      }).catch(() => {});
+      }).catch(() => { /* noop */ });
     }
   })();
 
