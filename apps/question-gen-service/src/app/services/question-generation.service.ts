@@ -9,6 +9,7 @@ import {
   eq,
   and,
   sql,
+  pgNotify,
 } from '@temar/db-client';
 import { LlmService, AiConfig, QuestionType } from './llm.service';
 export type { TokenUsage } from './llm.service';
@@ -45,7 +46,7 @@ export class QuestionGenerationService {
       );
 
     try {
-      // Fetch chunk with context
+      // Fetch chunk with context (also used for SSE notification below)
       const [chunkRow] = await dbClient
         .select({
           id: chunk.id,
@@ -66,6 +67,14 @@ export class QuestionGenerationService {
       if (!chunkRow) {
         throw new Error(`Chunk ${chunkId} not found`);
       }
+
+      // Notify frontend that generation has started
+      await pgNotify(userId, {
+        type: 'generation:status',
+        chunkId,
+        chunkName: chunkRow.name ?? '',
+        status: 'generating',
+      }).catch(() => {});
 
       const content =
         chunkRow.contentMd ||
@@ -90,6 +99,13 @@ export class QuestionGenerationService {
               eq(chunkTracking.userId, userId)
             )
           );
+        await pgNotify(userId, {
+          type: 'generation:status',
+          chunkId,
+          chunkName: chunkRow?.name ?? '',
+          status: 'failed',
+          errorMessage: 'No content available',
+        }).catch(() => {});
         return { chunkId, questions: [], error: 'No content available' };
       }
 
@@ -163,6 +179,13 @@ export class QuestionGenerationService {
               eq(chunkTracking.userId, userId)
             )
           );
+        await pgNotify(userId, {
+          type: 'generation:status',
+          chunkId,
+          chunkName: chunkRow.name ?? '',
+          status: 'failed',
+          errorMessage: 'LLM returned no questions',
+        }).catch(() => {});
         return { chunkId, questions: [], error: 'No questions generated' };
       }
 
@@ -236,6 +259,15 @@ export class QuestionGenerationService {
         this.logger.error(`recordUsage failed for chunk ${chunkId}: ${err}`);
       }
 
+      // Notify frontend via SSE
+      await pgNotify(userId, {
+        type: 'generation:status',
+        chunkId,
+        chunkName: chunkRow.name ?? '',
+        status: 'ready',
+        newBalance,
+      }).catch(() => {});
+
       return {
         chunkId,
         batchId,
@@ -261,6 +293,13 @@ export class QuestionGenerationService {
             eq(chunkTracking.userId, userId)
           )
         );
+      await pgNotify(userId, {
+        type: 'generation:status',
+        chunkId,
+        chunkName: '',
+        status: 'failed',
+        errorMessage: errMsg.slice(0, 500),
+      }).catch(() => {});
       throw err;
     }
   }
@@ -282,6 +321,21 @@ export class QuestionGenerationService {
           eq(chunkTracking.userId, userId)
         )
       );
+
+    // Look up chunk name for the SSE event
+    const [chunkRow] = await dbClient
+      .select({ name: chunk.name })
+      .from(chunk)
+      .where(eq(chunk.id, chunkId))
+      .limit(1);
+
+    await pgNotify(userId, {
+      type: 'generation:status',
+      chunkId,
+      chunkName: chunkRow?.name ?? '',
+      status: 'pending',
+    }).catch(() => {});
+
     return this.generateForChunk(
       chunkId,
       userId,

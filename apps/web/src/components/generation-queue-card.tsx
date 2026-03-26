@@ -39,8 +39,13 @@ import {
   retryFailedGeneration,
   retryAllFailedGenerations,
 } from '@/lib/actions/tracking';
+import {
+  useSSE,
+  type GenerationStatusEvent,
+} from '@/components/providers/sse-provider';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { notifyPassBalanceChanged } from '@/lib/pass-events';
 
 const STATUS_CONFIG: Record<
   TrackingItem['status'],
@@ -87,6 +92,7 @@ export default function GenerationQueueCard({
   const [items, setItems] = useState(initialItems);
   const [isPending, startTransition] = useTransition();
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
+  const { subscribe } = useSSE();
 
   const counts = {
     pending: items.filter((i) => i.status === 'pending').length,
@@ -96,7 +102,6 @@ export default function GenerationQueueCard({
   };
 
   const nonReadyItems = items.filter((i) => i.status !== 'ready');
-  const hasActiveItems = counts.pending > 0 || counts.generating > 0;
 
   const refreshStatus = useCallback(() => {
     startTransition(async () => {
@@ -105,12 +110,37 @@ export default function GenerationQueueCard({
     });
   }, []);
 
-  // Auto-poll while items are pending/generating
+  // Subscribe to SSE generation:status events instead of polling
   useEffect(() => {
-    if (!hasActiveItems) return;
-    const interval = setInterval(refreshStatus, 10_000);
-    return () => clearInterval(interval);
-  }, [hasActiveItems, refreshStatus]);
+    return subscribe('generation:status', (event) => {
+      const e = event as GenerationStatusEvent;
+
+      setItems((prev) => {
+        const idx = prev.findIndex((i) => i.chunkId === e.chunkId);
+        if (idx === -1) {
+          // New chunk we don't know about yet — do a full refresh
+          startTransition(async () => {
+            const updated = await getTrackingStatus();
+            setItems(updated);
+          });
+          return prev;
+        }
+        const updated = [...prev];
+        updated[idx] = {
+          ...updated[idx],
+          status: e.status,
+          errorMessage: e.errorMessage ?? null,
+        };
+        return updated;
+      });
+
+      // Trigger a server-side balance refresh (e.newBalance is raw USD,
+      // not a pass count — let PassBalanceChip fetch the correct value)
+      if (e.status === 'ready') {
+        notifyPassBalanceChanged();
+      }
+    });
+  }, [subscribe]);
 
   const handleRetry = (chunkId: string) => {
     setRetryingIds((prev) => new Set(prev).add(chunkId));
@@ -121,9 +151,14 @@ export default function GenerationQueueCard({
           toast.error(result.message);
           return;
         }
-        await new Promise((r) => setTimeout(r, 1000));
-        const updated = await getTrackingStatus();
-        setItems(updated);
+        // Mark as pending immediately — SSE will update when ready
+        setItems((prev) =>
+          prev.map((i) =>
+            i.chunkId === chunkId
+              ? { ...i, status: 'pending' as const, errorMessage: null }
+              : i
+          )
+        );
       } finally {
         setRetryingIds((prev) => {
           const next = new Set(prev);
@@ -141,9 +176,14 @@ export default function GenerationQueueCard({
         toast.error(result.message);
         return;
       }
-      await new Promise((r) => setTimeout(r, 1500));
-      const updated = await getTrackingStatus();
-      setItems(updated);
+      // Mark all failed as pending — SSE will update as each finishes
+      setItems((prev) =>
+        prev.map((i) =>
+          i.status === 'failed'
+            ? { ...i, status: 'pending' as const, errorMessage: null }
+            : i
+        )
+      );
     });
   };
 

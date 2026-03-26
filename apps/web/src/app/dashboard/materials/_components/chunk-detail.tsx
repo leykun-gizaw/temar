@@ -198,8 +198,7 @@ export default function ChunkDetail({
       const result = await regenerateChunkQuestions(chunk.id);
       if (result.status === 'success') {
         setOutdatedInfo(null);
-        if (result.newBalance != null)
-          notifyPassBalanceChanged(result.newBalance);
+        notifyPassBalanceChanged();
       } else if (result.status === 'insufficient_pass') {
         setPassError(
           `Not enough Pass (have ${result.balance}, need ${result.required}).`

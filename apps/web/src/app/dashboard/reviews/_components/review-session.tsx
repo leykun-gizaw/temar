@@ -55,6 +55,11 @@ import {
 } from '@/components/lexical-editor/utils/serialize';
 import { cn } from '@/lib/utils';
 import { notifyPassBalanceChanged } from '@/lib/pass-events';
+import {
+  useSSE,
+  type AnalysisCompleteEvent,
+  type GenerationStatusEvent,
+} from '@/components/providers/sse-provider';
 
 const STATE_LABELS: Record<number, string> = {
   0: 'New',
@@ -158,11 +163,13 @@ export default function ReviewSession({
   dueCount,
 }: ReviewSessionProps) {
   const router = useRouter();
+  const { subscribe } = useSSE();
   const [items, setItems] = useState(initialItems);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reviewStartTime, setReviewStartTime] = useState<number>(Date.now());
   const [isPending, startTransition] = useTransition();
   const [completedCount, setCompletedCount] = useState(0);
+  const pendingAnalysisRef = useRef<string | null>(null);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const STORAGE_KEY = 'temar:review-answers';
   const answersRef = useRef<Map<string, SerializedEditorState>>(new Map());
@@ -239,6 +246,16 @@ export default function ReviewSession({
     }
   }, []);
 
+  // Merge new items from server refresh (e.g. after question generation)
+  // without resetting the user's review progress
+  useEffect(() => {
+    const existingIds = new Set(items.map((i) => i.id));
+    const newItems = initialItems.filter((i) => !existingIds.has(i.id));
+    if (newItems.length > 0) {
+      setItems((prev) => [...prev, ...newItems]);
+    }
+  }, [initialItems]);
+
   const currentItem = items[currentIndex];
   const isSessionComplete = !currentItem;
 
@@ -248,6 +265,8 @@ export default function ReviewSession({
     setAnalysisError(null);
     setAnalysisPopoverOpen(false);
     setEditorLocked(false);
+    setIsAnalyzing(false);
+    pendingAnalysisRef.current = null;
   }, [currentItem?.id]);
 
   // Flip through analyzing words while analysis is in progress
@@ -261,6 +280,34 @@ export default function ReviewSession({
     }, 1800);
     return () => clearInterval(interval);
   }, [isAnalyzing]);
+
+  // Listen for analysis results via SSE
+  useEffect(() => {
+    return subscribe('analysis:complete', (event) => {
+      const e = event as AnalysisCompleteEvent;
+      if (e.requestId !== pendingAnalysisRef.current) return;
+      pendingAnalysisRef.current = null;
+
+      if (e.status === 'success' && e.data) {
+        setAnalysis(e.data);
+        setAnalysisPopoverOpen(true);
+        notifyPassBalanceChanged();
+      } else {
+        setAnalysisError(e.message ?? 'Analysis failed');
+      }
+      setIsAnalyzing(false);
+    });
+  }, [subscribe]);
+
+  // Refresh review data when new questions finish generating
+  useEffect(() => {
+    return subscribe('generation:status', (event) => {
+      const e = event as GenerationStatusEvent;
+      if (e.status === 'ready') {
+        router.refresh();
+      }
+    });
+  }, [subscribe, router]);
 
   // Derive unique notes from items for the note filter dropdown
   const noteOptions = useMemo(() => {
@@ -405,21 +452,28 @@ export default function ReviewSession({
         criteria,
         keyPoints
       );
-      if (result.status === 'success') {
+
+      if (result.status === 'analyzing') {
+        // Server action returned immediately — result arrives via SSE
+        pendingAnalysisRef.current = result.requestId;
+      } else if (result.status === 'success') {
+        // Synchronous fallback (shouldn't normally hit this path)
         setAnalysis(result.data);
         setAnalysisPopoverOpen(true);
         notifyPassBalanceChanged();
+        setIsAnalyzing(false);
       } else if (result.status === 'insufficient_pass') {
         setAnalysisError(
           `Not enough Pass (have ${result.balance}, need ${result.required}). Top up in billing.`
         );
+        setIsAnalyzing(false);
       } else {
         setAnalysisError(result.message);
+        setIsAnalyzing(false);
       }
     } catch (err) {
       console.error('Analysis failed:', err);
       setAnalysisError(err instanceof Error ? err.message : 'Analysis failed');
-    } finally {
       setIsAnalyzing(false);
     }
   };

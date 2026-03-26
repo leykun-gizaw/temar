@@ -1,5 +1,6 @@
 export * from './lib/db-client';
 export * from './lib/crypto';
+export { pgNotify } from './lib/pg-notify';
 export * from './schema/auth-schema';
 export * from './schema/notion-cache-schema';
 export * from './schema/fsrs-schema';

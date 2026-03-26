@@ -33,7 +33,6 @@ import {
   getCascadeInfo,
 } from '@/lib/actions/tracking';
 import type { CascadeInfo, ChunkTrackConfig } from '@/lib/actions/tracking';
-import { notifyPassBalanceChanged } from '@/lib/pass-events';
 
 const QUESTION_TYPES = [
   { id: 'open_ended', label: 'Open-ended', short: 'OE' },
@@ -147,12 +146,11 @@ export default function TrackingButton({
     setPerChunkCounts((prev) => ({ ...prev, [chunkId]: count }));
   };
 
-  const handleResult = (result: { status: string; newBalance?: number; balance?: number; required?: number; message?: string }) => {
+  const handleResult = (result: { status: string; balance?: number; required?: number; message?: string }) => {
     if (result.status === 'success') {
       setTracked(true);
       setPopoverOpen(false);
-      if (result.newBalance != null)
-        notifyPassBalanceChanged(result.newBalance);
+      // Pass balance updates arrive via SSE when generation completes
     } else if (result.status === 'insufficient_pass') {
       setPopoverOpen(false);
       setErrorIsPassInsufficient(true);
