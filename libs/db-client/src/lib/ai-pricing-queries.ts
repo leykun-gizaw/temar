@@ -1,4 +1,4 @@
-import { eq, and, isNull, sql } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { dbClient, type DbClient } from './db-client';
 import {
   aiModel,
@@ -104,6 +104,11 @@ export async function insertUsageLog(
   return row;
 }
 
+/**
+ * Decrement the user's pass balance, consuming subscription passes first
+ * (they expire at rollover) and top-up passes only after the subscription
+ * portion is exhausted.
+ */
 export async function decrementUserPassBalance(
   userId: string,
   amount: number,
@@ -111,26 +116,45 @@ export async function decrementUserPassBalance(
 ) {
   const db = tx ?? dbClient;
 
-  // Try to decrement the existing row, clamping to 0 (never go negative)
+  const [current] = await db
+    .select({
+      balanceUsd: passBalance.balanceUsd,
+      topupBalanceUsd: passBalance.topupBalanceUsd,
+    })
+    .from(passBalance)
+    .where(eq(passBalance.userId, userId))
+    .limit(1);
+
+  if (!current) {
+    // No pass_balance row exists — create one with 0 balance.
+    const [inserted] = await db
+      .insert(passBalance)
+      .values({ userId, balanceUsd: 0, topupBalanceUsd: 0 })
+      .onConflictDoNothing()
+      .returning({ balanceUsd: passBalance.balanceUsd });
+    return inserted ?? null;
+  }
+
+  // Subscription portion = total - topup
+  const subBalance = Math.max(0, current.balanceUsd - current.topupBalanceUsd);
+
+  // Deduct from subscription first, then topup
+  const subDeduction = Math.min(amount, subBalance);
+  const topupDeduction = Math.min(amount - subDeduction, current.topupBalanceUsd);
+
+  const newBalanceUsd = Math.max(0, current.balanceUsd - amount);
+  const newTopupUsd = Math.max(0, current.topupBalanceUsd - topupDeduction);
+
   const [row] = await db
     .update(passBalance)
     .set({
-      balanceUsd: sql`GREATEST(0, ${passBalance.balanceUsd} - ${amount})`,
+      balanceUsd: newBalanceUsd,
+      topupBalanceUsd: newTopupUsd,
     })
     .where(eq(passBalance.userId, userId))
     .returning({ balanceUsd: passBalance.balanceUsd });
 
-  if (row) return row;
-
-  // No pass_balance row exists — create one with 0 balance.
-  // The usage log still records the full passCharged for audit purposes.
-  const [inserted] = await db
-    .insert(passBalance)
-    .values({ userId, balanceUsd: 0 })
-    .onConflictDoNothing()
-    .returning({ balanceUsd: passBalance.balanceUsd });
-
-  return inserted ?? null;
+  return row ?? null;
 }
 
 // ---------------------------------------------------------------------------

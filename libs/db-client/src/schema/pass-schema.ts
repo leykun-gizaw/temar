@@ -20,6 +20,7 @@ export const passBalance = pgTable(
       .unique()
       .references(() => user.id, { onDelete: 'cascade' }),
     balanceUsd: real('balance_usd').notNull().default(0),
+    topupBalanceUsd: real('topup_balance_usd').notNull().default(0),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
       .default(sql`now()`)

@@ -6,6 +6,7 @@ import { getAiHeaders } from './ai-headers';
 import { analysisServiceFetch } from '../answer-analysis-service';
 import { checkPassAvailability } from './pass';
 import { estimateInputTokens } from '@/lib/config/ai-operations';
+import { pgNotify } from '@temar/db-client';
 import type { AiProvider } from '@/lib/config/ai-operations';
 
 export interface AnalysisResult {
@@ -23,6 +24,7 @@ export type AnalyzeAnswerResult =
       data: AnalysisResult;
       passDeducted: number;
     }
+  | { status: 'analyzing'; requestId: string }
   | { status: 'insufficient_pass'; balance: number; required: number }
   | { status: 'error'; message: string };
 
@@ -57,34 +59,43 @@ export async function analyzeAnswer(
   }
 
   const aiHeaders = await getAiHeaders();
+  const requestId = crypto.randomUUID();
 
-  try {
-    // Step 2: Make the API call
-    const data = await analysisServiceFetch<AnalysisResult>('analyze', {
-      method: 'POST',
-      userId: loggedInUser.id,
-      headers: aiHeaders,
-      body: {
-        answer,
-        questionTitle,
-        questionText,
-        criteria,
-        keyPoints,
-        maxOutputTokens: 1000,
-        _estimatedTokens: estimatedTokens,
-      },
-    });
+  // Fire-and-forget: run analysis in the background.
+  // The result is pushed to the client via SSE (pg_notify → EventSource).
+  void (async () => {
+    try {
+      const data = await analysisServiceFetch<AnalysisResult>('analyze', {
+        method: 'POST',
+        userId: loggedInUser.id,
+        headers: aiHeaders,
+        body: {
+          answer,
+          questionTitle,
+          questionText,
+          criteria,
+          keyPoints,
+          maxOutputTokens: 1000,
+          _estimatedTokens: estimatedTokens,
+        },
+      });
 
-    return {
-      status: 'success',
-      data,
-      passDeducted: passCheck.passToDeduct,
-    };
-  } catch (err) {
-    // API call failed — no passes deducted
-    return {
-      status: 'error',
-      message: err instanceof Error ? err.message : 'Analysis failed',
-    };
-  }
+      await pgNotify(loggedInUser.id, {
+        type: 'analysis:complete',
+        requestId,
+        status: 'success',
+        data,
+        passDeducted: passCheck.passToDeduct,
+      });
+    } catch (err) {
+      await pgNotify(loggedInUser.id, {
+        type: 'analysis:complete',
+        requestId,
+        status: 'error',
+        message: err instanceof Error ? err.message : 'Analysis failed',
+      }).catch(() => { /* noop */ });
+    }
+  })();
+
+  return { status: 'analyzing', requestId };
 }

@@ -11,11 +11,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
 import { submitReview, saveAnswerDraft } from '@/lib/actions/review';
 import {
   analyzeAnswer,
@@ -32,8 +31,6 @@ import {
   SkipForward,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   Sparkles,
   Loader2,
   Send,
@@ -42,6 +39,7 @@ import {
   Frown,
   Smile,
   Rocket,
+  Pencil,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -49,7 +47,6 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/components/ui/resizable';
-import type { PanelImperativeHandle } from 'react-resizable-panels';
 import AnswerEditor from '@/components/lexical-editor/AnswerEditor';
 import type { SerializedEditorState } from 'lexical';
 import {
@@ -58,6 +55,11 @@ import {
 } from '@/components/lexical-editor/utils/serialize';
 import { cn } from '@/lib/utils';
 import { notifyPassBalanceChanged } from '@/lib/pass-events';
+import {
+  useSSE,
+  type AnalysisCompleteEvent,
+  type GenerationStatusEvent,
+} from '@/components/providers/sse-provider';
 
 const STATE_LABELS: Record<number, string> = {
   0: 'New',
@@ -65,6 +67,24 @@ const STATE_LABELS: Record<number, string> = {
   2: 'Review',
   3: 'Relearning',
 };
+
+const ANALYZING_WORDS = [
+  'Analyzing',
+  'Pondering',
+  'Inspecting',
+  'Evaluating',
+  'Scrutinizing',
+  'Deciphering',
+  'Judging',
+  'Contemplating',
+  'Dissecting',
+  'Vibing with',
+  'Squinting at',
+  'Overthinking',
+  'Grading',
+  'Marinating on',
+  'Crunching',
+];
 
 const RATING_CONFIG: {
   rating: number;
@@ -143,11 +163,13 @@ export default function ReviewSession({
   dueCount,
 }: ReviewSessionProps) {
   const router = useRouter();
+  const { subscribe } = useSSE();
   const [items, setItems] = useState(initialItems);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reviewStartTime, setReviewStartTime] = useState<number>(Date.now());
   const [isPending, startTransition] = useTransition();
   const [completedCount, setCompletedCount] = useState(0);
+  const pendingAnalysisRef = useRef<string | null>(null);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const STORAGE_KEY = 'temar:review-answers';
   const answersRef = useRef<Map<string, SerializedEditorState>>(new Map());
@@ -155,9 +177,10 @@ export default function ReviewSession({
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const resultsPanelRef = useRef<PanelImperativeHandle>(null);
-  const [resultsCollapsed, setResultsCollapsed] = useState(false);
+  const [analysisPopoverOpen, setAnalysisPopoverOpen] = useState(false);
+  const [analyzingWordIndex, setAnalyzingWordIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editorLocked, setEditorLocked] = useState(false);
   // Track which items have been submitted (answer saved to DB)
   const [submittedIds, setSubmittedIds] = useState<Set<string>>(new Set());
   // Track if editor has changed since last submit
@@ -223,8 +246,68 @@ export default function ReviewSession({
     }
   }, []);
 
+  // Merge new items from server refresh (e.g. after question generation)
+  // without resetting the user's review progress
+  useEffect(() => {
+    const existingIds = new Set(items.map((i) => i.id));
+    const newItems = initialItems.filter((i) => !existingIds.has(i.id));
+    if (newItems.length > 0) {
+      setItems((prev) => [...prev, ...newItems]);
+    }
+  }, [initialItems]);
+
   const currentItem = items[currentIndex];
   const isSessionComplete = !currentItem;
+
+  // Reset analysis + editor state when navigating to a different card
+  useEffect(() => {
+    setAnalysis(null);
+    setAnalysisError(null);
+    setAnalysisPopoverOpen(false);
+    setEditorLocked(false);
+    setIsAnalyzing(false);
+    pendingAnalysisRef.current = null;
+  }, [currentItem?.id]);
+
+  // Flip through analyzing words while analysis is in progress
+  useEffect(() => {
+    if (!isAnalyzing) {
+      setAnalyzingWordIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setAnalyzingWordIndex((i) => (i + 1) % ANALYZING_WORDS.length);
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [isAnalyzing]);
+
+  // Listen for analysis results via SSE
+  useEffect(() => {
+    return subscribe('analysis:complete', (event) => {
+      const e = event as AnalysisCompleteEvent;
+      if (e.requestId !== pendingAnalysisRef.current) return;
+      pendingAnalysisRef.current = null;
+
+      if (e.status === 'success' && e.data) {
+        setAnalysis(e.data);
+        setAnalysisPopoverOpen(true);
+        notifyPassBalanceChanged();
+      } else {
+        setAnalysisError(e.message ?? 'Analysis failed');
+      }
+      setIsAnalyzing(false);
+    });
+  }, [subscribe]);
+
+  // Refresh review data when new questions finish generating
+  useEffect(() => {
+    return subscribe('generation:status', (event) => {
+      const e = event as GenerationStatusEvent;
+      if (e.status === 'ready') {
+        router.refresh();
+      }
+    });
+  }, [subscribe, router]);
 
   // Derive unique notes from items for the note filter dropdown
   const noteOptions = useMemo(() => {
@@ -307,6 +390,7 @@ export default function ReviewSession({
         next.delete(currentItem.id);
         return next;
       });
+      setEditorLocked(true);
       // Clear from localStorage since it's now in DB
       removeFromLocalStorage(currentItem.id);
     } catch (err) {
@@ -368,20 +452,28 @@ export default function ReviewSession({
         criteria,
         keyPoints
       );
-      if (result.status === 'success') {
+
+      if (result.status === 'analyzing') {
+        // Server action returned immediately — result arrives via SSE
+        pendingAnalysisRef.current = result.requestId;
+      } else if (result.status === 'success') {
+        // Synchronous fallback (shouldn't normally hit this path)
         setAnalysis(result.data);
+        setAnalysisPopoverOpen(true);
         notifyPassBalanceChanged();
+        setIsAnalyzing(false);
       } else if (result.status === 'insufficient_pass') {
         setAnalysisError(
           `Not enough Pass (have ${result.balance}, need ${result.required}). Top up in billing.`
         );
+        setIsAnalyzing(false);
       } else {
         setAnalysisError(result.message);
+        setIsAnalyzing(false);
       }
     } catch (err) {
       console.error('Analysis failed:', err);
       setAnalysisError(err instanceof Error ? err.message : 'Analysis failed');
-    } finally {
       setIsAnalyzing(false);
     }
   };
@@ -414,6 +506,7 @@ export default function ReviewSession({
         });
         setAnalysis(null);
         setAnalysisError(null);
+        setAnalysisPopoverOpen(false);
         advanceAfterReview();
       } catch (err) {
         console.error('Review submission failed:', err);
@@ -463,9 +556,9 @@ export default function ReviewSession({
   const isCurrentReviewed = reviewedIds.has(currentItem.id);
 
   return (
-    <div className="grid grid-rows-[auto_1fr] h-full">
+    <div className="grid grid-rows-[auto_1fr] h-full overflow-hidden">
       {/* ── Top bar ── */}
-      <div className="flex items-center justify-between px-5 py-2 bg-muted/30 shrink-0">
+      <div className="flex items-center justify-between px-5 py-2 bg-muted/30 shrink-0 overflow-hidden min-w-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-0.5 bg-muted/60 rounded-full p-0.5">
             <Button
@@ -559,13 +652,13 @@ export default function ReviewSession({
       </div>
 
       {/* ── Main: resizable two-column layout with card gaps ── */}
-      <div className="p-4 min-h-0 flex-1">
+      <div className="p-4 min-h-0 min-w-0 flex-1 overflow-hidden">
         <ResizablePanelGroup orientation="horizontal" className="h-full">
           {/* ──── LEFT PANEL: Question + Rubric ──── */}
           <ResizablePanel defaultSize={45} minSize={25}>
             <div className="h-full p-1">
               <div className="h-full rounded-2xl bg-card shadow-md overflow-hidden">
-                <div className="overflow-y-auto h-full p-8 lg:p-10">
+                <div className="overflow-y-auto overflow-x-hidden h-full p-8 lg:p-10">
                   <div className="space-y-8">
                     {/* Due Today badge */}
                     <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-bold">
@@ -574,7 +667,7 @@ export default function ReviewSession({
                     </span>
 
                     {currentItem.questionTitle && (
-                      <h2 className="text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
+                      <h2 className="text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight break-words">
                         {currentItem.questionTitle}
                       </h2>
                     )}
@@ -657,308 +750,256 @@ export default function ReviewSession({
             <div className="w-1 h-8 rounded-full bg-border opacity-40 group-hover/handle:opacity-100 transition-opacity" />
           </ResizableHandle>
 
-          {/* ──── RIGHT PANEL: Editor (top) + Results (bottom) ──── */}
+          {/* ──── RIGHT PANEL: Editor + Bottom Bar ──── */}
           <ResizablePanel defaultSize={55} minSize={25}>
-            <div className="h-full flex flex-col gap-2">
-              <ResizablePanelGroup
-                orientation="vertical"
-                className="flex-1 min-h-0"
-              >
-                {/* Editor section */}
-                <ResizablePanel defaultSize={70} minSize={20}>
-                  <div className="h-full p-1">
-                    <div className="flex flex-col h-full min-h-0 rounded-2xl bg-card shadow-md overflow-hidden">
-                      <div className="flex items-center justify-between px-5 py-2.5 shrink-0 bg-muted/20 rounded-t-2xl">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                          Your Answer
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            'h-6 text-xs px-2.5 rounded-full',
-                            submittedIds.has(currentItem.id) &&
-                              !dirtyIds.has(currentItem.id)
-                              ? 'bg-fsrs-good-bg text-fsrs-good border-fsrs-good/30'
-                              : ''
-                          )}
-                          onClick={handleSubmitAnswer}
-                          disabled={
-                            isSubmitting ||
-                            isPending ||
-                            (submittedIds.has(currentItem.id) &&
-                              !dirtyIds.has(currentItem.id))
-                          }
-                        >
-                          {isSubmitting ? (
-                            <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                          ) : (
-                            <Send className="h-3 w-3 mr-1" />
-                          )}
-                          {submittedIds.has(currentItem.id) &&
+            <div className="h-full flex flex-col gap-2 p-1">
+              {/* Editor card — takes all available space */}
+              <div className="flex-1 min-h-0 flex flex-col rounded-2xl bg-card shadow-md overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-2.5 shrink-0 bg-muted/20 rounded-t-2xl">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Your Answer
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {editorLocked && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs px-2.5 rounded-full"
+                        onClick={() => {
+                          setEditorLocked(false);
+                          setDirtyIds((prev) =>
+                            new Set(prev).add(currentItem.id)
+                          );
+                        }}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        'h-6 text-xs px-2.5 rounded-full',
+                        editorLocked &&
+                          submittedIds.has(currentItem.id) &&
                           !dirtyIds.has(currentItem.id)
-                            ? 'Submitted'
-                            : 'Submit'}
-                        </Button>
-                      </div>
-                      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                        <AnswerEditor
-                          key={currentItem.id}
-                          initialValue={answersRef.current.get(currentItem.id)}
-                          onChange={(value) => {
-                            answersRef.current.set(currentItem.id, value);
-                            persistToLocalStorage();
-                            if (submittedIds.has(currentItem.id)) {
-                              setDirtyIds((prev) =>
-                                new Set(prev).add(currentItem.id)
-                              );
-                            }
-                          }}
-                          placeholder="Write your answer here..."
-                        />
-                      </div>
-                    </div>
+                          ? 'bg-fsrs-good-bg text-fsrs-good border-fsrs-good/30'
+                          : ''
+                      )}
+                      onClick={handleSubmitAnswer}
+                      disabled={
+                        isSubmitting ||
+                        isPending ||
+                        editorLocked
+                      }
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      ) : (
+                        <Send className="h-3 w-3 mr-1" />
+                      )}
+                      {editorLocked &&
+                      submittedIds.has(currentItem.id) &&
+                      !dirtyIds.has(currentItem.id)
+                        ? 'Submitted'
+                        : 'Submit'}
+                    </Button>
                   </div>
-                </ResizablePanel>
-
-                <ResizableHandle
-                  className="bg-transparent border-none group/vhandle flex items-center justify-center"
-                  style={{ height: 12, cursor: 'row-resize' }}
-                >
-                  <div
-                    className="h-1 w-8 rounded-full bg-border opacity-40 group-hover/vhandle:opacity-100 transition-opacity"
-                    style={{ transform: 'none' }}
+                </div>
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                  <AnswerEditor
+                    key={currentItem.id}
+                    initialValue={answersRef.current.get(currentItem.id)}
+                    editable={!editorLocked}
+                    onChange={(value) => {
+                      answersRef.current.set(currentItem.id, value);
+                      persistToLocalStorage();
+                      if (submittedIds.has(currentItem.id)) {
+                        setDirtyIds((prev) =>
+                          new Set(prev).add(currentItem.id)
+                        );
+                      }
+                    }}
+                    placeholder="Write your answer here..."
                   />
-                </ResizableHandle>
+                </div>
+              </div>
 
-                {/* Results section — collapsible */}
-                <ResizablePanel
-                  panelRef={resultsPanelRef}
-                  defaultSize={30}
-                  minSize={10}
-                  collapsible
-                  collapsedSize={0}
-                  onResize={(size) => {
-                    setResultsCollapsed(size.asPercentage === 0);
-                  }}
-                >
-                  <div className="h-full p-1">
-                    <div className="flex flex-col h-full min-h-0 rounded-2xl bg-card shadow-md overflow-hidden">
-                      <div className="flex items-center justify-between shrink-0 px-5 bg-muted/20 rounded-t-2xl">
-                        <span className="flex items-center gap-1.5 py-2.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                          <Sparkles className="h-3.5 w-3.5" />
-                          Results
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => resultsPanelRef.current?.collapse()}
-                          title="Minimize results"
-                        >
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-
-                      <div className="flex-1 overflow-y-auto p-4">
-                        {!analysis && !isAnalyzing && !analysisError && (
-                          <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-                            <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
-                              <Sparkles className="h-5 w-5 opacity-50" />
-                            </div>
-                            <p className="text-xs font-medium">
-                              {submittedIds.has(currentItem.id) &&
-                              !dirtyIds.has(currentItem.id)
-                                ? 'Click Analyze to get AI feedback'
-                                : 'Submit your answer first, then analyze'}
-                            </p>
-                            <button
-                              className="group inline-flex items-center gap-2 px-5 py-2.5 bg-secondary text-secondary-foreground rounded-full font-bold text-sm hover:bg-secondary/80 transition-all active:scale-95 shadow-md disabled:opacity-50 disabled:pointer-events-none"
-                              onClick={handleAnalyze}
-                              disabled={
-                                isAnalyzing ||
-                                isPending ||
-                                !submittedIds.has(currentItem.id) ||
-                                dirtyIds.has(currentItem.id)
-                              }
-                            >
-                              {isAnalyzing ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Sparkles className="h-4 w-4" />
+              {/* Bottom bar — always visible */}
+              <div className="shrink-0 rounded-2xl bg-card shadow-md px-4 py-2.5">
+                <div className="flex items-center justify-between">
+                  {/* Analyze button with Popover */}
+                  {/* Analyze button — animated during analysis, popover on result */}
+                  {isAnalyzing ? (
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground shadow-md">
+                      <Sparkles className="h-4 w-4 animate-[spin_2s_linear_infinite]" />
+                      <span
+                        key={analyzingWordIndex}
+                        className="text-sm font-bold animate-[fadeInUp_0.3s_ease-out]"
+                      >
+                        {ANALYZING_WORDS[analyzingWordIndex]}...
+                      </span>
+                    </div>
+                  ) : (
+                  <Popover
+                    open={analysisPopoverOpen}
+                    onOpenChange={setAnalysisPopoverOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <button
+                        className={cn(
+                          'inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all active:scale-95',
+                          analysis
+                            ? 'bg-secondary/10 text-secondary-foreground hover:bg-secondary/20'
+                            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-md'
+                        )}
+                        onClick={() => {
+                          if (!analysis && !analysisError) {
+                            handleAnalyze();
+                          }
+                        }}
+                        disabled={
+                          isPending ||
+                          (!analysis &&
+                            !analysisError &&
+                            (!submittedIds.has(currentItem.id) ||
+                              dirtyIds.has(currentItem.id)))
+                        }
+                      >
+                        {analysis ? (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            <span
+                              className={cn(
+                                'font-extrabold',
+                                analysis.suggestedRating === 1
+                                  ? 'text-fsrs-again'
+                                  : analysis.suggestedRating === 2
+                                    ? 'text-fsrs-hard'
+                                    : analysis.suggestedRating === 3
+                                      ? 'text-fsrs-good'
+                                      : 'text-fsrs-easy'
                               )}
-                              Analyze Answer
-                              <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                            </button>
-                          </div>
-                        )}
-                        {isAnalyzing && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Analyzing your answer...
-                          </div>
-                        )}
-                        {analysisError && (
-                          <div className="flex flex-col items-center gap-2 py-3">
-                            <p className="text-sm text-destructive text-center">
-                              {analysisError}
-                            </p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={handleAnalyze}
-                              disabled={isAnalyzing || isPending}
                             >
-                              <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                              Retry Analysis
-                            </Button>
-                          </div>
+                              {analysis.scorePercent}%
+                            </span>
+                          </>
+                        ) : analysisError ? (
+                          <>
+                            <RefreshCw className="h-4 w-4" />
+                            Retry
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            Analyze
+                          </>
                         )}
-                        {analysis && (
-                          <div className="space-y-3">
-                            <ReviewAnalysis
-                              analysis={analysis}
-                              hideTitle
-                              scoreSize="sm"
-                            />
-
-                            {rubric?.type === 'mcq' && (
-                              <div className="border-t pt-3 mt-3">
-                                <h4 className="text-[10px] font-semibold text-green-600 dark:text-green-400 mb-1.5 uppercase tracking-wider">
-                                  Correct Answer
-                                </h4>
-                                <p className="text-sm font-medium mb-2">
-                                  {rubric.correctAnswer}.{' '}
-                                  {
-                                    rubric.choices.find(
-                                      (c) => c.label === rubric.correctAnswer
-                                    )?.text
-                                  }
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="top"
+                      align="start"
+                      sideOffset={8}
+                      className="w-80 max-h-[60vh] overflow-y-auto p-4"
+                    >
+                      {analysisError && (
+                        <div className="flex flex-col items-center gap-2 py-3">
+                          <p className="text-sm text-destructive text-center">
+                            {analysisError}
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={handleAnalyze}
+                            disabled={isAnalyzing || isPending}
+                          >
+                            <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                            Retry
+                          </Button>
+                        </div>
+                      )}
+                      {analysis && (
+                        <div className="space-y-3">
+                          <ReviewAnalysis
+                            analysis={analysis}
+                            hideTitle
+                            scoreSize="sm"
+                          />
+                          {rubric?.type === 'mcq' && (
+                            <div className="border-t pt-3 mt-3">
+                              <h4 className="text-[10px] font-semibold text-green-600 dark:text-green-400 mb-1.5 uppercase tracking-wider">
+                                Correct Answer
+                              </h4>
+                              <p className="text-sm font-medium mb-2">
+                                {rubric.correctAnswer}.{' '}
+                                {
+                                  rubric.choices.find(
+                                    (c) => c.label === rubric.correctAnswer
+                                  )?.text
+                                }
+                              </p>
+                              {rubric.explanation && (
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                  {rubric.explanation}
                                 </p>
-                                {rubric.explanation && (
-                                  <p className="text-xs text-muted-foreground leading-relaxed">
-                                    {rubric.explanation}
-                                  </p>
-                                )}
+                              )}
+                            </div>
+                          )}
+                          {rubric?.keyPoints &&
+                            rubric.keyPoints.length > 0 && (
+                              <div className="border-t pt-3 mt-3">
+                                <h4 className="text-[10px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                                  Key Points
+                                </h4>
+                                <ul className="space-y-1">
+                                  {rubric.keyPoints.map((kp, i) => (
+                                    <li
+                                      key={i}
+                                      className="text-xs text-muted-foreground flex items-start gap-2"
+                                    >
+                                      <span className="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                                      {kp}
+                                    </li>
+                                  ))}
+                                </ul>
                               </div>
                             )}
-
-                            {rubric?.keyPoints &&
-                              rubric.keyPoints.length > 0 && (
-                                <div className="border-t pt-3 mt-3">
-                                  <h4 className="text-[10px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                                    Key Points
-                                  </h4>
-                                  <ul className="space-y-1">
-                                    {rubric.keyPoints.map((kp, i) => (
-                                      <li
-                                        key={i}
-                                        className="text-xs text-muted-foreground flex items-start gap-2"
-                                      >
-                                        <span className="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                                        {kp}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Rating buttons — sticky footer inside results */}
-                      <div className="shrink-0 px-4 py-2.5 bg-card/80 backdrop-blur-sm border-t border-border/30">
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1.5 text-center">
-                          Rate your recall difficulty
-                        </p>
-                        <div className="grid grid-cols-4 gap-1 max-w-xs mx-auto">
-                          <TooltipProvider delayDuration={200}>
-                            {RATING_CONFIG.map(
-                              ({
-                                rating,
-                                label,
-                                tooltip,
-                                shortcut,
-                                Icon,
-                                color,
-                              }) => (
-                                <Tooltip key={rating}>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      onClick={() => handleRate(rating)}
-                                      disabled={isPending}
-                                      className={cn(
-                                        'flex flex-col items-center gap-1 py-1.5 px-1 rounded-xl transition-all group disabled:opacity-50 disabled:pointer-events-none',
-                                        color.hoverBg
-                                      )}
-                                    >
-                                      <div
-                                        className={cn(
-                                          'w-9 h-9 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform',
-                                          color.bg
-                                        )}
-                                      >
-                                        <Icon
-                                          className={cn('h-4 w-4', color.text)}
-                                        />
-                                      </div>
-                                      <span className="text-[11px] font-bold">
-                                        {label}
-                                      </span>
-                                      <span className="text-[9px] text-muted-foreground font-medium">
-                                        {shortcut}
-                                      </span>
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top">
-                                    <p className="text-xs">{tooltip}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )
-                            )}
-                          </TooltipProvider>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </ResizablePanel>
-              </ResizablePanelGroup>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                  )}
 
-              {/* Collapsed results expand bar — inside right panel */}
-              {resultsCollapsed && (
-                <div className="flex items-center justify-between px-4 py-1.5 bg-card rounded-2xl shadow-sm shrink-0">
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Results
-                    {analysis && (
-                      <span
+                  {/* Rating buttons */}
+                  <div className="flex items-center gap-1">
+                    {RATING_CONFIG.map(({ rating, label, Icon, color }) => (
+                      <button
+                        key={rating}
+                        onClick={() => handleRate(rating)}
+                        disabled={isPending}
                         className={cn(
-                          'ml-1 text-xs font-bold',
-                          analysis.suggestedRating === 1
-                            ? 'text-fsrs-again'
-                            : analysis.suggestedRating === 2
-                            ? 'text-fsrs-hard'
-                            : analysis.suggestedRating === 3
-                            ? 'text-fsrs-good'
-                            : 'text-fsrs-easy'
+                          'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all',
+                          'disabled:opacity-50 disabled:pointer-events-none',
+                          color.hoverBg
                         )}
                       >
-                        {analysis.scorePercent}%
-                      </span>
-                    )}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => resultsPanelRef.current?.expand()}
-                    title="Expand results"
-                  >
-                    <ChevronUp className="h-3.5 w-3.5" />
-                  </Button>
+                        <div
+                          className={cn(
+                            'w-7 h-7 rounded-full flex items-center justify-center',
+                            color.bg
+                          )}
+                        >
+                          <Icon className={cn('h-3.5 w-3.5', color.text)} />
+                        </div>
+                        <span className="text-xs font-bold">{label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>

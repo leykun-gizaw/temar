@@ -1,6 +1,7 @@
 import { AppSidebar } from './_components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { SSEProvider } from '@/components/providers/sse-provider';
 import React from 'react';
 import { RedirectToSignIn, SignedIn } from '@daveyplate/better-auth-ui';
 
@@ -13,22 +14,24 @@ export default async function DashboardLayout({
     <>
       <RedirectToSignIn />
       <SignedIn>
-        <SidebarProvider
-          style={
-            {
-              '--sidebar-width': '17rem',
-              '--sidebar-width-icon': '3.5rem',
-              '--header-height': 'calc(var(--spacing) * 12)',
-            } as React.CSSProperties
-          }
-          defaultOpen={false}
-        >
-          <AppSidebar variant="floating" />
-          <SidebarInset>
-            <SiteHeader />
-            {children}
-          </SidebarInset>
-        </SidebarProvider>
+        <SSEProvider>
+          <SidebarProvider
+            style={
+              {
+                '--sidebar-width': '17rem',
+                '--sidebar-width-icon': '3.5rem',
+                '--header-height': 'calc(var(--spacing) * 12)',
+              } as React.CSSProperties
+            }
+            defaultOpen={false}
+          >
+            <AppSidebar variant="floating" />
+            <SidebarInset>
+              <SiteHeader />
+              {children}
+            </SidebarInset>
+          </SidebarProvider>
+        </SSEProvider>
       </SignedIn>
     </>
   );

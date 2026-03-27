@@ -95,8 +95,7 @@ export default function OutdatedQuestionsCard({
         const result = await regenerateChunkQuestions(chunkId);
         if (result.status === 'success') {
           setChunks((prev) => prev.filter((c) => c.chunkId !== chunkId));
-          if (result.newBalance != null)
-            notifyPassBalanceChanged(result.newBalance);
+          notifyPassBalanceChanged();
         } else if (result.status === 'insufficient_pass') {
           setPassError(
             `Not enough Pass (have ${result.balance}, need ${result.required}).`

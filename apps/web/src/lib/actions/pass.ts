@@ -92,10 +92,15 @@ export async function creditPass(
   providerTransactionId?: string
 ): Promise<void> {
   const usdAmount = amount * getCostPerPassUsd();
+  const isTopup = operationType === 'topup';
 
   await dbClient.transaction(async (tx) => {
     const [existing] = await tx
-      .select({ id: passBalance.id, balanceUsd: passBalance.balanceUsd })
+      .select({
+        id: passBalance.id,
+        balanceUsd: passBalance.balanceUsd,
+        topupBalanceUsd: passBalance.topupBalanceUsd,
+      })
       .from(passBalance)
       .where(eq(passBalance.userId, userId))
       .limit(1);
@@ -103,10 +108,19 @@ export async function creditPass(
     if (existing) {
       await tx
         .update(passBalance)
-        .set({ balanceUsd: existing.balanceUsd + usdAmount })
+        .set({
+          balanceUsd: existing.balanceUsd + usdAmount,
+          ...(isTopup && {
+            topupBalanceUsd: existing.topupBalanceUsd + usdAmount,
+          }),
+        })
         .where(eq(passBalance.userId, userId));
     } else {
-      await tx.insert(passBalance).values({ userId, balanceUsd: usdAmount });
+      await tx.insert(passBalance).values({
+        userId,
+        balanceUsd: usdAmount,
+        topupBalanceUsd: isTopup ? usdAmount : 0,
+      });
     }
 
     await tx.insert(passTransaction).values({

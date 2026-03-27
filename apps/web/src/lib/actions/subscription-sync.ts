@@ -55,7 +55,7 @@ async function ensurePassBalance(
   await dbClient.transaction(async (tx) => {
     await tx
       .insert(passBalance)
-      .values({ userId, balanceUsd: allocationUsd });
+      .values({ userId, balanceUsd: allocationUsd, topupBalanceUsd: 0 });
     await tx.insert(passTransaction).values({
       userId,
       deltaUsd: allocationUsd,

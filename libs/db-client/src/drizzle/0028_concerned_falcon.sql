@@ -1,0 +1,1 @@
+ALTER TABLE "pass_balance" ADD COLUMN "topup_balance_usd" real DEFAULT 0 NOT NULL;

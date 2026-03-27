@@ -1,4 +1,5 @@
 import {
+  ChartNoAxesCombined,
   Coins,
   Home,
   LibraryBig,
@@ -22,6 +23,11 @@ export const NAV_ITEMS = [
     title: 'Reviews',
     url: '/dashboard/reviews',
     icon: BinocularsIcon,
+  },
+  {
+    title: 'Analytics',
+    url: '/dashboard/analytics',
+    icon: ChartNoAxesCombined,
   },
 ];
 

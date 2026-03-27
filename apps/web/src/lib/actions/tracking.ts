@@ -6,7 +6,6 @@ import { fsrsServiceFetch } from '../fsrs-service';
 import { getAiHeaders } from './ai-headers';
 import { checkPassAvailability } from './pass';
 import { dbClient, chunk, note, chunkTracking, eq, and } from '@temar/db-client';
-import { getCostPerPassUsd } from '@/lib/config/ai-operations';
 
 export type TrackResult<T = unknown> =
   | { status: 'success'; data: T; newBalance?: number }
@@ -133,13 +132,7 @@ export async function trackTopic(
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/materials');
-    return {
-      status: 'success',
-      data,
-      ...(data?.newBalance != null && {
-        newBalance: Math.floor((data.newBalance as number) / getCostPerPassUsd()),
-      }),
-    };
+    return { status: 'success', data };
   } catch (err) {
     return {
       status: 'error',
@@ -187,13 +180,7 @@ export async function trackNote(
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/materials');
-    return {
-      status: 'success',
-      data,
-      ...(data?.newBalance != null && {
-        newBalance: Math.floor((data.newBalance as number) / getCostPerPassUsd()),
-      }),
-    };
+    return { status: 'success', data };
   } catch (err) {
     return {
       status: 'error',
@@ -234,13 +221,7 @@ export async function trackChunk(
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/materials');
-    return {
-      status: 'success',
-      data,
-      ...(data?.newBalance != null && {
-        newBalance: Math.floor((data.newBalance as number) / getCostPerPassUsd()),
-      }),
-    };
+    return { status: 'success', data };
   } catch (err) {
     return {
       status: 'error',
@@ -271,32 +252,29 @@ export async function trackChunksBatch(
   if (!passCheck.ok) return passCheck.result;
 
   const aiHeaders = await getAiHeaders();
-  let lastBalance: number | null = null;
 
-  for (const cfg of configs) {
-    const data = await fsrsServiceFetch<Record<string, unknown>>(
-      `track/chunk/${cfg.chunkId}`,
-      {
-        method: 'POST',
-        userId: loggedInUser.id,
-        headers: aiHeaders,
-        body: {
-          questionTypes: cfg.questionTypes,
-          questionCount: cfg.questionCount,
-        },
-      }
-    );
-    if (data?.newBalance != null) lastBalance = data.newBalance as number;
-  }
+  await Promise.all(
+    configs.map((cfg) =>
+      fsrsServiceFetch<Record<string, unknown>>(
+        `track/chunk/${cfg.chunkId}`,
+        {
+          method: 'POST',
+          userId: loggedInUser.id,
+          headers: aiHeaders,
+          body: {
+            questionTypes: cfg.questionTypes,
+            questionCount: cfg.questionCount,
+          },
+        }
+      )
+    )
+  );
 
   revalidatePath('/dashboard');
   revalidatePath('/dashboard/materials');
   return {
     status: 'success',
     data: { tracked: configs.length },
-    ...(lastBalance != null && {
-      newBalance: Math.floor(lastBalance / getCostPerPassUsd()),
-    }),
   };
 }
 
@@ -461,13 +439,7 @@ export async function regenerateChunkQuestions(
     );
 
     revalidatePath('/dashboard');
-    return {
-      status: 'success',
-      data,
-      ...(data?.newBalance != null && {
-        newBalance: Math.floor((data.newBalance as number) / getCostPerPassUsd()),
-      }),
-    };
+    return { status: 'success', data };
   } catch (err) {
     return {
       status: 'error',

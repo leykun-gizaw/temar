@@ -17,6 +17,7 @@ import {
   count,
   desc,
   inArray,
+  pgNotify,
 } from '@temar/db-client';
 
 const RATING_LABELS: Record<number, string> = {
@@ -89,21 +90,39 @@ export class RecallItemService {
         `Tracked chunk ${chunkId} for user ${userId} (pending generation)`
       );
 
-      // Trigger question generation synchronously so errors propagate
-      const qgenResult = await this.triggerQuestionGen(
+      // Notify frontend that a chunk entered pending state
+      const [chunkRow] = await dbClient
+        .select({ name: chunk.name })
+        .from(chunk)
+        .where(eq(chunk.id, chunkId))
+        .limit(1);
+      void pgNotify(userId, {
+        type: 'generation:status',
+        chunkId,
+        chunkName: chunkRow?.name ?? '',
+        status: 'pending',
+      }).catch(() => { /* noop */ });
+
+      // Fire-and-forget: trigger question generation in the background.
+      // The question-gen-service updates chunk_tracking status and sends
+      // a pg_notify event when done — the frontend picks it up via SSE.
+      void this.triggerQuestionGen(
         chunkId,
         userId,
         aiConfig,
         questionTypes,
         questionCount
-      );
+      ).catch((err) => {
+        this.logger.error(
+          `Background question gen failed for chunk ${chunkId}: ${err}`
+        );
+      });
 
       return {
         tracked: true,
         chunkId,
         trackingId: row.id,
-        status: qgenResult?.status ?? 'pending',
-        newBalance: qgenResult?.newBalance ?? null,
+        status: 'pending',
       };
     } catch (err: unknown) {
       if (
@@ -134,18 +153,11 @@ export class RecallItemService {
       .from(chunk)
       .where(and(eq(chunk.noteId, noteId), eq(chunk.userId, userId)));
 
-    const results = [];
-    for (const c of chunks) {
-      results.push(
-        await this.trackChunk(
-          c.id,
-          userId,
-          aiConfig,
-          questionTypes,
-          questionCount
-        )
-      );
-    }
+    const results = await Promise.all(
+      chunks.map((c) =>
+        this.trackChunk(c.id, userId, aiConfig, questionTypes, questionCount)
+      )
+    );
 
     this.logger.log(
       `Tracked note ${noteId}: ${results.filter((r) => r.tracked).length}/${
@@ -172,18 +184,11 @@ export class RecallItemService {
       .from(note)
       .where(and(eq(note.topicId, topicId), eq(note.userId, userId)));
 
-    const results = [];
-    for (const n of notes) {
-      results.push(
-        await this.trackNote(
-          n.id,
-          userId,
-          aiConfig,
-          questionTypes,
-          questionCount
-        )
-      );
-    }
+    const results = await Promise.all(
+      notes.map((n) =>
+        this.trackNote(n.id, userId, aiConfig, questionTypes, questionCount)
+      )
+    );
 
     this.logger.log(`Tracked topic ${topicId}: ${notes.length} notes`);
     return { topicId, results };
@@ -505,12 +510,15 @@ export class RecallItemService {
       byok?: boolean;
     }
   ) {
-    const result = await this.callQuestionGenService(
+    // Fire-and-forget — SSE will notify when generation completes
+    void this.callQuestionGenService(
       `/generate/retry/${chunkId}`,
       userId,
       aiConfig
-    );
-    return { chunkId, ...result };
+    ).catch((err) => {
+      this.logger.error(`Background retry failed for chunk ${chunkId}: ${err}`);
+    });
+    return { chunkId, status: 'pending' };
   }
 
   async retryAllFailed(
@@ -522,12 +530,15 @@ export class RecallItemService {
       byok?: boolean;
     }
   ) {
-    const result = await this.callQuestionGenService(
+    // Fire-and-forget — SSE will notify when generation completes
+    void this.callQuestionGenService(
       '/generate/retry-failed',
       userId,
       aiConfig
-    );
-    return result;
+    ).catch((err) => {
+      this.logger.error(`Background retry-all-failed failed: ${err}`);
+    });
+    return { status: 'pending' };
   }
 
   async getUnderperformingChunks(
@@ -833,21 +844,24 @@ ${questionSummaries.join('\n')}`;
         )
       );
 
-    // Trigger question generation synchronously
-    const qgenResult = await this.triggerQuestionGen(
+    // Fire-and-forget: trigger question generation in the background
+    void this.triggerQuestionGen(
       chunkId,
       userId,
       aiConfig,
       undefined,
       undefined,
       performanceSummary
-    );
+    ).catch((err) => {
+      this.logger.error(
+        `Background regeneration failed for chunk ${chunkId}: ${err}`
+      );
+    });
 
     this.logger.log(`Regeneration triggered for chunk ${chunkId}`);
     return {
       chunkId,
-      status: qgenResult?.status ?? 'regeneration_triggered',
-      newBalance: qgenResult?.newBalance ?? null,
+      status: 'pending',
     };
   }
 

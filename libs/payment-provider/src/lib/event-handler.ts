@@ -43,6 +43,9 @@ export async function getUserIdByProviderCustomerId(
 /**
  * Reset monthly pass allocation with rollover cap.
  * Called on subscription activation and renewal.
+ *
+ * The rollover cap applies ONLY to the subscription portion of the balance.
+ * Top-up passes are preserved in full — users paid for them separately.
  */
 async function resetMonthlyPass(
   userId: string,
@@ -56,26 +59,60 @@ async function resetMonthlyPass(
   const allocationUsd = allocation * cpp;
   const rolloverCapUsd = rolloverCap * cpp;
 
-  const [balanceRow] = await dbClient
-    .select({ balanceUsd: passBalance.balanceUsd })
-    .from(passBalance)
-    .where(eq(passBalance.userId, userId))
-    .limit(1);
+  await dbClient.transaction(async (tx) => {
+    const [balanceRow] = await tx
+      .select({
+        balanceUsd: passBalance.balanceUsd,
+        topupBalanceUsd: passBalance.topupBalanceUsd,
+      })
+      .from(passBalance)
+      .where(eq(passBalance.userId, userId))
+      .limit(1);
 
-  const currentBalanceUsd = balanceRow?.balanceUsd ?? 0;
-  const rolledOver = Math.min(currentBalanceUsd, rolloverCapUsd);
-  const newBalanceUsd = rolledOver + allocationUsd;
+    const currentBalanceUsd = balanceRow?.balanceUsd ?? 0;
+    const currentTopupUsd = balanceRow?.topupBalanceUsd ?? 0;
 
-  if (balanceRow) {
-    await dbClient
-      .update(passBalance)
-      .set({ balanceUsd: newBalanceUsd })
-      .where(eq(passBalance.userId, userId));
-  } else {
-    await dbClient
-      .insert(passBalance)
-      .values({ userId, balanceUsd: newBalanceUsd });
-  }
+    // Subscription portion = total minus top-up (clamped to 0)
+    const currentSubUsd = Math.max(0, currentBalanceUsd - currentTopupUsd);
+
+    // Rollover cap applies ONLY to subscription balance
+    const rolledOverSubUsd = Math.min(currentSubUsd, rolloverCapUsd);
+    const forfeitedUsd = currentSubUsd - rolledOverSubUsd;
+
+    // New total = rolled-over subscription + fresh allocation + unchanged top-up
+    const newBalanceUsd = rolledOverSubUsd + allocationUsd + currentTopupUsd;
+
+    if (balanceRow) {
+      await tx
+        .update(passBalance)
+        .set({ balanceUsd: newBalanceUsd, topupBalanceUsd: currentTopupUsd })
+        .where(eq(passBalance.userId, userId));
+    } else {
+      await tx
+        .insert(passBalance)
+        .values({ userId, balanceUsd: allocationUsd, topupBalanceUsd: 0 });
+    }
+
+    // Audit trail: log forfeited passes
+    if (forfeitedUsd > 0) {
+      await tx.insert(passTransaction).values({
+        userId,
+        deltaUsd: -forfeitedUsd,
+        operationType: 'rollover_forfeit',
+        description: `Monthly reset: forfeited ${Math.round(forfeitedUsd / cpp)} unused subscription Pass (rollover cap: ${rolloverCap})`,
+      });
+    }
+
+    // Audit trail: log monthly allocation credit
+    if (allocationUsd > 0) {
+      await tx.insert(passTransaction).values({
+        userId,
+        deltaUsd: allocationUsd,
+        operationType: 'subscription',
+        description: `Monthly allocation: ${allocation} Pass (${plan} plan)`,
+      });
+    }
+  });
 
   await dbClient
     .update(user)
@@ -87,17 +124,24 @@ async function resetMonthlyPass(
 
 /**
  * Debit USD from the user's balance (clamped to 0) and log a transaction.
+ * When source is 'topup', the topupBalanceUsd column is also decremented
+ * (e.g. a top-up refund reverses the topup portion).
  */
 async function debitPass(
   userId: string,
   amountUsd: number,
   description: string,
   operationType: string,
+  source: 'subscription' | 'topup',
   providerTransactionId?: string
 ): Promise<void> {
   await dbClient.transaction(async (tx) => {
     const [existing] = await tx
-      .select({ id: passBalance.id, balanceUsd: passBalance.balanceUsd })
+      .select({
+        id: passBalance.id,
+        balanceUsd: passBalance.balanceUsd,
+        topupBalanceUsd: passBalance.topupBalanceUsd,
+      })
       .from(passBalance)
       .where(eq(passBalance.userId, userId))
       .limit(1);
@@ -106,7 +150,15 @@ async function debitPass(
       const newBalanceUsd = Math.max(0, existing.balanceUsd - amountUsd);
       await tx
         .update(passBalance)
-        .set({ balanceUsd: newBalanceUsd })
+        .set({
+          balanceUsd: newBalanceUsd,
+          ...(source === 'topup' && {
+            topupBalanceUsd: Math.max(
+              0,
+              existing.topupBalanceUsd - amountUsd
+            ),
+          }),
+        })
         .where(eq(passBalance.userId, userId));
     }
 
@@ -122,6 +174,8 @@ async function debitPass(
 
 /**
  * Credit pass balance. Used for top-ups and initial allocations.
+ * When the credit is a top-up, the topupBalanceUsd column is also incremented
+ * so rollover logic can distinguish subscription vs top-up passes.
  */
 async function creditPass(
   userId: string,
@@ -131,10 +185,15 @@ async function creditPass(
   providerTransactionId?: string
 ): Promise<void> {
   const usdAmount = amount * getCostPerPassUsd();
+  const isTopup = operationType === 'topup';
 
   await dbClient.transaction(async (tx) => {
     const [existing] = await tx
-      .select({ id: passBalance.id, balanceUsd: passBalance.balanceUsd })
+      .select({
+        id: passBalance.id,
+        balanceUsd: passBalance.balanceUsd,
+        topupBalanceUsd: passBalance.topupBalanceUsd,
+      })
       .from(passBalance)
       .where(eq(passBalance.userId, userId))
       .limit(1);
@@ -142,12 +201,19 @@ async function creditPass(
     if (existing) {
       await tx
         .update(passBalance)
-        .set({ balanceUsd: existing.balanceUsd + usdAmount })
+        .set({
+          balanceUsd: existing.balanceUsd + usdAmount,
+          ...(isTopup && {
+            topupBalanceUsd: existing.topupBalanceUsd + usdAmount,
+          }),
+        })
         .where(eq(passBalance.userId, userId));
     } else {
-      await tx
-        .insert(passBalance)
-        .values({ userId, balanceUsd: usdAmount });
+      await tx.insert(passBalance).values({
+        userId,
+        balanceUsd: usdAmount,
+        topupBalanceUsd: isTopup ? usdAmount : 0,
+      });
     }
 
     await tx.insert(passTransaction).values({
@@ -325,6 +391,7 @@ export async function processPaymentEvent(
             originalCredit.deltaUsd,
             `Refund: $${originalCredit.deltaUsd.toFixed(2)} (subscription)`,
             'refund',
+            'subscription',
             event.providerTransactionId
           );
         }
@@ -358,6 +425,7 @@ export async function processPaymentEvent(
             originalCredit.deltaUsd,
             `Refund: $${originalCredit.deltaUsd.toFixed(2)} (top-up)`,
             'refund',
+            'topup',
             event.providerTransactionId
           );
         }

@@ -37,7 +37,7 @@ export default function ReviewsTabs({
   return (
     <Tabs
       defaultValue={defaultTab}
-      className="h-[calc(100vh-var(--header-height))] flex flex-col gap-0"
+      className="h-[calc(100vh-var(--header-height))] flex flex-col gap-0 overflow-hidden"
     >
       <div className="shrink-0 px-5 pt-4 pb-2">
         <TabsList className="h-9 bg-muted/60 p-1 rounded-full gap-1 shadow-sm">

@@ -7,12 +7,14 @@ interface AnswerEditorProps {
   onChange?: (state: SerializedEditorState) => void;
   placeholder?: string;
   initialValue?: SerializedEditorState;
+  editable?: boolean;
 }
 
 export default function AnswerEditor({
   onChange,
   placeholder = 'Write your answer here...',
   initialValue,
+  editable = true,
 }: AnswerEditorProps) {
   return (
     <LexicalEditor
@@ -20,6 +22,7 @@ export default function AnswerEditor({
       onChange={onChange}
       placeholder={placeholder}
       showToolbar
+      editable={editable}
       className="bg-card border-0 h-full"
       editorClassName="max-w-none"
     />

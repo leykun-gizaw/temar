@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { PassBalanceChip } from './pass-balance-chip';
+import { GenerationStatusChip } from './generation-status-chip';
 
 export function SiteHeader() {
   const pathname = usePathname() ?? '/';
@@ -67,6 +68,7 @@ export function SiteHeader() {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="ml-auto flex items-center gap-2">
+          <GenerationStatusChip />
           <PassBalanceChip />
           <NavUser />
         </div>
