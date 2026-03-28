@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@temar/ui';
 import { RefreshCw } from 'lucide-react';
 import { syncModelsFromProviders } from './actions';
 import { toast } from 'sonner';

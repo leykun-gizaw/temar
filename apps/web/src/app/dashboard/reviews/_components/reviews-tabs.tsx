@@ -1,7 +1,7 @@
 'use client';
 
 import { Brain } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@temar/ui';
 import ReviewSession from './review-session';
 import ReviewHistory from './review-history';
 import type { RecallItemDue } from '@/lib/fetchers/recall-items';
@@ -14,6 +14,7 @@ interface ReviewsTabsProps {
   topics: Array<{ id: string; name: string }>;
   currentTopicId?: string;
   currentNoteId?: string;
+  initialItemId?: string;
 }
 
 export default function ReviewsTabs({
@@ -24,6 +25,7 @@ export default function ReviewsTabs({
   topics,
   currentTopicId,
   currentNoteId,
+  initialItemId,
 }: ReviewsTabsProps) {
   const defaultTab = dueCount > 0 ? 'active' : 'history';
 
@@ -71,6 +73,7 @@ export default function ReviewsTabs({
             currentTopicId={currentTopicId}
             currentNoteId={currentNoteId}
             dueCount={dueCount}
+            initialItemId={initialItemId}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">

@@ -139,6 +139,7 @@ flowchart TD
 | `NX_DAEMON=false` | Docker builds cannot run a background Nx daemon process |
 | Next.js `output: 'standalone'` | Produces minimal bundle, but `public/` and `.next/static` must be manually copied to the runner stage |
 | Separate prod-deps stages | NestJS runners need `node_modules` (unlike Next.js standalone); a dedicated stage installs only production deps from the built `package.json` |
+| `@source` in Tailwind v4 CSS | Apps consuming `@temar/ui` must include `@source "../../../../libs/ui/src";` in their `globals.css` so Tailwind v4 scans the shared library for utility classes during build. Without this, shared component styles are missing from the CSS output. |
 
 ## 4. Production Infrastructure
 

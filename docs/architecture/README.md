@@ -20,6 +20,7 @@ Temar is a spaced-repetition learning platform. Users organize study material as
 | `@temar/shared-types` | Cross-app TypeScript interfaces and DTOs |
 | `@temar/pricing-service` | In-memory cached pricing engine, cost computation, usage recording |
 | `@temar/payment-provider` | Strategy-pattern payment abstraction (Paddle adapter, Dodo stub) |
+| `@temar/ui` | Shared shadcn/ui component library — 24 components used by both web and admin |
 
 ---
 

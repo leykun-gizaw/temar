@@ -9,25 +9,48 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import {
+  Button,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+  Input,
+  Label,
+  Textarea,
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@temar/ui';
 import { toast } from 'sonner';
 import { updatePricing, fetchPricingHistory } from './actions';
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = 10;
+
+function generatePageNumbers(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | 'ellipsis')[] = [1];
+  if (current > 3) pages.push('ellipsis');
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (current < total - 2) pages.push('ellipsis');
+  if (total > 1) pages.push(total);
+  return pages;
+}
 
 interface PricingHistoryRow {
   id: string;
@@ -45,6 +68,8 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
   const [history, setHistory] = useState<PricingHistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [providerFilter, setProviderFilter] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const providers = useMemo(() => {
     const counts = new Map<string, number>();
@@ -54,9 +79,18 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
     return Array.from(counts.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [models]);
 
-  const filteredModels = providerFilter
-    ? models.filter((m) => m.provider === providerFilter)
-    : models;
+  const filteredModels = useMemo(() => {
+    return providerFilter
+      ? models.filter((m) => m.provider === providerFilter)
+      : models;
+  }, [models, providerFilter]);
+
+  const totalPages = Math.ceil(filteredModels.length / pageSize);
+
+  const paginatedModels = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredModels.slice(start, start + pageSize);
+  }, [filteredModels, currentPage, pageSize]);
 
   async function handleUpdate(formData: FormData) {
     setLoading(true);
@@ -82,8 +116,8 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
         <Button
           variant={providerFilter === null ? 'default' : 'outline'}
           size="sm"
-          className="h-7 text-xs"
-          onClick={() => setProviderFilter(null)}
+          className="text-xs"
+          onClick={() => { setProviderFilter(null); setCurrentPage(1); }}
         >
           All ({models.length})
         </Button>
@@ -92,8 +126,8 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
             key={provider}
             variant={providerFilter === provider ? 'default' : 'outline'}
             size="sm"
-            className="h-7 text-xs"
-            onClick={() => setProviderFilter(provider)}
+            className="text-xs"
+            onClick={() => { setProviderFilter(provider); setCurrentPage(1); }}
           >
             {provider.charAt(0).toUpperCase() + provider.slice(1)} ({count})
           </Button>
@@ -111,7 +145,7 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredModels.map((m) => (
+          {paginatedModels.map((m) => (
             <TableRow key={m.modelId}>
               <TableCell className="font-mono text-sm">{m.modelId}</TableCell>
               <TableCell className="capitalize">{m.provider}</TableCell>
@@ -135,7 +169,7 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
               </TableCell>
             </TableRow>
           ))}
-          {filteredModels.length === 0 && (
+          {paginatedModels.length === 0 && (
             <TableRow>
               <TableCell colSpan={5} className="text-center text-muted-foreground">
                 No active models with pricing
@@ -144,6 +178,64 @@ export function PricingTable({ models }: { models: ModelConfig[] }) {
           )}
         </TableBody>
       </Table>
+
+      {filteredModels.length > 0 && (
+        <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages} ({filteredModels.length} items)
+            </p>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}
+            >
+              <SelectTrigger className="h-8 w-[110px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size} / page
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              {generatePageNumbers(currentPage, totalPages).map((pageNum, i) =>
+                pageNum === 'ellipsis' ? (
+                  <PaginationItem key={`e-${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      isActive={pageNum === currentPage}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="cursor-pointer"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {/* Update Pricing Dialog */}
       <Dialog open={!!editModel} onOpenChange={() => setEditModel(null)}>

@@ -12,20 +12,20 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from 'recharts';
-import { Card } from '@/components/ui/card';
+import {
+  Card,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@temar/ui';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 interface ForgettingCurveChartProps {
   items: Array<{

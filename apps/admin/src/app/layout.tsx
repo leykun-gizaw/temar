@@ -1,5 +1,12 @@
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
+import { Manrope } from 'next/font/google';
+import { ThemeProvider } from '@/components/providers/theme-provider';
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  variable: '--font-sans',
+});
 
 export const metadata = {
   title: 'Temar Admin',
@@ -12,10 +19,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="h-full">
-        {children}
-        <Toaster />
+    <html lang="en" suppressHydrationWarning>
+      <body className={`h-full ${manrope.variable}`}>
+        <ThemeProvider attribute="class" disableTransitionOnChange>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

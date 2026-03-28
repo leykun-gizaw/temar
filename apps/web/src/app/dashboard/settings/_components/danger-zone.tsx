@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button, Input } from '@temar/ui';
 import { AlertTriangle, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { resetAllData } from '@/lib/actions/reset';

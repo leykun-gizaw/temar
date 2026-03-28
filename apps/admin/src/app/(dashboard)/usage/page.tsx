@@ -20,6 +20,7 @@ export default async function UsagePage({ searchParams }: PageProps) {
     dateTo: typeof params.dateTo === 'string' ? params.dateTo : undefined,
     userId: typeof params.userId === 'string' ? params.userId : undefined,
     page: typeof params.page === 'string' ? parseInt(params.page, 10) : 1,
+    pageSize: typeof params.pageSize === 'string' ? parseInt(params.pageSize, 10) : undefined,
   };
 
   const [data, filterOptions] = await Promise.all([
@@ -40,6 +41,7 @@ export default async function UsagePage({ searchParams }: PageProps) {
           rows={data.rows}
           total={data.total}
           page={data.page}
+          pageSize={data.pageSize}
           totalPages={data.totalPages}
           modelOptions={filterOptions.models}
           operationOptions={filterOptions.operations}

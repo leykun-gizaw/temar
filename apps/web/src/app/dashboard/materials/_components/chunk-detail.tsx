@@ -2,7 +2,23 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import {
+  Button,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@temar/ui';
 import Link from 'next/link';
 import {
   Plus,
@@ -14,16 +30,6 @@ import {
   RefreshCw,
   Brain,
 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import type { SerializedEditorState } from 'lexical';
 import ChunkEditor from '@/components/lexical-editor/ChunkEditor';
 import { lexicalToMarkdown } from '@/components/lexical-editor/utils/serialize';
@@ -36,14 +42,6 @@ import AddNoteDialog from '@/components/add-note-dialog';
 import AddChunkDialog from './add-chunk-dialog';
 import { regenerateChunkQuestions } from '@/lib/actions/tracking';
 import { notifyPassBalanceChanged } from '@/lib/pass-events';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import type { ChunkRecallStats } from '@/app/api/chunks/[chunkId]/recall-stats/route';
 import type { OutdatedChunk } from '@/lib/actions/tracking';
 
@@ -275,7 +273,7 @@ export default function ChunkDetail({
                 }}
                 trigger={
                   <button
-                    className="p-1 rounded-lg hover:bg-background/60"
+                    className="p-1 rounded-xl hover:bg-background/60"
                     title="Edit chunk metadata"
                   >
                     <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
@@ -283,7 +281,7 @@ export default function ChunkDetail({
                 }
               />
               <button
-                className="p-1 rounded-lg hover:bg-destructive/10"
+                className="p-1 rounded-xl hover:bg-destructive/10"
                 title="Delete chunk"
                 onClick={() => setShowDeleteDialog(true)}
               >

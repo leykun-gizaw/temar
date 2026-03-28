@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { Brain } from 'lucide-react';
 import { PieChart, Pie, Cell } from 'recharts';
-import { Card } from '@/components/ui/card';
+import { Card } from '@temar/ui';
 import {
   ChartContainer,
   ChartTooltip,

@@ -2,8 +2,7 @@
 
 import { useMemo } from 'react';
 import { CalendarDays } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { Card, cn } from '@temar/ui';
 
 interface ActivityHeatmapFullProps {
   data: Array<{ date: string; count: number }>;

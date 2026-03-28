@@ -1,15 +1,15 @@
 'use client';
 
 import { AlertTriangle } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 import {
+  Card,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@temar/ui';
 
 interface HardestItemsTableProps {
   data: Array<{

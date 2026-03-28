@@ -2,7 +2,7 @@
 
 import { PlusCircle, Mail, type LucideIcon } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@temar/ui';
 import {
   SidebarGroup,
   SidebarGroupContent,

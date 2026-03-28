@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import {
+  Button,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@temar/ui';
 import type {
   RecallItemDue,
   ReviewLogEntry,
@@ -436,7 +436,7 @@ export default function ReviewHistory({
                       className={cn(
                         'flex-1 py-1.5 text-[11px] font-bold rounded-full transition-all whitespace-nowrap',
                         log.id === selectedLogId
-                          ? 'bg-card shadow-sm text-foreground'
+                          ? 'bg-background shadow-md text-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       )}
                     >

@@ -34,7 +34,7 @@ export function ReviewRubricDisplay({
             <div
               key={choice.label}
               className={cn(
-                'flex items-start gap-2.5 rounded-lg border p-3',
+                'flex items-start gap-2.5 rounded-xl bg-muted/30 p-3',
                 !isHistoryView && 'hover:bg-muted/50 transition-colors',
                 isHistoryView &&
                   choice.label === rubric.correctAnswer &&
@@ -55,7 +55,7 @@ export function ReviewRubricDisplay({
             </div>
           ))}
           {isHistoryView && rubric.explanation && (
-            <div className="mt-3 p-3 rounded-md bg-muted/30 border">
+            <div className="mt-3 p-3 rounded-xl bg-muted/30">
               <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                 Explanation
               </h4>
@@ -86,7 +86,7 @@ export function ReviewRubricDisplay({
                 {rubric.examples.map((ex, i) => (
                   <div
                     key={i}
-                    className="rounded-lg border p-3 bg-muted/20 space-y-1.5"
+                    className="rounded-xl p-3 bg-muted/20 space-y-1.5"
                   >
                     <p className="text-xs">
                       <span className="font-semibold text-muted-foreground">

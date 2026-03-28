@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button, cn } from '@temar/ui';
 import {
   CalendarEvent,
   CalendarProps,
@@ -9,7 +9,6 @@ import {
   monthEventVariants,
   View,
 } from '@/lib/calendar-types';
-import { cn } from '@/lib/utils';
 import {
   Locale,
   addDays,

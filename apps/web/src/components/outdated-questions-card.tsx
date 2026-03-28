@@ -8,15 +8,20 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
+  Button,
+  Badge,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  cn,
+} from '@temar/ui';
 import {
   RefreshCw,
   AlertTriangle,
@@ -24,17 +29,8 @@ import {
   Loader2,
   SquareArrowOutUpRight,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import type { OutdatedChunk } from '@/lib/actions/tracking';
 import { regenerateChunkQuestions } from '@/lib/actions/tracking';
-import { cn } from '@/lib/utils';
 import { notifyPassBalanceChanged } from '@/lib/pass-events';
 import Link from 'next/link';
 

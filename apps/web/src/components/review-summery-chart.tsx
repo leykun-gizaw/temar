@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@temar/ui';
 import {
   ChartConfig,
   ChartContainer,

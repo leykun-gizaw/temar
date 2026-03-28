@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@temar/ui';
 import { ExternalLink } from 'lucide-react';
 
 interface ConnectNotionButtonProps {

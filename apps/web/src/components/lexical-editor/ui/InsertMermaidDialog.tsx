@@ -5,9 +5,9 @@ import {
   Popover,
   PopoverContent,
   PopoverAnchor,
-} from '@/components/ui/popover';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+  Label,
+  Button,
+} from '@temar/ui';
 import { renderMermaid } from '../nodes/MermaidNode';
 
 interface InsertMermaidDialogProps {

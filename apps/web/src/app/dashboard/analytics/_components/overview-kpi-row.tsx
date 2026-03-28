@@ -1,7 +1,7 @@
 'use client';
 
 import { BarChart3, Trophy, Shield, Flame, Brain } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Card } from '@temar/ui';
 
 interface OverviewKpiRowProps {
   totalReviews: number;

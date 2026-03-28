@@ -12,11 +12,12 @@ export const dynamic = 'force-dynamic';
 export default async function ReviewsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ topicId?: string; noteId?: string }>;
+  searchParams?: Promise<{ topicId?: string; noteId?: string; itemId?: string }>;
 }) {
   const params = await searchParams;
   const topicId = params?.topicId;
   const noteId = params?.noteId;
+  const itemId = params?.itemId;
 
   const [dueItems, dueCount, allItemsResult, topics] = await Promise.all([
     getDueRecallItems({ topicId, noteId, limit: 50 }),
@@ -39,6 +40,7 @@ export default async function ReviewsPage({
       topics={topics.map((t) => ({ id: t.id, name: t.name }))}
       currentTopicId={topicId}
       currentNoteId={noteId}
+      initialItemId={itemId}
     />
   );
 }

@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, BookOpen } from 'lucide-react';
 import {
+  Button,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -13,7 +12,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@temar/ui';
+import { Plus, Pencil, Trash2, BookOpen } from 'lucide-react';
 import TrackingButton from '@/components/tracking-button';
 import EditDialog from '@/components/edit-dialog';
 import AddNoteDialog from '@/components/add-note-dialog';

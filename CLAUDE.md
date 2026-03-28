@@ -15,7 +15,7 @@ pnpm nx serve @temar/web                      # Next.js frontend (port 5173)
 pnpm nx serve @temar/fsrs-service              # FSRS service (port 3334)
 pnpm nx serve @temar/question-gen-service      # Question gen (port 3335)
 pnpm nx serve @temar/answer-analysis-service   # Answer analysis (port 3336)
-pnpm nx serve @temar/admin                     # Admin panel (port 3000)
+pnpm nx serve admin                              # Admin panel (port 3000)
 
 # Build
 pnpm nx build @temar/web                       # single project
@@ -55,7 +55,7 @@ User <-> Next.js (web) <-> NestJS microservices <-> PostgreSQL
 ```
 
 - **Monorepo:** Nx 22.x + pnpm workspaces
-- **Frontend:** Next.js 15 (App Router) + React 19 + Tailwind 4 + shadcn/ui
+- **Frontend:** Next.js 15 (App Router) + React 19 + Tailwind 4 + shadcn/ui (shared via `@temar/ui`)
 - **Backend:** NestJS microservices, each with Swagger docs at `/api/docs`
 - **Database:** PostgreSQL 16 + Drizzle ORM (schemas in `libs/db-client/src/schema/`)
 - **AI:** Vercel AI SDK (`ai` package), multi-provider (OpenAI, Anthropic, Google), BYOK support
@@ -77,11 +77,13 @@ User <-> Next.js (web) <-> NestJS microservices <-> PostgreSQL
 
 ### Libraries (`libs/`)
 
-| Library           | Purpose                                                                                      |
-| ----------------- | -------------------------------------------------------------------------------------------- |
-| `db-client`       | Drizzle ORM client, all schema definitions, crypto utilities, re-exported Drizzle operators  |
-| `shared-types`    | Cross-app TypeScript interfaces and DTOs (`ModelConfig`, `OperationType`, etc.)              |
-| `pricing-service` | In-memory cached pricing engine -- computes Pass costs, records usage with balance deduction |
+| Library            | Purpose                                                                                      |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| `db-client`        | Drizzle ORM client, all schema definitions, crypto utilities, re-exported Drizzle operators  |
+| `shared-types`     | Cross-app TypeScript interfaces and DTOs (`ModelConfig`, `OperationType`, etc.)              |
+| `pricing-service`  | In-memory cached pricing engine -- computes Pass costs, records usage with balance deduction |
+| `payment-provider` | Strategy-pattern billing abstraction (Paddle adapter)                                        |
+| `ui`               | Shared shadcn/ui component library -- 24 components used by both web and admin apps          |
 
 ### Inter-service communication
 
@@ -139,11 +141,14 @@ pnpm workspace symlinks (`node_modules/@temar/*`) conflict with lib tsconfigs du
 **When adding a new `@temar/*` library or service**, update ALL of:
 
 1. `tsconfig.base.json` -- path alias
-2. `Dockerfile` -- COPY + rm -rf commands in relevant stages
-3. `docker-compose.prod.yml` -- service entry
-4. `.github/workflows/deploy.yml` -- build matrix + `docker compose up -d`
-5. Service `tsconfig.app.json` -- include + references
-6. Deps stage -- COPY the new `package.json`
+2. App `tsconfig.json` files -- add path alias (apps duplicate base paths due to relative path differences)
+3. `Dockerfile` -- COPY + rm -rf commands in relevant stages
+4. `docker-compose.prod.yml` -- service entry
+5. `.github/workflows/deploy.yml` -- build matrix + `docker compose up -d`
+6. Service `tsconfig.app.json` -- include + references
+7. Deps stage -- COPY the new `package.json`
+8. For UI libraries: add `@source` directive in consuming apps' `globals.css` (Tailwind v4)
+9. For UI libraries: add content path to consuming apps' `tailwind.config.js`
 
 ### 2. Drizzle `$dynamic()` `.where()` overwrites (not appends)
 
@@ -169,6 +174,44 @@ Returns no error on duplicates, so code returning `{ success: true }` unconditio
 - **`apps/api/`** and **`apps/api-e2e/`** -- vestigial scaffolds, not deployed.
 - **`apps/web/src/app/api/stripe/`** -- replaced by Paddle, dead route handlers.
 - **`NOTION_*` env vars** -- unused since sync retirement.
+
+## Shared UI Library (`@temar/ui`)
+
+The `libs/ui/` library contains 24 shadcn/ui components shared between web and admin apps. Import from `@temar/ui` instead of local `@/components/ui/` for shared components.
+
+```tsx
+import { Button, Card, CardContent, Input, Select, Table } from '@temar/ui';
+```
+
+**Components in shared lib:** button, card, badge, dialog, alert-dialog, input, label, separator, select, table, tabs, textarea, dropdown-menu, popover, tooltip, toggle, toggle-group, command, checkbox, scroll-area, switch, sheet, hover-card, pagination.
+
+**Web-only components** (stay in `apps/web/src/components/ui/`): fab, card-enhanced, chart, calendar, drawer, resizable, sidebar, spinner, skeleton, breadcrumb, avatar, sonner, progress, pagination (re-export).
+
+**Admin-only local:** sonner (custom theme-aware wrapper).
+
+### Tailwind v4 `@source` directive (critical)
+
+Both apps **must** have `@source "../../../../libs/ui/src";` in their `globals.css` for Tailwind v4 to scan the shared library for class usage. Without this, components render with missing/broken styles. The `content` array in `tailwind.config.js` is NOT sufficient for Tailwind v4.
+
+### Card component API
+
+The shared Card uses `gap-6 py-6` with `px-6` on children (NOT the old `p-6`/`p-6 pt-0` pattern). For compact stat cards, use `Card className="gap-2"`. Do NOT use `CardHeader className="pb-2"`.
+
+### Design system
+
+- **Primary color:** Vibrant orange `oklch(0.70 0.19 50)` (matches favicon `#f97316`)
+- **Borderless design:** No `border` on cards/containers/overlays -- use tinted backgrounds
+- **Corner radius:** `rounded-2xl` for containers/overlays, `rounded-xl` for interactive elements
+- **Shadow elevation:** `shadow-md` on cards, `shadow-lg` on overlays
+- **Fonts:** Manrope (primary), Lora (serif), plus Merriweather, Literata, Source Serif 4, Crimson Text, Inter (Lexical editor)
+- **Colors:** All CSS variables use oklch(). Never wrap in `hsl()`
+- **Dark mode active states:** Use `bg-background` (not `bg-card` or `bg-input/30`) for tab/pill active states
+
+### Adding a new shared component
+
+1. Create in `libs/ui/src/components/` with `../lib/utils` for `cn()` import
+2. Export from `libs/ui/src/index.ts`
+3. No additional Tailwind config needed -- `@source` handles scanning
 
 ## Environment Variables
 

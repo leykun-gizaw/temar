@@ -1,9 +1,23 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Card,
+  Button,
+  Badge,
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+} from '@temar/ui';
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  BarChart3,
+  RotateCcw,
+  AlertTriangle,
+} from 'lucide-react';
 import Link from 'next/link';
 import type { RecallItemDue, ReviewLogEntry } from '@/lib/fetchers/recall-items';
 
@@ -21,6 +35,26 @@ const RATING_COLORS: Record<number, string> = {
   4: 'text-fsrs-easy',
 };
 
+const STATE_LABELS: Record<number, string> = {
+  0: 'New',
+  1: 'Learning',
+  2: 'Review',
+  3: 'Relearning',
+};
+
+const STATE_BADGE_STYLES: Record<number, string> = {
+  0: 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20',
+  1: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20',
+  2: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+  3: 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20',
+};
+
+const QUESTION_TYPE_LABELS: Record<string, string> = {
+  open_ended: 'Open-ended',
+  mcq: 'MCQ',
+  leetcode: 'LeetCode',
+};
+
 interface UpcomingSessionsProps {
   allItems: RecallItemDue[];
   dueItems: RecallItemDue[];
@@ -34,6 +68,7 @@ export function UpcomingSessions({
 }: UpcomingSessionsProps) {
   const now = useMemo(() => new Date(), []);
   const todayStr = now.toDateString();
+  const todayStart = useMemo(() => startOfDay(now), [now]);
 
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(now);
@@ -124,7 +159,7 @@ export function UpcomingSessions({
 
   // Is the selected date in the past (before today)?
   const isSelectedPast =
-    startOfDay(selectedDate).getTime() < startOfDay(now).getTime();
+    startOfDay(selectedDate).getTime() < todayStart.getTime();
 
   const hasContent =
     dueNowItems.length > 0 || laterItems.length > 0 || dayLogs.length > 0;
@@ -206,15 +241,34 @@ export function UpcomingSessions({
         {weekDays.map((day) => {
           const isToday = day.date.toDateString() === todayStr;
           const isSelected = day.date.toDateString() === selectedDateStr;
+          const dayDateStr = day.date.toDateString();
           // Check if this day has items
           const dayHasItems =
             allItems.some(
-              (i) => new Date(i.due).toDateString() === day.date.toDateString()
+              (i) => new Date(i.due).toDateString() === dayDateStr
             ) ||
             pastLogs.some(
               (l) =>
-                new Date(l.reviewedAt).toDateString() === day.date.toDateString()
+                new Date(l.reviewedAt).toDateString() === dayDateStr
             );
+          // Check if this day has overdue items (due before start of today)
+          const dayHasOverdue = allItems.some(
+            (i) => {
+              const dueDate = new Date(i.due);
+              return (
+                dueDate.toDateString() === dayDateStr &&
+                dueDate.getTime() < todayStart.getTime()
+              );
+            }
+          );
+          // For today, also check if dueItems has items from past days
+          const todayHasOverdue =
+            isToday &&
+            dueItems.some(
+              (i) => new Date(i.due).getTime() < todayStart.getTime()
+            );
+          const hasOverdue = dayHasOverdue || todayHasOverdue;
+
           return (
             <button
               key={day.label + day.num}
@@ -222,7 +276,7 @@ export function UpcomingSessions({
               onClick={() => setSelectedDate(day.date)}
               className={
                 isSelected
-                  ? 'flex flex-col items-center bg-primary text-primary-foreground w-9 h-11 justify-center rounded-xl shadow-md transition-all relative'
+                  ? `flex flex-col items-center ${hasOverdue ? 'bg-red-500 dark:bg-red-600' : 'bg-primary'} text-primary-foreground w-9 h-11 justify-center rounded-xl shadow-md transition-all relative`
                   : isToday
                   ? 'flex flex-col items-center w-9 h-11 justify-center rounded-xl ring-1 ring-primary/30 transition-all hover:bg-muted/80 relative'
                   : 'flex flex-col items-center w-9 h-11 justify-center rounded-xl transition-all hover:bg-muted/80 relative'
@@ -233,7 +287,13 @@ export function UpcomingSessions({
               </span>
               <span className="text-sm font-bold">{day.num}</span>
               {dayHasItems && !isSelected && (
-                <span className="absolute bottom-1 w-1 h-1 rounded-full bg-primary/60" />
+                <span
+                  className={`absolute bottom-1 w-1 h-1 rounded-full ${
+                    hasOverdue
+                      ? 'bg-red-400/80'
+                      : 'bg-primary/60'
+                  }`}
+                />
               )}
             </button>
           );
@@ -269,20 +329,26 @@ export function UpcomingSessions({
               }
               badge={RATING_LABELS[log.rating]}
               badgeColor={RATING_COLORS[log.rating]}
+              item={item}
+              log={log}
             />
           );
         })}
 
         {/* Due now */}
-        {dueNowItems.map((item) => (
-          <TimelineSlot
-            key={item.id}
-            time={formatDueTime(item.due)}
-            status="upcoming"
-            title={item.questionTitle || item.chunkName}
-            subtitle={`${item.topicName} > ${item.noteName}`}
-          />
-        ))}
+        {dueNowItems.map((item) => {
+          const isOverdue = new Date(item.due).getTime() < todayStart.getTime();
+          return (
+            <TimelineSlot
+              key={item.id}
+              time={formatDueTime(item.due)}
+              status={isOverdue ? 'overdue' : 'upcoming'}
+              title={item.questionTitle || item.chunkName}
+              subtitle={`${item.topicName} > ${item.noteName}`}
+              item={item}
+            />
+          );
+        })}
 
         {/* Scheduled / future */}
         {laterItems.map((item) => (
@@ -292,6 +358,7 @@ export function UpcomingSessions({
             status={isSelectedPast ? 'past' : 'scheduled'}
             title={item.questionTitle || item.chunkName}
             subtitle={`${item.topicName} > ${item.noteName}`}
+            item={item}
           />
         ))}
 
@@ -312,13 +379,17 @@ function TimelineSlot({
   subtitle,
   badge,
   badgeColor,
+  item,
+  log,
 }: {
   time: string;
-  status: 'upcoming' | 'scheduled' | 'past';
+  status: 'upcoming' | 'scheduled' | 'past' | 'overdue';
   title: string;
   subtitle?: string;
   badge?: string;
   badgeColor?: string;
+  item?: RecallItemDue;
+  log?: ReviewLogEntry;
 }) {
   const styles = {
     upcoming: {
@@ -328,6 +399,14 @@ function TimelineSlot({
       labelColor: 'text-amber-600 dark:text-amber-400',
       timeColor: 'text-amber-600/70 dark:text-amber-400/70',
       bg: 'bg-amber-500/8',
+    },
+    overdue: {
+      dot: 'bg-red-500',
+      border: 'border-red-300/40',
+      label: 'Overdue',
+      labelColor: 'text-red-600 dark:text-red-400',
+      timeColor: 'text-red-600/70 dark:text-red-400/70',
+      bg: 'bg-red-500/8',
     },
     past: {
       dot: 'bg-emerald-500',
@@ -347,7 +426,14 @@ function TimelineSlot({
     },
   }[status];
 
-  return (
+  const overdueDays =
+    status === 'overdue' && item
+      ? Math.floor(
+          (Date.now() - new Date(item.due).getTime()) / (1000 * 60 * 60 * 24)
+        )
+      : 0;
+
+  const slotContent = (
     <div className={`relative pl-5 border-l ${styles.border}`}>
       <div
         className={`absolute -left-1 top-0 w-2 h-2 rounded-full ${styles.dot}`}
@@ -360,6 +446,12 @@ function TimelineSlot({
           {badge && (
             <span className={`text-[0.6rem] font-bold ${badgeColor ?? ''}`}>
               {badge}
+            </span>
+          )}
+          {status === 'overdue' && overdueDays > 0 && (
+            <span className="text-[0.6rem] font-bold text-red-500 dark:text-red-400 flex items-center gap-0.5">
+              <AlertTriangle className="h-2.5 w-2.5" />
+              {overdueDays}d
             </span>
           )}
           <span className={`text-[0.65rem] font-bold uppercase ${styles.labelColor}`}>
@@ -375,6 +467,166 @@ function TimelineSlot({
           </p>
         )}
       </div>
+    </div>
+  );
+
+  // Only show hover card if we have an item or log to show details for
+  if (!item && !log) return slotContent;
+
+  return (
+    <HoverCard openDelay={300} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <div className="cursor-pointer">{slotContent}</div>
+      </HoverCardTrigger>
+      <HoverCardContent
+        side="left"
+        align="start"
+        className="w-72 p-0 rounded-xl overflow-hidden"
+      >
+        <HoverCardBody item={item} log={log} />
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
+function HoverCardBody({
+  item,
+  log,
+}: {
+  item?: RecallItemDue;
+  log?: ReviewLogEntry;
+}) {
+  const now = Date.now();
+
+  return (
+    <div className="flex flex-col">
+      {/* Header with question title */}
+      <div className="p-3 pb-2 border-b border-border/50">
+        <p className="text-xs font-semibold leading-snug line-clamp-2">
+          {item?.questionTitle || item?.chunkName || 'Review item'}
+        </p>
+        {item?.questionText && (
+          <p className="text-[0.65rem] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+            {item.questionText.slice(0, 100)}
+            {item.questionText.length > 100 ? '...' : ''}
+          </p>
+        )}
+      </div>
+
+      {/* Badges row */}
+      <div className="px-3 pt-2 pb-1.5 flex flex-wrap gap-1.5">
+        {item && (
+          <Badge
+            variant="outline"
+            className={`text-[0.6rem] px-1.5 py-0 h-5 font-semibold ${STATE_BADGE_STYLES[item.state] ?? ''}`}
+          >
+            {STATE_LABELS[item.state] ?? 'Unknown'}
+          </Badge>
+        )}
+        {item?.questionType && (
+          <Badge
+            variant="outline"
+            className="text-[0.6rem] px-1.5 py-0 h-5 font-semibold"
+          >
+            {QUESTION_TYPE_LABELS[item.questionType] ?? item.questionType}
+          </Badge>
+        )}
+        {log && (
+          <Badge
+            variant="outline"
+            className={`text-[0.6rem] px-1.5 py-0 h-5 font-semibold ${RATING_COLORS[log.rating] ?? ''}`}
+          >
+            {RATING_LABELS[log.rating] ?? `Rating ${log.rating}`}
+          </Badge>
+        )}
+      </div>
+
+      {/* Stats grid */}
+      <div className="px-3 py-2 grid grid-cols-2 gap-x-4 gap-y-1.5">
+        {item && (
+          <>
+            <StatRow icon={BarChart3} label="Stability" value={`${item.stability.toFixed(1)}d`} />
+            <StatRow icon={BarChart3} label="Difficulty" value={item.difficulty.toFixed(2)} />
+            <StatRow icon={RotateCcw} label="Reps" value={String(item.reps)} />
+            <StatRow icon={AlertTriangle} label="Lapses" value={String(item.lapses)} />
+          </>
+        )}
+        {item?.lastReview && (
+          <div className="col-span-2">
+            <StatRow
+              icon={Clock}
+              label="Last review"
+              value={formatRelativeDate(item.lastReview, now)}
+            />
+          </div>
+        )}
+        {log?.durationMs != null && log.durationMs > 0 && (
+          <div className="col-span-2">
+            <StatRow
+              icon={Clock}
+              label="Duration"
+              value={formatDuration(log.durationMs)}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Breadcrumb */}
+      {item && (
+        <div className="px-3 pb-2">
+          <p className="text-[0.6rem] text-muted-foreground truncate">
+            {item.topicName} &gt; {item.noteName} &gt; {item.chunkName}
+          </p>
+        </div>
+      )}
+
+      {/* Analysis summary for past reviews */}
+      {log?.analysisJson != null && (
+        <div className="px-3 pb-2">
+          <p className="text-[0.6rem] text-muted-foreground line-clamp-2 leading-relaxed">
+            {extractAnalysisSummary(log.analysisJson)}
+          </p>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex border-t border-border/50">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex-1 rounded-none text-[0.65rem] h-8 font-semibold"
+          asChild
+        >
+          <Link href="/dashboard/reviews">Start Review</Link>
+        </Button>
+        <div className="w-px bg-border/50" />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex-1 rounded-none text-[0.65rem] h-8 font-semibold"
+          asChild
+        >
+          <Link href="/dashboard/reviews?tab=history">View History</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function StatRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <Icon className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+      <span className="text-[0.6rem] text-muted-foreground">{label}</span>
+      <span className="text-[0.6rem] font-semibold ml-auto">{value}</span>
     </div>
   );
 }
@@ -430,4 +682,35 @@ function formatDueTime(due: string | Date): string {
     month: 'short',
     day: 'numeric',
   });
+}
+
+function formatRelativeDate(dateStr: string, nowMs: number): string {
+  const diffMs = nowMs - new Date(dateStr).getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return new Date(dateStr).toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function formatDuration(ms: number): string {
+  const seconds = Math.floor(ms / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+}
+
+function extractAnalysisSummary(analysisJson: unknown): string {
+  if (!analysisJson || typeof analysisJson !== 'object') return '';
+  const analysis = analysisJson as Record<string, unknown>;
+  if (typeof analysis.summary === 'string') return analysis.summary;
+  if (typeof analysis.feedback === 'string') return analysis.feedback;
+  if (typeof analysis.explanation === 'string') return analysis.explanation;
+  return '';
 }

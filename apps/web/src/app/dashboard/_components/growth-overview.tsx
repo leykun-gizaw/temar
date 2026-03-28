@@ -1,5 +1,4 @@
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { Card, cn } from '@temar/ui';
 import type { GrowthOverviewStats } from '@/lib/fetchers/dashboard-stats';
 import {
   TrendingUp,
@@ -106,39 +105,8 @@ export function GrowthOverview({
         <h2 className="text-sm font-medium">Growth Overview</h2>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {/* Total Reviews */}
-        <div className="bg-background rounded-xl p-4 flex flex-col gap-1">
-          <div className="flex gap-1.5 items-center text-xs text-muted-foreground">
-            <BarChart3 className="h-3.5 w-3.5" />
-            <span>Total Reviews</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold tabular-nums">
-              {stats.totalReviews.toLocaleString()}
-            </span>
-            <TrendIndicator value={stats.weekOverWeekTrend} />
-          </div>
-          <span className="text-[11px] text-muted-foreground">
-            vs last 7 days
-          </span>
-        </div>
-
-        {/* Mastery Rate */}
-        <div className="bg-background rounded-xl p-4 flex flex-col gap-1">
-          <div className="flex gap-1.5 items-center text-xs text-muted-foreground">
-            <Trophy className="h-3.5 w-3.5" />
-            <span>Mastery Rate</span>
-          </div>
-          <span className="text-2xl font-bold tabular-nums">
-            {stats.masteryRate.toFixed(0)}%
-          </span>
-          <span className="text-[11px] text-muted-foreground">
-            items past learning phase
-          </span>
-        </div>
-
         {/* Average Rating */}
-        <div className="bg-background rounded-xl p-4 flex flex-col gap-2">
+        <Card className="bg-background rounded-xl p-4 flex flex-col gap-2">
           <div className="flex gap-1.5 items-center text-xs text-muted-foreground">
             <Star className="h-3.5 w-3.5" />
             <span>Average Rating</span>
@@ -147,10 +115,10 @@ export function GrowthOverview({
             {stats.averageRating.toFixed(1)}
           </span>
           <RatingDistributionBar distribution={stats.ratingDistribution} />
-        </div>
+        </Card>
 
         {/* Memory Strength */}
-        <div className="bg-background rounded-xl p-4 flex flex-col gap-1">
+        <Card className="bg-background rounded-xl p-4 flex flex-col gap-1">
           <div className="flex gap-1.5 items-center text-xs text-muted-foreground">
             <Shield className="h-3.5 w-3.5" />
             <span>Memory Strength</span>
@@ -164,7 +132,38 @@ export function GrowthOverview({
           <span className="text-[11px] text-muted-foreground">
             average stability
           </span>
-        </div>
+        </Card>
+
+        {/* Mastery Rate */}
+        <Card className="bg-background rounded-xl p-4 flex flex-col gap-1">
+          <div className="flex gap-1.5 items-center text-xs text-muted-foreground">
+            <Trophy className="h-3.5 w-3.5" />
+            <span>Mastery Rate</span>
+          </div>
+          <span className="text-2xl font-bold tabular-nums">
+            {stats.masteryRate.toFixed(0)}%
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            items past learning phase
+          </span>
+        </Card>
+
+        {/* Total Reviews */}
+        <Card className="bg-background rounded-xl p-4 flex flex-col gap-1">
+          <div className="flex gap-1.5 items-center text-xs text-muted-foreground">
+            <BarChart3 className="h-3.5 w-3.5" />
+            <span>Total Reviews</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold tabular-nums">
+              {stats.totalReviews.toLocaleString()}
+            </span>
+            <TrendIndicator value={stats.weekOverWeekTrend} />
+          </div>
+          <span className="text-[11px] text-muted-foreground">
+            vs last 7 days
+          </span>
+        </Card>
       </div>
     </Card>
   );

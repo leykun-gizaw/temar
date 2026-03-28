@@ -146,8 +146,14 @@ const BLOCK_TYPE_ICONS: Record<BlockType, React.ReactNode> = {
 };
 
 const FONT_FAMILIES = [
-  { label: 'Default', value: '' },
-  { label: 'Serif', value: 'Georgia, serif' },
+  { label: 'Default (Manrope)', value: '' },
+  { label: 'Lora', value: "'Lora', Georgia, serif" },
+  { label: 'Merriweather', value: "'Merriweather', Georgia, serif" },
+  { label: 'Literata', value: "'Literata', Georgia, serif" },
+  { label: 'Source Serif 4', value: "'Source Serif 4', Georgia, serif" },
+  { label: 'Crimson Text', value: "'Crimson Text', Georgia, serif" },
+  { label: 'Inter', value: "'Inter', system-ui, sans-serif" },
+  { label: 'Georgia', value: 'Georgia, serif' },
   { label: 'Monospace', value: 'ui-monospace, monospace' },
 ];
 
@@ -185,7 +191,7 @@ function ToolbarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`inline-flex items-center justify-center h-7 w-7 rounded-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+      className={`inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
         active
           ? 'bg-accent text-accent-foreground'
           : 'hover:bg-accent/50 text-muted-foreground hover:text-foreground'
@@ -628,7 +634,7 @@ export default function ToolbarPlugin() {
           <button
             type="button"
             onClick={() => setShowBlockMenu((v) => !v)}
-            className="inline-flex items-center gap-1 h-7 px-2 rounded-sm text-xs font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 h-7 px-2 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors cursor-pointer"
             title="Block type"
           >
             {BLOCK_TYPE_ICONS[blockType]}
@@ -646,7 +652,7 @@ export default function ToolbarPlugin() {
                 key={type}
                 type="button"
                 onClick={() => formatBlock(type)}
-                className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer ${
+                className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer ${
                   blockType === type
                     ? 'bg-accent text-accent-foreground'
                     : 'hover:bg-accent/50'
@@ -666,7 +672,7 @@ export default function ToolbarPlugin() {
           <button
             type="button"
             onClick={() => setShowFontFamilyMenu((v) => !v)}
-            className="inline-flex items-center gap-1 h-7 px-1.5 rounded-sm text-xs text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 h-7 px-1.5 rounded-lg text-xs text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors cursor-pointer"
             title="Font family"
           >
             <Type className="h-3.5 w-3.5" />
@@ -681,7 +687,7 @@ export default function ToolbarPlugin() {
                 key={f.value}
                 type="button"
                 onClick={() => applyFontFamily(f.value)}
-                className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer ${
+                className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer ${
                   fontFamily === f.value
                     ? 'bg-accent text-accent-foreground'
                     : 'hover:bg-accent/50'
@@ -699,7 +705,7 @@ export default function ToolbarPlugin() {
           <button
             type="button"
             onClick={() => setShowFontSizeMenu((v) => !v)}
-            className="inline-flex items-center gap-0.5 h-7 px-1.5 rounded-sm text-xs text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors cursor-pointer min-w-[36px] justify-center"
+            className="inline-flex items-center gap-0.5 h-7 px-1.5 rounded-lg text-xs text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors cursor-pointer min-w-[36px] justify-center"
             title="Font size"
           >
             <span className="text-[10px]">{fontSize || '16px'}</span>
@@ -714,7 +720,7 @@ export default function ToolbarPlugin() {
                 key={size}
                 type="button"
                 onClick={() => applyFontSize(size)}
-                className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer ${
+                className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer ${
                   fontSize === size
                     ? 'bg-accent text-accent-foreground'
                     : 'hover:bg-accent/50'
@@ -802,7 +808,7 @@ export default function ToolbarPlugin() {
         <ColorPicker color={fontColor} onChange={applyFontColor} onClear={() => applyFontColor('')}>
           <button
             type="button"
-            className="inline-flex items-center justify-center h-7 w-7 rounded-sm transition-colors cursor-pointer hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors cursor-pointer hover:bg-accent/50 text-muted-foreground hover:text-foreground"
             title="Font color"
           >
             <div className="flex flex-col items-center">
@@ -819,7 +825,7 @@ export default function ToolbarPlugin() {
         <ColorPicker color={bgColor} onChange={applyBgColor} onClear={() => applyBgColor('')}>
           <button
             type="button"
-            className="inline-flex items-center justify-center h-7 w-7 rounded-sm transition-colors cursor-pointer hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors cursor-pointer hover:bg-accent/50 text-muted-foreground hover:text-foreground"
             title="Background color"
           >
             <div className="flex flex-col items-center">
@@ -869,28 +875,28 @@ export default function ToolbarPlugin() {
             <button
               type="button"
               onClick={() => formatAlign('left')}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <AlignLeft className="h-3.5 w-3.5" /> Left
             </button>
             <button
               type="button"
               onClick={() => formatAlign('center')}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <AlignCenter className="h-3.5 w-3.5" /> Center
             </button>
             <button
               type="button"
               onClick={() => formatAlign('right')}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <AlignRight className="h-3.5 w-3.5" /> Right
             </button>
             <button
               type="button"
               onClick={() => formatAlign('justify')}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <AlignJustify className="h-3.5 w-3.5" /> Justify
             </button>
@@ -922,7 +928,7 @@ export default function ToolbarPlugin() {
           <button
             type="button"
             onClick={() => setShowInsertMenu((v) => !v)}
-            className="inline-flex items-center gap-1 h-7 px-2 rounded-sm text-xs font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 h-7 px-2 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors cursor-pointer"
             title="Insert"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -942,7 +948,7 @@ export default function ToolbarPlugin() {
                 );
                 setShowInsertMenu(false);
               }}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <Minus className="h-3.5 w-3.5" /> Horizontal Rule
             </button>
@@ -952,7 +958,7 @@ export default function ToolbarPlugin() {
                 setShowTableDialog(true);
                 setShowInsertMenu(false);
               }}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <Table className="h-3.5 w-3.5" /> Table
             </button>
@@ -962,7 +968,7 @@ export default function ToolbarPlugin() {
                 setShowImageDialog(true);
                 setShowInsertMenu(false);
               }}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <ImageIcon className="h-3.5 w-3.5" /> Image
             </button>
@@ -973,7 +979,7 @@ export default function ToolbarPlugin() {
                 setShowEquationDialog(true);
                 setShowInsertMenu(false);
               }}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <Sigma className="h-3.5 w-3.5" /> Equation (Block)
             </button>
@@ -984,7 +990,7 @@ export default function ToolbarPlugin() {
                 setShowEquationDialog(true);
                 setShowInsertMenu(false);
               }}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <Sigma className="h-3.5 w-3.5" /> Equation (Inline)
             </button>
@@ -994,7 +1000,7 @@ export default function ToolbarPlugin() {
                 setShowMermaidDialog(true);
                 setShowInsertMenu(false);
               }}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <Workflow className="h-3.5 w-3.5" /> Mermaid Diagram
             </button>
@@ -1004,7 +1010,7 @@ export default function ToolbarPlugin() {
                 setShowYouTubeDialog(true);
                 setShowInsertMenu(false);
               }}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <Youtube className="h-3.5 w-3.5" /> YouTube Video
             </button>
@@ -1014,7 +1020,7 @@ export default function ToolbarPlugin() {
                 editor.dispatchCommand(INSERT_COLLAPSIBLE_COMMAND, undefined);
                 setShowInsertMenu(false);
               }}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <ChevronsDownUp className="h-3.5 w-3.5" /> Collapsible Section
             </button>
@@ -1024,7 +1030,7 @@ export default function ToolbarPlugin() {
                 editor.dispatchCommand(INSERT_PAGE_BREAK_COMMAND, undefined);
                 setShowInsertMenu(false);
               }}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <SeparatorHorizontal className="h-3.5 w-3.5" /> Page Break
             </button>
@@ -1034,7 +1040,7 @@ export default function ToolbarPlugin() {
                 setShowLayoutDialog(true);
                 setShowInsertMenu(false);
               }}
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm cursor-pointer hover:bg-accent/50"
             >
               <Columns3 className="h-3.5 w-3.5" /> Columns Layout
             </button>

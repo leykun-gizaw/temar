@@ -1,19 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RefreshCw, Check, AlertTriangle, Info } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 import {
+  Button,
+  Checkbox,
+  Badge,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@temar/ui';
 import {
   fetchAndComparePricing,
   applyPricingChanges,
@@ -21,6 +33,21 @@ import {
   type DiffStatus,
   type FetchResult,
 } from './actions';
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = 10;
+
+function generatePageNumbers(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | 'ellipsis')[] = [1];
+  if (current > 3) pages.push('ellipsis');
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (current < total - 2) pages.push('ellipsis');
+  if (total > 1) pages.push(total);
+  return pages;
+}
 
 const STATUS_FILTERS: { label: string; value: DiffStatus | 'all' }[] = [
   { label: 'All', value: 'all' },
@@ -33,13 +60,13 @@ function statusBadge(status: DiffStatus) {
   switch (status) {
     case 'changed':
       return (
-        <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
+        <Badge className="bg-accent text-accent-foreground border-accent hover:bg-accent">
           Changed
         </Badge>
       );
     case 'new':
       return (
-        <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100">
+        <Badge className="bg-secondary text-secondary-foreground border-secondary hover:bg-secondary">
           New
         </Badge>
       );
@@ -58,7 +85,7 @@ function priceCell(
   status: DiffStatus
 ) {
   if (status === 'new') {
-    return <span className="text-blue-700">${latest.toFixed(3)}</span>;
+    return <span className="text-secondary-foreground">${latest.toFixed(3)}</span>;
   }
   if (status === 'unchanged' || current === null) {
     return <span>${latest.toFixed(3)}</span>;
@@ -69,7 +96,7 @@ function priceCell(
         ${current.toFixed(3)}
       </span>
       <span className="mx-1 text-muted-foreground">&rarr;</span>
-      <span className="font-medium text-amber-700">${latest.toFixed(3)}</span>
+      <span className="font-medium text-accent-foreground">${latest.toFixed(3)}</span>
     </span>
   );
 }
@@ -80,6 +107,8 @@ export function PricingSyncClient() {
   const [result, setResult] = useState<FetchResult | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<DiffStatus | 'all'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const handleFetch = async () => {
     setLoading(true);
@@ -175,11 +204,19 @@ export function PricingSyncClient() {
     }
   };
 
-  const filteredRows = result
-    ? filter === 'all'
+  const filteredRows = useMemo(() => {
+    if (!result) return [];
+    return filter === 'all'
       ? result.diff
-      : result.diff.filter((r) => r.status === filter)
-    : [];
+      : result.diff.filter((r) => r.status === filter);
+  }, [result, filter]);
+
+  const totalPages = Math.ceil(filteredRows.length / pageSize);
+
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredRows.slice(start, start + pageSize);
+  }, [filteredRows, currentPage, pageSize]);
 
   const selectedCount = selected.size;
 
@@ -210,11 +247,11 @@ export function PricingSyncClient() {
 
       {/* Info card */}
       {!result && (
-        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-          <Info className="mt-0.5 h-4 w-4 text-blue-600" />
-          <div className="text-sm text-blue-800">
-            <p className="font-medium">How it works</p>
-            <p className="mt-1 text-blue-700">
+        <div className="flex items-start gap-3 rounded-lg border bg-muted/50 p-4">
+          <Info className="mt-0.5 h-4 w-4 text-muted-foreground" />
+          <div className="text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">How it works</p>
+            <p className="mt-1">
               Click &ldquo;Check for Updates&rdquo; to fetch the latest pricing
               from Google, Anthropic, and Deepseek via the pricepertoken MCP
               server. You&apos;ll see a diff of what changed, and can choose
@@ -226,12 +263,12 @@ export function PricingSyncClient() {
 
       {/* Errors */}
       {result && result.errors.length > 0 && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-          <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" />
-          <div className="text-sm text-amber-800">
-            <p className="font-medium">Provider errors</p>
+        <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+          <AlertTriangle className="mt-0.5 h-4 w-4 text-destructive" />
+          <div className="text-sm">
+            <p className="font-medium text-destructive">Provider errors</p>
             {result.errors.map((e, i) => (
-              <p key={i} className="text-amber-700">
+              <p key={i} className="text-muted-foreground">
                 {e}
               </p>
             ))}
@@ -253,8 +290,8 @@ export function PricingSyncClient() {
                   key={f.value}
                   variant={filter === f.value ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setFilter(f.value)}
-                  className="h-7 text-xs"
+                  onClick={() => { setFilter(f.value); setCurrentPage(1); }}
+                  className="text-xs"
                 >
                   {f.label} ({count})
                 </Button>
@@ -304,7 +341,7 @@ export function PricingSyncClient() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRows.map((row) => (
+              {paginatedRows.map((row) => (
                 <TableRow
                   key={row.modelId}
                   className={
@@ -334,6 +371,64 @@ export function PricingSyncClient() {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {result && filteredRows.length > 0 && (
+        <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages} ({filteredRows.length} items)
+            </p>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}
+            >
+              <SelectTrigger className="h-8 w-[110px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size} / page
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              {generatePageNumbers(currentPage, totalPages).map((pageNum, i) =>
+                pageNum === 'ellipsis' ? (
+                  <PaginationItem key={`e-${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      isActive={pageNum === currentPage}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="cursor-pointer"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
 
