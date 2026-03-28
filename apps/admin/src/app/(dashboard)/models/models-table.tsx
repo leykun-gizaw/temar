@@ -8,9 +8,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+  Badge,
+  Button,
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@temar/ui';
 import { AlertTriangle } from 'lucide-react';
 import { ModelToggle } from './model-toggle';
 
@@ -30,9 +42,26 @@ interface ModelsTableProps {
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = 10;
+
+function generatePageNumbers(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | 'ellipsis')[] = [1];
+  if (current > 3) pages.push('ellipsis');
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (current < total - 2) pages.push('ellipsis');
+  if (total > 1) pages.push(total);
+  return pages;
+}
+
 export function ModelsTable({ models, warnings }: ModelsTableProps) {
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const providers = useMemo(() => {
     const unique = Array.from(new Set(models.map((m) => m.provider))).sort();
@@ -70,6 +99,13 @@ export function ModelsTable({ models, warnings }: ModelsTableProps) {
     });
   }, [models, providerFilter, statusFilter]);
 
+  const totalPages = Math.ceil(filteredModels.length / pageSize);
+
+  const paginatedModels = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredModels.slice(start, start + pageSize);
+  }, [filteredModels, currentPage, pageSize]);
+
   return (
     <div className="space-y-4">
       {/* Filter bar */}
@@ -82,8 +118,8 @@ export function ModelsTable({ models, warnings }: ModelsTableProps) {
           <Button
             variant={providerFilter === 'all' ? 'default' : 'outline'}
             size="sm"
-            className="h-7 text-xs"
-            onClick={() => setProviderFilter('all')}
+            className="text-xs"
+            onClick={() => { setProviderFilter('all'); setCurrentPage(1); }}
           >
             All ({models.length})
           </Button>
@@ -92,8 +128,8 @@ export function ModelsTable({ models, warnings }: ModelsTableProps) {
               key={provider}
               variant={providerFilter === provider ? 'default' : 'outline'}
               size="sm"
-              className="h-7 text-xs"
-              onClick={() => setProviderFilter(provider)}
+              className="text-xs"
+              onClick={() => { setProviderFilter(provider); setCurrentPage(1); }}
             >
               <span className="capitalize">{provider}</span> (
               {providerCounts[provider]})
@@ -117,8 +153,8 @@ export function ModelsTable({ models, warnings }: ModelsTableProps) {
               key={f.value}
               variant={statusFilter === f.value ? 'default' : 'outline'}
               size="sm"
-              className="h-7 text-xs"
-              onClick={() => setStatusFilter(f.value)}
+              className="text-xs"
+              onClick={() => { setStatusFilter(f.value); setCurrentPage(1); }}
             >
               {f.label} ({statusCounts[f.value]})
             </Button>
@@ -139,7 +175,7 @@ export function ModelsTable({ models, warnings }: ModelsTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredModels.map((model) => (
+          {paginatedModels.map((model) => (
             <TableRow key={model.id}>
               <TableCell className="font-mono text-sm">{model.id}</TableCell>
               <TableCell className="capitalize">{model.provider}</TableCell>
@@ -170,7 +206,7 @@ export function ModelsTable({ models, warnings }: ModelsTableProps) {
               </TableCell>
             </TableRow>
           ))}
-          {filteredModels.length === 0 && (
+          {paginatedModels.length === 0 && (
             <TableRow>
               <TableCell
                 colSpan={6}
@@ -184,6 +220,64 @@ export function ModelsTable({ models, warnings }: ModelsTableProps) {
           )}
         </TableBody>
       </Table>
+
+      {filteredModels.length > 0 && (
+        <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages} ({filteredModels.length} items)
+            </p>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}
+            >
+              <SelectTrigger className="h-8 w-[110px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size} / page
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={currentPage <= 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              {generatePageNumbers(currentPage, totalPages).map((pageNum, i) =>
+                pageNum === 'ellipsis' ? (
+                  <PaginationItem key={`e-${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      isActive={pageNum === currentPage}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="cursor-pointer"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }

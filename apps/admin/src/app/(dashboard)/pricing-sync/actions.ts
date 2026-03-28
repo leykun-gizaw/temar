@@ -65,19 +65,18 @@ export async function fetchAndComparePricing(): Promise<FetchResult> {
     fetchAllProviderPricing(),
     fetchCurrentPricing(),
   ]);
+  const currentMap = new Map(currentRows.map((r) => [r.modelId, r]));
 
-  const currentMap = new Map(
-    currentRows.map((r) => [r.modelId, r])
+  const latest: LatestModel[] = mcpResult.models.map(
+    (m: PricePerTokenModel) => ({
+      id: slugToModelId(m.slug, m.author_name),
+      provider: authorToProvider(m.author_name),
+      label: m.model_name,
+      slug: m.slug,
+      inputPricePer1M: m.input_per_1m!,
+      outputPricePer1M: m.output_per_1m!,
+    })
   );
-
-  const latest: LatestModel[] = mcpResult.models.map((m: PricePerTokenModel) => ({
-    id: slugToModelId(m.slug, m.author_name),
-    provider: authorToProvider(m.author_name),
-    label: m.model_name,
-    slug: m.slug,
-    inputPricePer1M: m.input_per_1m!,
-    outputPricePer1M: m.output_per_1m!,
-  }));
 
   const diff: PricingDiffRow[] = latest.map((m) => {
     const current = currentMap.get(m.id);
@@ -93,7 +92,6 @@ export async function fetchAndComparePricing(): Promise<FetchResult> {
         latestOutput: m.outputPricePer1M,
       };
     }
-
     const inputChanged =
       Math.abs(current.inputPricePer1M - m.inputPricePer1M) > 0.0001;
     const outputChanged =
@@ -103,7 +101,9 @@ export async function fetchAndComparePricing(): Promise<FetchResult> {
       modelId: m.id,
       provider: m.provider,
       label: m.label,
-      status: (inputChanged || outputChanged ? 'changed' : 'unchanged') as DiffStatus,
+      status: (inputChanged || outputChanged
+        ? 'changed'
+        : 'unchanged') as DiffStatus,
       currentInput: current.inputPricePer1M,
       currentOutput: current.outputPricePer1M,
       latestInput: m.inputPricePer1M,

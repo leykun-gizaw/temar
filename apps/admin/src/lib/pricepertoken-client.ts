@@ -3,14 +3,11 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 
 const MCP_URL = 'https://api.pricepertoken.com/mcp/mcp';
 
-let client: Client | null = null;
-
-async function getClient(): Promise<Client> {
-  if (client) return client;
+async function createClient(): Promise<Client> {
   const transport = new StreamableHTTPClientTransport(new URL(MCP_URL));
-  client = new Client({ name: 'temar-admin', version: '1.0.0' }, {});
-  await client.connect(transport);
-  return client;
+  const c = new Client({ name: 'temar-admin', version: '1.0.0' }, {});
+  await c.connect(transport);
+  return c;
 }
 
 export interface PricePerTokenModel {
@@ -27,32 +24,36 @@ export interface PricePerTokenModel {
 export async function fetchProviderPricing(
   author: 'google' | 'anthropic' | 'deepseek'
 ): Promise<PricePerTokenModel[]> {
-  const c = await getClient();
-  const result = await c.callTool({
-    name: 'get_all_models',
-    arguments: { author, limit: 100 },
-  });
-
-  const textBlock = (
-    result.content as Array<{ type: string; text?: string }>
-  ).find((b) => b.type === 'text');
-  if (!textBlock?.text) return [];
-
-  let parsed: unknown;
+  const c = await createClient();
   try {
-    const outer = JSON.parse(textBlock.text);
-    parsed =
-      typeof outer === 'object' && outer !== null && 'result' in outer
-        ? JSON.parse((outer as { result: string }).result)
-        : outer;
-  } catch {
-    parsed = JSON.parse(textBlock.text);
-  }
+    const result = await c.callTool({
+      name: 'get_all_models',
+      arguments: { author, limit: 100 },
+    });
 
-  const models = parsed as PricePerTokenModel[];
-  return models.filter(
-    (m) => m.input_per_1m != null && m.output_per_1m != null
-  );
+    const textBlock = (
+      result.content as Array<{ type: string; text?: string }>
+    ).find((b) => b.type === 'text');
+    if (!textBlock?.text) return [];
+
+    let parsed: unknown;
+    try {
+      const outer = JSON.parse(textBlock.text);
+      parsed =
+        typeof outer === 'object' && outer !== null && 'result' in outer
+          ? JSON.parse((outer as { result: string }).result)
+          : outer;
+    } catch {
+      parsed = JSON.parse(textBlock.text);
+    }
+
+    const models = parsed as PricePerTokenModel[];
+    return models.filter(
+      (m) => m.input_per_1m != null && m.output_per_1m != null
+    );
+  } finally {
+    await c.close();
+  }
 }
 
 export async function fetchAllProviderPricing() {

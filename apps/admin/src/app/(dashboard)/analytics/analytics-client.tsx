@@ -1,18 +1,24 @@
 'use client';
 
 import { useCallback, useEffect, useState, useTransition } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Input,
+  Button,
+} from '@temar/ui';
 import {
   fetchAnalyticsSummary,
   fetchTopModelsByUsage,
@@ -138,8 +144,8 @@ export default function AnalyticsClient() {
       {summary && modelCount ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader className="pb-2">
+            <Card className="gap-2">
+              <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Requests
                 </CardTitle>
@@ -151,8 +157,8 @@ export default function AnalyticsClient() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
+            <Card className="gap-2">
+              <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Cost (USD)
                 </CardTitle>
@@ -164,8 +170,8 @@ export default function AnalyticsClient() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
+            <Card className="gap-2">
+              <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Unique Users
                 </CardTitle>
@@ -177,8 +183,8 @@ export default function AnalyticsClient() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
+            <Card className="gap-2">
+              <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Passes Charged
                 </CardTitle>
@@ -190,8 +196,8 @@ export default function AnalyticsClient() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
+            <Card className="gap-2">
+              <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Tokens (Input)
                 </CardTitle>
@@ -203,8 +209,8 @@ export default function AnalyticsClient() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
+            <Card className="gap-2">
+              <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Active Models
                 </CardTitle>

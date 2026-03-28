@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@temar/ui';
 import { Info } from 'lucide-react';
 import { fetchModelsWithMarkup } from './actions';
 import { computeCostTier, computeRawCostPerRequest } from './cost-utils';
@@ -25,10 +25,10 @@ export default async function MarkupPage() {
         </p>
       </div>
 
-      <Card className="border-blue-200 bg-blue-50/50">
-        <CardContent className="flex items-start gap-3 pt-4">
-          <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
-          <p className="text-sm text-blue-800">
+      <Card className="bg-muted/50">
+        <CardContent className="flex items-start gap-3">
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
             Markup factors follow an inverse curve — cheaper models should carry
             higher markup, expensive models lower markup. See the seed script
             for suggested ranges per cost tier.

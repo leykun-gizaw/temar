@@ -13,7 +13,7 @@ import {
 } from '@temar/db-client';
 import { getActiveModels } from '@temar/pricing-service';
 
-const PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 10;
 
 interface UsageFilters {
   modelId?: string;
@@ -22,11 +22,13 @@ interface UsageFilters {
   dateTo?: string;
   userId?: string;
   page?: number;
+  pageSize?: number;
 }
 
 export async function fetchUsageLogs(filters: UsageFilters) {
   const page = filters.page ?? 1;
-  const offset = (page - 1) * PAGE_SIZE;
+  const pageSize = filters.pageSize ?? DEFAULT_PAGE_SIZE;
+  const offset = (page - 1) * pageSize;
 
   const conditions = [];
 
@@ -54,7 +56,7 @@ export async function fetchUsageLogs(filters: UsageFilters) {
       .from(aiUsageLog)
       .where(where)
       .orderBy(desc(aiUsageLog.createdAt))
-      .limit(PAGE_SIZE)
+      .limit(pageSize)
       .offset(offset),
     dbClient
       .select({ total: count() })
@@ -66,8 +68,8 @@ export async function fetchUsageLogs(filters: UsageFilters) {
     rows,
     total: countResult?.total ?? 0,
     page,
-    pageSize: PAGE_SIZE,
-    totalPages: Math.ceil((countResult?.total ?? 0) / PAGE_SIZE),
+    pageSize,
+    totalPages: Math.ceil((countResult?.total ?? 0) / pageSize),
   };
 }
 

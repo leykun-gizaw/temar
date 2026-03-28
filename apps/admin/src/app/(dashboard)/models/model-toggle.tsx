@@ -1,6 +1,6 @@
 'use client';
 
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@temar/ui';
 import { toggleModelActive } from './actions';
 import { useState } from 'react';
 
