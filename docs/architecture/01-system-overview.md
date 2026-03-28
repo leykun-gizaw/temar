@@ -104,6 +104,7 @@ flowchart TD
     DbClient["@temar/db-client\nDrizzle ORM client,\nall schema definitions,\ncrypto utilities"]
     PricingSvc["@temar/pricing-service\nIn-memory cached pricing,\ncost computation,\nusage recording"]
     PaymentProv["@temar/payment-provider\nStrategy-pattern abstraction\nPaddle adapter, Dodo stub,\nshared event handler"]
+    UI["@temar/ui\nShared shadcn/ui components\n24 components: Button, Card,\nDialog, Table, Pagination, etc."]
 
     %% ── Library interdependencies ────────────────────────
     PricingSvc --> DbClient
@@ -125,10 +126,12 @@ flowchart TD
     Web --> SharedTypes
     Web --> PricingSvc
     Web --> PaymentProv
+    Web --> UI
 
     AdminApp --> DbClient
     AdminApp --> SharedTypes
     AdminApp --> PricingSvc
+    AdminApp --> UI
 
     FSRS --> DbClient
 
@@ -144,7 +147,7 @@ flowchart TD
     classDef lib fill:#f97316,stroke:#c2410c,color:#fff
     classDef app fill:#3b82f6,stroke:#1e40af,color:#fff
 
-    class SharedTypes,DbClient,PricingSvc,PaymentProv lib
+    class SharedTypes,DbClient,PricingSvc,PaymentProv,UI lib
     class Web,AdminApp,FSRS,QGen,AAna app
 ```
 
@@ -156,19 +159,20 @@ flowchart TD
 | `@temar/db-client` | None (leaf among `@temar/*`) | All 5 apps, pricing-service, payment-provider | Single source of truth for all Drizzle schema definitions. Exports `dbClient` singleton, table references, query operators (`eq`, `and`, `inArray`, `sql`), and crypto utilities (`encrypt`/`decrypt`). |
 | `@temar/pricing-service` | db-client, shared-types | web, admin, question-gen, answer-analysis | In-memory cached pricing engine. Computes per-operation costs using active model pricing + markup configs, and records usage with balance deduction. |
 | `@temar/payment-provider` | db-client, shared-types, pricing-service | web | Strategy-pattern abstraction that decouples billing logic from specific payment providers. Ships a Paddle adapter (production) and a Dodo Payments stub. The shared event handler normalizes webhook events and delegates to `pricing-service` for cost calculations. |
+| `@temar/ui` | None (leaf) | web, admin | 24 shared shadcn/ui components (Button, Card, Dialog, Table, Pagination, etc.) with design-system fixes applied. Eliminates component duplication between web and admin. Requires Tailwind v4 `@source` directive in consuming apps' CSS. |
 
 ### Dependency layering
 
-The libraries form a clean DAG with two leaf nodes:
+The libraries form a clean DAG with three leaf nodes:
 
 ```
-shared-types (leaf)     db-client (leaf)
-       \                   /    \
-        \                 /      \
-       pricing-service --+       |
+shared-types (leaf)     db-client (leaf)      ui (leaf)
+       \                   /    \              /    \
+        \                 /      \            /      \
+       pricing-service --+       |       web --+-- admin
               \                  |
                \                 |
             payment-provider ----+
 ```
 
-`shared-types` and `db-client` are fully independent of each other and of any other `@temar/*` library. `pricing-service` depends on both leaves. `payment-provider` sits at the top of the dependency chain, consuming all three other libraries. This layering means schema changes in `db-client` can ripple through every library and application in the monorepo.
+`shared-types`, `db-client`, and `ui` are fully independent leaf nodes. `ui` is a pure frontend library with no `@temar/*` dependencies — it only depends on Radix UI, Tailwind utilities, and lucide-react. `pricing-service` depends on both `shared-types` and `db-client`. `payment-provider` sits at the top of the backend dependency chain. Schema changes in `db-client` can ripple through every library and application in the monorepo.
