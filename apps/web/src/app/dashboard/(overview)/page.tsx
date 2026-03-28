@@ -1,5 +1,5 @@
 import ReviewsTableCard from '@/components/reviews-table-card';
-import { EventsSummary } from '@/app/dashboard/_components/events-summary';
+import { DueNowCardStack } from '@/app/dashboard/_components/due-now-card-stack';
 import { UpcomingSessions } from '../_components/upcoming-sessions';
 import {
   getDueRecallItems,
@@ -85,7 +85,7 @@ export default async function Page() {
 
         {/* Stat Cards Row */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <EventsSummary dueItems={dueItems} />
+          <DueNowCardStack dueItems={dueItems} />
           <TopicStats
             topicsCount={topicsCount}
             trackedCount={trackedItems.length}

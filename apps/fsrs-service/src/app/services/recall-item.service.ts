@@ -103,6 +103,12 @@ export class RecallItemService {
         status: 'pending',
       }).catch(() => { /* noop */ });
 
+      // Build sibling performance context so the LLM can tailor difficulty
+      const siblingPerformance = await this.buildSiblingPerformanceSummary(
+        chunkId,
+        userId
+      );
+
       // Fire-and-forget: trigger question generation in the background.
       // The question-gen-service updates chunk_tracking status and sends
       // a pg_notify event when done — the frontend picks it up via SSE.
@@ -111,7 +117,8 @@ export class RecallItemService {
         userId,
         aiConfig,
         questionTypes,
-        questionCount
+        questionCount,
+        siblingPerformance
       ).catch((err) => {
         this.logger.error(
           `Background question gen failed for chunk ${chunkId}: ${err}`
@@ -791,6 +798,112 @@ Total reviews: ${totalReviews} | Rating distribution: Again=${ratingCounts[1]}, 
 Total lapses: ${totalLapses} | Good+Easy ratio: ${(goodEasyRatio * 100).toFixed(0)}%
 
 ### Per-Question Breakdown
+${questionSummaries.join('\n')}`;
+  }
+
+  /**
+   * Build a performance summary from sibling chunks in the same note
+   * so the LLM can calibrate difficulty for first-time generation.
+   */
+  private async buildSiblingPerformanceSummary(
+    chunkId: string,
+    userId: string
+  ): Promise<string | null> {
+    // Find this chunk's note
+    const [chunkRow] = await dbClient
+      .select({ noteId: chunk.noteId })
+      .from(chunk)
+      .where(eq(chunk.id, chunkId))
+      .limit(1);
+
+    if (!chunkRow) return null;
+
+    // Get sibling chunks in the same note (excluding this one)
+    const siblingChunks = await dbClient
+      .select({ id: chunk.id })
+      .from(chunk)
+      .where(and(eq(chunk.noteId, chunkRow.noteId), ne(chunk.id, chunkId)));
+
+    if (siblingChunks.length === 0) return null;
+
+    const siblingChunkIds = siblingChunks.map((c) => c.id);
+
+    // Get recall items for sibling chunks belonging to this user
+    const siblingItems = await dbClient
+      .select()
+      .from(recallItem)
+      .where(
+        and(
+          inArray(recallItem.chunkId, siblingChunkIds),
+          eq(recallItem.userId, userId)
+        )
+      );
+
+    if (siblingItems.length === 0) return null;
+
+    const itemIds = siblingItems.map((i) => i.id);
+    const logs = await dbClient
+      .select()
+      .from(reviewLog)
+      .where(inArray(reviewLog.recallItemId, itemIds))
+      .orderBy(desc(reviewLog.reviewedAt));
+
+    if (logs.length === 0) return null;
+
+    // Rating distribution
+    const ratingCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const log of logs) ratingCounts[log.rating]++;
+
+    const totalReviews = logs.length;
+    const goodEasyRatio =
+      (ratingCounts[3] + ratingCounts[4]) / totalReviews;
+    const totalLapses = siblingItems.reduce((sum, i) => sum + i.lapses, 0);
+
+    let knowledgeLevel: string;
+    if (goodEasyRatio >= 0.8 && totalLapses <= 1) {
+      knowledgeLevel = 'STRONG';
+    } else if (goodEasyRatio >= 0.6) {
+      knowledgeLevel = 'MODERATE';
+    } else if (goodEasyRatio >= 0.35) {
+      knowledgeLevel = 'DEVELOPING';
+    } else {
+      knowledgeLevel = 'WEAK';
+    }
+
+    const questionSummaries: string[] = [];
+    for (const item of siblingItems.slice(0, 10)) {
+      const itemLogs = logs.filter((l) => l.recallItemId === item.id);
+      if (itemLogs.length === 0) continue;
+
+      const ratings = itemLogs.map((l) => RATING_LABELS[l.rating]).join(', ');
+
+      const strengths: string[] = [];
+      const weaknesses: string[] = [];
+      for (const log of itemLogs) {
+        const analysis = log.analysisJson as {
+          strengths?: string[];
+          weaknesses?: string[];
+        } | null;
+        if (analysis?.strengths) strengths.push(...analysis.strengths);
+        if (analysis?.weaknesses) weaknesses.push(...analysis.weaknesses);
+      }
+
+      let summary = `- Q: "${item.questionTitle}" | Ratings: [${ratings}] | Reps: ${item.reps}, Lapses: ${item.lapses}, Stability: ${item.stability.toFixed(1)}d`;
+      if (strengths.length > 0)
+        summary += `\n  Strengths: ${[...new Set(strengths)].slice(0, 3).join('; ')}`;
+      if (weaknesses.length > 0)
+        summary += `\n  Weaknesses: ${[...new Set(weaknesses)].slice(0, 3).join('; ')}`;
+
+      questionSummaries.push(summary);
+    }
+
+    return `## Sibling Performance Context
+The user has reviewed other chunks in the same note. Use this to calibrate difficulty.
+Overall knowledge level: ${knowledgeLevel}
+Total reviews across siblings: ${totalReviews} | Rating distribution: Again=${ratingCounts[1]}, Hard=${ratingCounts[2]}, Good=${ratingCounts[3]}, Easy=${ratingCounts[4]}
+Total lapses: ${totalLapses} | Good+Easy ratio: ${(goodEasyRatio * 100).toFixed(0)}%
+
+### Sibling Question Performance
 ${questionSummaries.join('\n')}`;
   }
 

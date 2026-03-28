@@ -99,6 +99,7 @@ services:
     depends_on:
       - web
       - fsrs-service
+      - admin
     networks:
       - temar-network
 

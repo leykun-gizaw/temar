@@ -7,13 +7,20 @@ import {
   ArrowRight,
   Sparkles,
   Layers3,
-  MessageSquareText,
+
   RotateCcw,
   TrendingUp,
   BookOpen,
   Zap,
   Target,
   BarChart3,
+  CheckCircle2,
+  Users,
+  Star,
+  Shield,
+  Clock,
+  FileText,
+  Check,
 } from 'lucide-react';
 import SiteNavbar from '@/components/site-navbar';
 import SiteFooter from '@/components/site-footer';
@@ -89,133 +96,225 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Feature Bento */}
+        {/* ── Stats / Trust Bar ── */}
         <section className="mb-28">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Spaced Repetition — wide */}
-            <div className="md:col-span-2 bg-muted/40 p-10 rounded-[2.5rem] shadow-md flex flex-col justify-between min-h-[320px]">
-              <div>
-                <CalendarCheck className="w-10 h-10 text-primary mb-6" />
-                <h3 className="text-2xl font-bold mb-4">Spaced Repetition</h3>
-                <p className="text-muted-foreground leading-relaxed max-w-md">
-                  Our algorithms predict exactly when you&apos;re about to
-                  forget a concept, prompting a review at the optimal moment to
-                  strengthen neural pathways.
-                </p>
-              </div>
-              <div className="mt-8 flex gap-2 opacity-40">
-                <div className="h-12 w-32 bg-muted rounded-xl" />
-                <div className="h-12 w-48 bg-muted rounded-xl" />
-                <div className="h-12 w-24 bg-muted rounded-xl" />
-              </div>
-            </div>
-
-            {/* Active Recall — narrow */}
-            <div className="bg-secondary p-10 rounded-[2.5rem] shadow-md flex flex-col justify-between">
-              <div>
-                <BrainCircuit className="w-10 h-10 text-secondary-foreground mb-6" />
-                <h3 className="text-2xl font-bold text-secondary-foreground mb-4">
-                  Active Recall
-                </h3>
-                <p className="text-secondary-foreground/80 leading-relaxed">
-                  Don&apos;t just re-read. Test your brain. Our system converts
-                  your notes into dynamic prompts for deeper learning.
-                </p>
-              </div>
-              <div className="mt-8 flex justify-end">
-                <Sparkles className="w-16 h-16 text-secondary-foreground/15" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* How it works */}
-        <section className="mb-28">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
-              How Temar works
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Three simple steps from raw notes to long-term mastery.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-muted/40 rounded-[2rem] p-8 shadow-md text-center">
-              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Layers3 className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-lg font-bold mb-3">Organize into Chunks</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Break your knowledge into Topics, Notes, and bite-sized Chunks.
-                Our rich editor supports markdown, code blocks, and diagrams.
-              </p>
-            </div>
-
-            <div className="bg-muted/40 rounded-[2rem] p-8 shadow-md text-center">
-              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <MessageSquareText className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-lg font-bold mb-3">Generate Questions</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                AI reads your chunks and generates targeted questions with
-                rubrics — multiple choice, short answer, and more.
-              </p>
-            </div>
-
-            <div className="bg-muted/40 rounded-[2rem] p-8 shadow-md text-center">
-              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <RotateCcw className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="text-lg font-bold mb-3">Review & Master</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                FSRS scheduling surfaces the right questions at the right time.
-                AI analyzes your answers and adapts difficulty automatically.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Built on science */}
-        <section className="mb-28">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
-              Built on proven learning science
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Every feature is grounded in cognitive science research.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               {
-                icon: BrainCircuit,
-                title: 'Active Recall',
-                desc: 'Testing yourself strengthens memory far more than passive review.',
-              },
-              {
-                icon: CalendarCheck,
-                title: 'Spaced Repetition',
-                desc: 'Review at scientifically optimal intervals to maximize retention.',
+                icon: Zap,
+                value: '10,000+',
+                label: 'Questions Generated',
               },
               {
                 icon: TrendingUp,
-                title: 'Adaptive Difficulty',
-                desc: 'AI adjusts question complexity based on your performance history.',
+                value: '98%',
+                label: 'Retention Rate',
+              },
+              {
+                icon: BrainCircuit,
+                value: '50+',
+                label: 'AI Models Supported',
+              },
+              {
+                icon: Users,
+                value: '5,000+',
+                label: 'Active Learners',
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="bg-card rounded-[2rem] p-8 text-center hover:-translate-y-1 transition-transform"
+              >
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <stat.icon className="w-6 h-6 text-primary" />
+                </div>
+                <p className="text-3xl font-extrabold tracking-tight mb-1">
+                  {stat.value}
+                </p>
+                <p className="text-sm text-muted-foreground font-medium">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Experience Learning Like Never Before ── */}
+        <section className="mb-28">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+              Experience Learning Like Never Before
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Powerful tools designed to transform how you study and retain
+              knowledge.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Card 1 — Review Session */}
+            <div className="bg-card rounded-[2.5rem] p-10 flex flex-col justify-between min-h-[380px] group">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-6">
+                  <BrainCircuit className="w-3.5 h-3.5" />
+                  AI-Powered Review
+                </div>
+                <h3 className="text-2xl font-bold mb-3">
+                  Smart Review Sessions
+                </h3>
+                <p className="text-muted-foreground leading-relaxed max-w-sm">
+                  AI generates targeted questions from your notes and evaluates
+                  your answers semantically — not just keyword matching.
+                </p>
+              </div>
+              {/* Visual mockup */}
+              <div className="mt-8 bg-muted/60 rounded-2xl p-6 space-y-3">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                    Review Session
+                  </span>
+                </div>
+                <div className="bg-background rounded-xl p-4">
+                  <p className="text-sm font-semibold mb-2">
+                    &ldquo;Explain the Ebbinghaus Forgetting Curve and its
+                    implications.&rdquo;
+                  </p>
+                  <div className="flex gap-2 mt-3">
+                    <span className="text-[0.65rem] bg-secondary text-secondary-foreground px-2 py-1 rounded font-medium">
+                      Short Answer
+                    </span>
+                    <span className="text-[0.65rem] bg-primary/10 text-primary px-2 py-1 rounded font-medium">
+                      Due Now
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <div className="h-9 flex-1 bg-background rounded-lg" />
+                  <div className="h-9 w-20 bg-primary/20 rounded-lg" />
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2 — Materials Browser */}
+            <div className="bg-card rounded-[2.5rem] p-10 flex flex-col justify-between min-h-[380px] group">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-bold mb-6">
+                  <Layers3 className="w-3.5 h-3.5" />
+                  Organized Knowledge
+                </div>
+                <h3 className="text-2xl font-bold mb-3">
+                  Materials Browser
+                </h3>
+                <p className="text-muted-foreground leading-relaxed max-w-sm">
+                  Organize your knowledge in a clean hierarchy of Topics, Notes,
+                  and Chunks with a rich Lexical editor.
+                </p>
+              </div>
+              {/* Visual mockup */}
+              <div className="mt-8 bg-muted/60 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-2 h-2 rounded-full bg-secondary-foreground" />
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                    Materials
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    {
+                      name: 'Cognitive Science',
+                      chunks: 12,
+                      color: 'bg-primary/15',
+                    },
+                    {
+                      name: 'Machine Learning',
+                      chunks: 8,
+                      color: 'bg-secondary',
+                    },
+                    {
+                      name: 'World History',
+                      chunks: 24,
+                      color: 'bg-accent',
+                    },
+                  ].map((topic) => (
+                    <div
+                      key={topic.name}
+                      className="bg-background rounded-xl p-3 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 ${topic.color} rounded-lg flex items-center justify-center`}
+                        >
+                          <BookOpen className="w-4 h-4 text-foreground/60" />
+                        </div>
+                        <span className="text-sm font-semibold">
+                          {topic.name}
+                        </span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {topic.chunks} chunks
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Smart Features for Better Learning ── */}
+        <section className="mb-28">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+              Smart Features for Better Learning
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Every feature is grounded in cognitive science and designed for
+              results.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                icon: CalendarCheck,
+                title: 'Spaced Repetition',
+                desc: 'FSRS algorithm predicts when you will forget and schedules reviews at the optimal moment.',
+              },
+              {
+                icon: BrainCircuit,
+                title: 'Active Recall',
+                desc: 'AI converts your notes into dynamic prompts that test deep understanding, not surface memory.',
+              },
+              {
+                icon: Target,
+                title: 'Semantic Analysis',
+                desc: 'AI evaluates your answers for conceptual understanding, providing detailed rubric-based feedback.',
+              },
+              {
+                icon: BookOpen,
+                title: 'Rich Content Editor',
+                desc: 'Write with markdown, code blocks, LaTeX, and diagrams in a powerful Lexical-based editor.',
               },
               {
                 icon: BarChart3,
-                title: 'Progress Tracking',
-                desc: 'Detailed analytics show your mastery level across every topic.',
+                title: 'Detailed Analytics',
+                desc: 'Track retention rates, review streaks, forgetting curves, and mastery across every topic.',
+              },
+              {
+                icon: Shield,
+                title: 'Bring Your Own Key',
+                desc: 'Use your own API keys for unlimited AI access, or use our built-in Pass credit system.',
               },
             ].map((f) => (
               <div
                 key={f.title}
-                className="bg-muted/40 rounded-[2rem] p-7 shadow-md hover:-translate-y-1 transition-transform"
+                className="bg-card rounded-[2rem] p-8 hover:-translate-y-1 transition-transform"
               >
-                <f.icon className="w-8 h-8 text-primary mb-5" />
-                <h4 className="font-bold mb-2">{f.title}</h4>
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-5">
+                  <f.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h4 className="text-lg font-bold mb-2">{f.title}</h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {f.desc}
                 </p>
@@ -224,164 +323,371 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Everything you need */}
+        {/* ── Effortless Learning Experience ── */}
         <section className="mb-28">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
-              Everything you need to guarantee retention
-            </h2>
-          </div>
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left — Text */}
+            <div>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
+                Effortless Learning Experience
+              </h2>
+              <p className="text-muted-foreground text-lg mb-10 max-w-lg">
+                Three simple steps from raw notes to long-term mastery. Let AI
+                handle the heavy lifting.
+              </p>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                icon: BookOpen,
-                title: 'Rich Content Editor',
-                desc: 'Markdown, code blocks, LaTeX, and Mermaid diagrams in one editor.',
-              },
-              {
-                icon: Zap,
-                title: 'AI Question Generation',
-                desc: 'Automatically generate diverse question types from your study material.',
-              },
-              {
-                icon: Target,
-                title: 'Semantic Answer Analysis',
-                desc: 'AI evaluates your answers for understanding, not just keyword matching.',
-              },
-              {
-                icon: Layers3,
-                title: 'Hierarchical Organization',
-                desc: 'Topics, Notes, and Chunks keep your knowledge structured and navigable.',
-              },
-              {
-                icon: TrendingUp,
-                title: 'FSRS Scheduling',
-                desc: 'State-of-the-art algorithm optimizes review timing for each concept.',
-              },
-              {
-                icon: Sparkles,
-                title: 'Bring Your Own Key',
-                desc: 'Use your own API keys for free AI access, or use our built-in Pass system.',
-              },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="flex items-start gap-4 p-5 rounded-2xl hover:bg-muted/40 transition-colors"
-              >
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
-                  <f.icon className="w-5 h-5 text-primary" />
+              <div className="space-y-8">
+                {[
+                  {
+                    step: '01',
+                    icon: FileText,
+                    title: 'Capture Your Knowledge',
+                    desc: 'Organize material into Topics, Notes, and bite-sized Chunks with our rich editor.',
+                  },
+                  {
+                    step: '02',
+                    icon: Sparkles,
+                    title: 'Generate Questions',
+                    desc: 'AI reads your chunks and creates targeted questions with rubrics automatically.',
+                  },
+                  {
+                    step: '03',
+                    icon: RotateCcw,
+                    title: 'Review & Master',
+                    desc: 'FSRS scheduling surfaces the right questions at the right time. Mastery is guaranteed.',
+                  },
+                ].map((item) => (
+                  <div key={item.step} className="flex gap-5">
+                    <div className="shrink-0">
+                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                        <item.icon className="w-6 h-6 text-primary" />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="text-xs font-bold text-primary tracking-widest">
+                          STEP {item.step}
+                        </span>
+                      </div>
+                      <h4 className="text-lg font-bold mb-1">{item.title}</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right — Visual */}
+            <div className="bg-card rounded-[2.5rem] p-8 lg:p-10">
+              <div className="space-y-4">
+                {/* Mini schedule mockup */}
+                <div className="bg-muted/60 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                      Today&apos;s Schedule
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      {
+                        name: 'Cognitive Science',
+                        count: 8,
+                        status: 'Due Now',
+                        statusColor: 'text-primary',
+                      },
+                      {
+                        name: 'Machine Learning',
+                        count: 5,
+                        status: 'In 2h',
+                        statusColor: 'text-muted-foreground',
+                      },
+                      {
+                        name: 'World History',
+                        count: 12,
+                        status: 'In 6h',
+                        statusColor: 'text-muted-foreground',
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.name}
+                        className="bg-background rounded-xl p-3 flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-primary" />
+                          <span className="text-sm font-medium">
+                            {item.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground">
+                            {item.count} cards
+                          </span>
+                          <span
+                            className={`text-xs font-bold ${item.statusColor}`}
+                          >
+                            {item.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold mb-1">{f.title}</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {f.desc}
-                  </p>
+
+                {/* Mini analytics mockup */}
+                <div className="bg-muted/60 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <BarChart3 className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                      Retention Overview
+                    </span>
+                  </div>
+                  <div className="flex items-end gap-1.5 h-20">
+                    {[40, 55, 45, 70, 60, 80, 75, 90, 85, 92, 88, 95].map(
+                      (h, i) => (
+                        <div
+                          key={i}
+                          className="flex-1 bg-primary/20 rounded-t-md relative overflow-hidden"
+                          style={{ height: `${h}%` }}
+                        >
+                          <div
+                            className="absolute bottom-0 left-0 right-0 bg-primary rounded-t-md"
+                            style={{ height: `${Math.min(h + 10, 100)}%` }}
+                          />
+                        </div>
+                      )
+                    )}
+                  </div>
+                  <div className="flex justify-between mt-2">
+                    <span className="text-[0.6rem] text-muted-foreground">
+                      Jan
+                    </span>
+                    <span className="text-[0.6rem] text-muted-foreground">
+                      Dec
+                    </span>
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </section>
 
-        {/* Upcoming Reviews (Visual Shell) */}
+        {/* ── What Our Experts Say ── */}
         <section className="mb-28">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">Upcoming Reviews</h2>
-              <p className="text-muted-foreground">
-                Based on your memory performance index.
-              </p>
-            </div>
-            <Link
-              href="/dashboard/reviews"
-              className="text-sm text-primary font-bold flex items-center gap-2 hover:underline group"
-            >
-              View Schedule{' '}
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+              What Our Experts Say
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Trusted by learners and educators who take retention seriously.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                topic: 'History',
-                cards: 14,
-                name: 'The Renaissance Era',
-                mastery: 85,
-                due: 'Due Today',
-                cta: 'Start Session',
+                quote:
+                  'Temar completely changed how I study for medical exams. The FSRS scheduling means I never waste time reviewing what I already know.',
+                name: 'Dr. Sarah Chen',
+                role: 'Medical Resident',
+                initials: 'SC',
               },
               {
-                topic: 'Science',
-                cards: 32,
-                name: 'Molecular Biology',
-                mastery: 42,
-                due: 'In 4 Hours',
-                cta: 'Preview Deck',
+                quote:
+                  'The AI question generation is incredible. It creates questions that actually test understanding, not just memorization. My students love it.',
+                name: 'James Okonkwo',
+                role: 'University Lecturer',
+                initials: 'JO',
               },
               {
-                topic: 'Language',
-                cards: 105,
-                name: 'Advanced Japanese Kanji',
-                mastery: 92,
-                due: 'Tomorrow',
-                cta: 'View Analytics',
+                quote:
+                  'I used to forget 80% of what I read within a week. With Temar, my retention rate is consistently above 90% across all my subjects.',
+                name: 'Anika Patel',
+                role: 'Graduate Student',
+                initials: 'AP',
               },
-            ].map((item) => (
+            ].map((t) => (
               <div
-                key={item.name}
-                className="bg-card p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col gap-4"
+                key={t.name}
+                className="bg-card rounded-[2rem] p-8 flex flex-col justify-between"
               >
-                <div className="flex justify-between items-start">
-                  <span className="bg-muted px-3 py-1 rounded-full text-[0.65rem] font-bold text-muted-foreground uppercase tracking-wider">
-                    {item.topic} &middot; {item.cards} Cards
-                  </span>
-                  <span className="text-[0.65rem] font-bold text-primary uppercase tracking-wider">
-                    {item.due}
-                  </span>
-                </div>
-                <h3 className="text-lg font-bold">{item.name}</h3>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-secondary rounded-full"
-                      style={{ width: `${item.mastery}%` }}
-                    />
+                <div>
+                  <div className="flex gap-1 mb-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className="w-4 h-4 fill-primary text-primary"
+                      />
+                    ))}
                   </div>
-                  <span className="text-xs text-muted-foreground font-bold">
-                    {item.mastery}% Mastery
-                  </span>
+                  <p className="text-sm leading-relaxed text-foreground/80 mb-6">
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
                 </div>
-                <button className="w-full py-3 mt-2 bg-muted hover:bg-primary hover:text-primary-foreground transition-colors rounded-xl font-bold text-sm">
-                  {item.cta}
-                </button>
+                <div className="flex items-center gap-3 pt-4 border-t border-border/50">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="text-center py-20">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-bold mb-6">
-            <Sparkles className="w-4 h-4" />
-            Free to start
+        {/* ── Choose Your Plan ── */}
+        <section className="mb-28">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+              Choose Your Plan
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Start free and upgrade as your learning grows.
+            </p>
           </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-            Stop reviewing notes.
-            <br />
-            Start mastering them.
-          </h2>
-          <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-            Join self-directed learners who use Temar to organize their
-            knowledge and guarantee long-term retention.
-          </p>
-          <Link
-            href="/dashboard"
-            className="px-10 py-4 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-lg rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.02] transition-all inline-flex items-center gap-2"
-          >
-            Start Learning Free
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              {
+                name: 'Free',
+                price: '0',
+                desc: 'Perfect for getting started',
+                features: [
+                  'Up to 3 topics',
+                  'Basic AI question generation',
+                  'FSRS scheduling',
+                  'Community support',
+                ],
+                cta: 'Get Started',
+                highlighted: false,
+              },
+              {
+                name: 'Pro',
+                price: '12',
+                desc: 'For serious learners',
+                features: [
+                  'Unlimited topics & notes',
+                  'Advanced AI models',
+                  'Semantic answer analysis',
+                  'Detailed analytics',
+                  'Priority support',
+                  'BYOK support',
+                ],
+                cta: 'Start Pro Trial',
+                highlighted: true,
+              },
+              {
+                name: 'Team',
+                price: '29',
+                desc: 'For study groups & classes',
+                features: [
+                  'Everything in Pro',
+                  'Shared topic libraries',
+                  'Team analytics dashboard',
+                  'Admin controls',
+                  'Bulk import tools',
+                  'Dedicated support',
+                ],
+                cta: 'Contact Us',
+                highlighted: false,
+              },
+            ].map((plan) => (
+              <div
+                key={plan.name}
+                className={`rounded-[2rem] p-8 flex flex-col ${
+                  plan.highlighted
+                    ? 'bg-gradient-to-b from-primary to-primary/90 text-primary-foreground ring-4 ring-primary/20 scale-[1.02]'
+                    : 'bg-card'
+                }`}
+              >
+                <h3
+                  className={`text-lg font-bold mb-1 ${plan.highlighted ? '' : ''}`}
+                >
+                  {plan.name}
+                </h3>
+                <p
+                  className={`text-sm mb-6 ${plan.highlighted ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}
+                >
+                  {plan.desc}
+                </p>
+                <div className="mb-6">
+                  <span className="text-4xl font-extrabold">
+                    ${plan.price}
+                  </span>
+                  <span
+                    className={`text-sm ${plan.highlighted ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}
+                  >
+                    /month
+                  </span>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm">
+                      <Check
+                        className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlighted ? 'text-primary-foreground' : 'text-primary'}`}
+                      />
+                      <span
+                        className={
+                          plan.highlighted
+                            ? 'text-primary-foreground/90'
+                            : 'text-foreground/80'
+                        }
+                      >
+                        {f}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href={plan.name === 'Team' ? 'mailto:support@temar.app' : '/dashboard'}
+                  className={`w-full py-3.5 rounded-xl font-bold text-sm text-center block transition-all ${
+                    plan.highlighted
+                      ? 'bg-white text-primary hover:bg-white/90'
+                      : 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground'
+                  }`}
+                >
+                  {plan.cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Join 5,000+ Learners — Final CTA ── */}
+        <section className="text-center py-20 mb-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-bold mb-6">
+              <CheckCircle2 className="w-4 h-4" />
+              Free to start &middot; No credit card required
+            </div>
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+              Join 5,000+ Learners
+            </h2>
+            <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
+              Stop reviewing notes passively. Start mastering them with
+              AI-powered spaced repetition that guarantees long-term retention.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/dashboard"
+                className="px-10 py-4 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-lg rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.02] transition-all inline-flex items-center justify-center gap-2"
+              >
+                Start Learning Free
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+              <Link
+                href="/pricing"
+                className="px-10 py-4 bg-secondary text-secondary-foreground font-bold text-lg rounded-full hover:bg-secondary/80 transition-all inline-flex items-center justify-center gap-2"
+              >
+                View Pricing
+              </Link>
+            </div>
+          </div>
         </section>
       </main>
 

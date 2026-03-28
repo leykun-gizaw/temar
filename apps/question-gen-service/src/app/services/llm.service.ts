@@ -348,9 +348,9 @@ ${chunkContent}`;
         let systemPrompt = this.buildSystemPrompt(type, typeCount);
 
         if (performanceSummary) {
-          systemPrompt += `\n\n## Previous Performance Context
-The user is regenerating questions for this chunk after completing a previous review cycle.
-Use the following performance summary to adapt your questions:
+          systemPrompt += `\n\n## Performance Context
+The following shows the user's review history on related material in the same study area.
+Use this performance data to adapt your questions:
 
 ### How to use this context:
 - If the user showed WEAK understanding: generate foundational questions that reinforce core concepts
@@ -358,7 +358,7 @@ Use the following performance summary to adapt your questions:
 - If the user showed STRONG understanding: generate advanced questions testing synthesis, edge cases, and cross-concept reasoning
 - Target the identified GAPS specifically — create questions that address the weaknesses found in previous reviews
 - Avoid generating questions identical to ones the user already mastered (high stability, no lapses)
-- Vary question types and angles from the previous round to test understanding from different perspectives`;
+- Vary question angles to test understanding from different perspectives`;
         }
 
         const result = await generateText({

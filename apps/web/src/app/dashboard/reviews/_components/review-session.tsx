@@ -2,19 +2,17 @@
 
 import { useState, useRef, useTransition, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import {
+  Button,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from '@/components/ui/popover';
+} from '@temar/ui';
 import { submitReview, saveAnswerDraft } from '@/lib/actions/review';
 import {
   analyzeAnswer,
@@ -48,11 +46,13 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import AnswerEditor from '@/components/lexical-editor/AnswerEditor';
+import MonacoEditorLazy from '@/components/monaco-editor-lazy';
 import type { SerializedEditorState } from 'lexical';
 import {
   lexicalToMarkdown,
   lexicalToPlainText,
 } from '@/components/lexical-editor/utils/serialize';
+import type { LeetcodeRubric } from '@/lib/fetchers/recall-items';
 import { cn } from '@/lib/utils';
 import { notifyPassBalanceChanged } from '@/lib/pass-events';
 import {
@@ -152,6 +152,7 @@ interface ReviewSessionProps {
   currentTopicId?: string;
   currentNoteId?: string;
   dueCount: number;
+  initialItemId?: string;
 }
 
 export default function ReviewSession({
@@ -161,18 +162,27 @@ export default function ReviewSession({
   currentTopicId,
   currentNoteId,
   dueCount,
+  initialItemId,
 }: ReviewSessionProps) {
   const router = useRouter();
   const { subscribe } = useSSE();
   const [items, setItems] = useState(initialItems);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    if (initialItemId) {
+      const idx = initialItems.findIndex((item) => item.id === initialItemId);
+      return idx >= 0 ? idx : 0;
+    }
+    return 0;
+  });
   const [reviewStartTime, setReviewStartTime] = useState<number>(Date.now());
   const [isPending, startTransition] = useTransition();
   const [completedCount, setCompletedCount] = useState(0);
   const pendingAnalysisRef = useRef<string | null>(null);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const STORAGE_KEY = 'temar:review-answers';
+  const CODE_STORAGE_KEY = 'temar:review-code-answers';
   const answersRef = useRef<Map<string, SerializedEditorState>>(new Map());
+  const codeAnswersRef = useRef<Map<string, string>>(new Map());
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -206,7 +216,21 @@ export default function ReviewSession({
         const parsed = JSON.parse(raw) as Record<string, SerializedEditorState>;
         for (const [id, value] of Object.entries(parsed)) {
           answersRef.current.set(id, value);
-          // If localStorage has content for a submitted item, mark it dirty
+          if (initialDrafts?.[id]) {
+            setDirtyIds((prev) => new Set(prev).add(id));
+          }
+        }
+      }
+    } catch {
+      // Ignore corrupted localStorage data
+    }
+    // Overlay code answers from localStorage
+    try {
+      const codeRaw = localStorage.getItem(CODE_STORAGE_KEY);
+      if (codeRaw) {
+        const parsed = JSON.parse(codeRaw) as Record<string, string>;
+        for (const [id, value] of Object.entries(parsed)) {
+          codeAnswersRef.current.set(id, value);
           if (initialDrafts?.[id]) {
             setDirtyIds((prev) => new Set(prev).add(id));
           }
@@ -227,6 +251,12 @@ export default function ReviewSession({
           obj[k] = v;
         });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+        // Also persist code answers
+        const codeObj: Record<string, string> = {};
+        codeAnswersRef.current.forEach((v, k) => {
+          codeObj[k] = v;
+        });
+        localStorage.setItem(CODE_STORAGE_KEY, JSON.stringify(codeObj));
       } catch {
         // Ignore storage errors
       }
@@ -240,6 +270,12 @@ export default function ReviewSession({
         const parsed = JSON.parse(raw) as Record<string, SerializedEditorState>;
         delete parsed[itemId];
         localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      }
+      const codeRaw = localStorage.getItem(CODE_STORAGE_KEY);
+      if (codeRaw) {
+        const parsed = JSON.parse(codeRaw) as Record<string, string>;
+        delete parsed[itemId];
+        localStorage.setItem(CODE_STORAGE_KEY, JSON.stringify(parsed));
       }
     } catch {
       // silently ignore
@@ -376,9 +412,13 @@ export default function ReviewSession({
     setCurrentIndex(0);
   }, [currentIndex, items, reviewedIds]);
 
+  const isLeetcode = (currentItem?.answerRubric as AnswerRubric | null)?.type === 'leetcode';
+
   const handleSubmitAnswer = async () => {
     if (!currentItem) return;
-    const answer = answersRef.current.get(currentItem.id);
+    const answer = isLeetcode
+      ? codeAnswersRef.current.get(currentItem.id)
+      : answersRef.current.get(currentItem.id);
     if (!answer) return;
 
     setIsSubmitting(true);
@@ -402,21 +442,59 @@ export default function ReviewSession({
 
   const handleAnalyze = async () => {
     if (!currentItem) return;
-    const answer = answersRef.current.get(currentItem.id);
-    if (!answer) return;
 
     const rubric = currentItem.answerRubric as AnswerRubric | null;
     if (!rubric) return;
 
-    // Extract criteria and keyPoints from any rubric type
+    // For leetcode, get code answer; for others, get Lexical answer
+    if (rubric.type === 'leetcode') {
+      const codeAnswer = codeAnswersRef.current.get(currentItem.id);
+      if (!codeAnswer?.trim()) return;
+    } else {
+      const answer = answersRef.current.get(currentItem.id);
+      if (!answer) return;
+    }
+
+    // MCQ instant analysis — compare against correctAnswer directly, no AI needed
+    if (rubric.type === 'mcq') {
+      const answer = answersRef.current.get(currentItem.id)!;
+      const plainText = lexicalToPlainText(answer).trim().toUpperCase();
+      const choiceMatch = plainText.match(/\b([A-D])\b/);
+      const userChoice = choiceMatch?.[1] ?? null;
+
+      if (!userChoice) {
+        setAnalysisError('Could not determine your answer. Please type A, B, C, or D.');
+        return;
+      }
+
+      const isCorrect = userChoice === rubric.correctAnswer.toUpperCase();
+      const correctChoiceText = rubric.choices.find(
+        (c) => c.label === rubric.correctAnswer
+      )?.text ?? '';
+
+      const instantAnalysis: AnalysisResult = {
+        scorePercent: isCorrect ? 100 : 0,
+        strengths: isCorrect ? ['Correct answer selected'] : [],
+        weaknesses: isCorrect
+          ? []
+          : [`Selected ${userChoice} but correct answer is ${rubric.correctAnswer}. ${correctChoiceText}`],
+        reasoning: rubric.explanation,
+        suggestedRating: isCorrect ? 4 : 1,
+        suggestedLabel: isCorrect ? 'Easy' : 'Again',
+      };
+
+      setAnalysis(instantAnalysis);
+      setAnalysisPopoverOpen(true);
+      setEditorLocked(true);
+      return;
+    }
+
+    // Extract criteria and keyPoints from non-MCQ rubric types
     let criteria: string[] = [];
     let keyPoints: string[] = [];
 
     if (rubric.type === 'open_ended') {
       criteria = rubric.criteria ?? [];
-      keyPoints = rubric.keyPoints ?? [];
-    } else if (rubric.type === 'mcq') {
-      criteria = rubric.choices.map((c) => `${c.label}. ${c.text}`);
       keyPoints = rubric.keyPoints ?? [];
     } else if (rubric.type === 'leetcode') {
       criteria = [
@@ -433,12 +511,19 @@ export default function ReviewSession({
 
     if (!keyPoints.length) return;
 
-    // Use markdown for analysis — preserves code blocks, formatting, structure
-    const answerMd = lexicalToMarkdown(answer);
-    // Also get plain text to check for empty answers
-    const plainText = lexicalToPlainText(answer);
+    // Get the answer text based on question type
+    let answerText: string;
+    if (rubric.type === 'leetcode') {
+      const codeAnswer = codeAnswersRef.current.get(currentItem.id) ?? '';
+      answerText = '```\n' + codeAnswer + '\n```';
+    } else {
+      const answer = answersRef.current.get(currentItem.id)!;
+      const answerMd = lexicalToMarkdown(answer);
+      const plainText = lexicalToPlainText(answer);
+      answerText = answerMd || plainText;
+    }
 
-    if (!plainText && !answerMd.trim()) return;
+    if (!answerText.trim()) return;
 
     setIsAnalyzing(true);
     setAnalysisError(null);
@@ -446,7 +531,7 @@ export default function ReviewSession({
 
     try {
       const result: AnalyzeAnswerResult = await analyzeAnswer(
-        answerMd || plainText,
+        answerText,
         currentItem.questionTitle ?? '',
         currentItem.questionText ?? '',
         criteria,
@@ -481,7 +566,9 @@ export default function ReviewSession({
   const handleRate = (rating: number) => {
     if (!currentItem) return;
     const durationMs = Date.now() - reviewStartTime;
-    const answer = answersRef.current.get(currentItem.id);
+    const answer = isLeetcode
+      ? codeAnswersRef.current.get(currentItem.id)
+      : answersRef.current.get(currentItem.id);
 
     startTransition(async () => {
       try {
@@ -494,6 +581,7 @@ export default function ReviewSession({
         );
         removeFromLocalStorage(currentItem.id);
         answersRef.current.delete(currentItem.id);
+        codeAnswersRef.current.delete(currentItem.id);
         // Clear draft from DB (fire-and-forget)
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         saveAnswerDraft(currentItem.id, null).catch(() => {});
@@ -754,75 +842,150 @@ export default function ReviewSession({
           <ResizablePanel defaultSize={55} minSize={25}>
             <div className="h-full flex flex-col gap-2 p-1">
               {/* Editor card — takes all available space */}
-              <div className="flex-1 min-h-0 flex flex-col rounded-2xl bg-card shadow-md overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-2.5 shrink-0 bg-muted/20 rounded-t-2xl">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Your Answer
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    {editorLocked && (
+              <div className={cn(
+                'flex-1 min-h-0 flex flex-col rounded-2xl shadow-md overflow-hidden',
+                isLeetcode ? 'bg-muted/30' : 'bg-card'
+              )}>
+                {!isLeetcode && (
+                  <div className="flex items-center justify-between px-5 py-2.5 shrink-0 bg-muted/20 rounded-t-2xl">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      Your Answer
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {editorLocked && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs px-2.5 rounded-full"
+                          onClick={() => {
+                            setEditorLocked(false);
+                            setDirtyIds((prev) =>
+                              new Set(prev).add(currentItem.id)
+                            );
+                          }}
+                        >
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                      )}
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="h-6 text-xs px-2.5 rounded-full"
-                        onClick={() => {
-                          setEditorLocked(false);
+                        className={cn(
+                          'h-6 text-xs px-2.5 rounded-full',
+                          editorLocked &&
+                            submittedIds.has(currentItem.id) &&
+                            !dirtyIds.has(currentItem.id)
+                            ? 'bg-fsrs-good-bg text-fsrs-good border-fsrs-good/30'
+                            : ''
+                        )}
+                        onClick={handleSubmitAnswer}
+                        disabled={
+                          isSubmitting ||
+                          isPending ||
+                          editorLocked
+                        }
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        ) : (
+                          <Send className="h-3 w-3 mr-1" />
+                        )}
+                        {editorLocked &&
+                        submittedIds.has(currentItem.id) &&
+                        !dirtyIds.has(currentItem.id)
+                          ? 'Submitted'
+                          : 'Submit'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                  {isLeetcode ? (
+                    <MonacoEditorLazy
+                      key={currentItem.id}
+                      value={
+                        codeAnswersRef.current.get(currentItem.id) ??
+                        (rubric as LeetcodeRubric).functionPrototype ??
+                        ''
+                      }
+                      onChange={(value) => {
+                        codeAnswersRef.current.set(currentItem.id, value);
+                        persistToLocalStorage();
+                        if (submittedIds.has(currentItem.id)) {
                           setDirtyIds((prev) =>
                             new Set(prev).add(currentItem.id)
                           );
-                        }}
-                      >
-                        <Pencil className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        'h-6 text-xs px-2.5 rounded-full',
-                        editorLocked &&
-                          submittedIds.has(currentItem.id) &&
-                          !dirtyIds.has(currentItem.id)
-                          ? 'bg-fsrs-good-bg text-fsrs-good border-fsrs-good/30'
-                          : ''
-                      )}
-                      onClick={handleSubmitAnswer}
-                      disabled={
-                        isSubmitting ||
-                        isPending ||
-                        editorLocked
+                        }
+                      }}
+                      readOnly={editorLocked}
+                      headerActions={
+                        <>
+                          {editorLocked && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-xs px-2.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
+                              onClick={() => {
+                                setEditorLocked(false);
+                                setDirtyIds((prev) =>
+                                  new Set(prev).add(currentItem.id)
+                                );
+                              }}
+                            >
+                              <Pencil className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              'h-6 text-xs px-2.5 rounded-full border-border',
+                              editorLocked &&
+                                submittedIds.has(currentItem.id) &&
+                                !dirtyIds.has(currentItem.id)
+                                ? 'bg-fsrs-good-bg text-fsrs-good border-fsrs-good/30'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                            )}
+                            onClick={handleSubmitAnswer}
+                            disabled={
+                              isSubmitting ||
+                              isPending ||
+                              editorLocked
+                            }
+                          >
+                            {isSubmitting ? (
+                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                            ) : (
+                              <Send className="h-3 w-3 mr-1" />
+                            )}
+                            {editorLocked &&
+                            submittedIds.has(currentItem.id) &&
+                            !dirtyIds.has(currentItem.id)
+                              ? 'Submitted'
+                              : 'Submit'}
+                          </Button>
+                        </>
                       }
-                    >
-                      {isSubmitting ? (
-                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                      ) : (
-                        <Send className="h-3 w-3 mr-1" />
-                      )}
-                      {editorLocked &&
-                      submittedIds.has(currentItem.id) &&
-                      !dirtyIds.has(currentItem.id)
-                        ? 'Submitted'
-                        : 'Submit'}
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                  <AnswerEditor
-                    key={currentItem.id}
-                    initialValue={answersRef.current.get(currentItem.id)}
-                    editable={!editorLocked}
-                    onChange={(value) => {
-                      answersRef.current.set(currentItem.id, value);
-                      persistToLocalStorage();
-                      if (submittedIds.has(currentItem.id)) {
-                        setDirtyIds((prev) =>
-                          new Set(prev).add(currentItem.id)
-                        );
-                      }
-                    }}
-                    placeholder="Write your answer here..."
-                  />
+                    />
+                  ) : (
+                    <AnswerEditor
+                      key={currentItem.id}
+                      initialValue={answersRef.current.get(currentItem.id)}
+                      editable={!editorLocked}
+                      onChange={(value) => {
+                        answersRef.current.set(currentItem.id, value);
+                        persistToLocalStorage();
+                        if (submittedIds.has(currentItem.id)) {
+                          setDirtyIds((prev) =>
+                            new Set(prev).add(currentItem.id)
+                          );
+                        }
+                      }}
+                      placeholder="Write your answer here..."
+                    />
+                  )}
                 </div>
               </div>
 

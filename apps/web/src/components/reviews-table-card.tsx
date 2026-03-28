@@ -1,17 +1,14 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button, Card, Input, cn } from '@temar/ui';
 import { BinocularsIcon, Play, Loader2, Search } from 'lucide-react';
 import Link from 'next/link';
-import { Input } from './ui/input';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import type { RecallItemDue } from '@/lib/fetchers/recall-items';
 import {
   searchRecallItemsAction,
   getAllRecallItemsAction,
 } from '@/lib/actions/review';
-import { cn } from '@/lib/utils';
 
 const STATE_LABELS: Record<number, string> = {
   0: 'New',
@@ -232,7 +229,7 @@ export default function ReviewsTableCard({
                       className="rounded-full hover:bg-muted text-primary"
                       asChild
                     >
-                      <Link href="/dashboard/reviews">
+                      <Link href={`/dashboard/reviews?itemId=${item.id}`}>
                         <Play className="h-4 w-4" fill="currentColor" />
                       </Link>
                     </Button>
