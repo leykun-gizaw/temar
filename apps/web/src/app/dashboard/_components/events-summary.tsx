@@ -1,7 +1,7 @@
 'use client';
 
 import type { RecallItemDue } from '@/lib/fetchers/recall-items';
-import { Button } from '../../../components/ui/button';
+import { Button } from '@temar/ui';
 import Link from 'next/link';
 import { BellRing, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';

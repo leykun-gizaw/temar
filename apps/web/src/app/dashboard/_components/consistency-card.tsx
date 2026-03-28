@@ -1,5 +1,4 @@
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { Card, cn } from '@temar/ui';
 import type { ConsistencyStats } from '@/lib/fetchers/dashboard-stats';
 import { Flame, CalendarDays, Zap } from 'lucide-react';
 

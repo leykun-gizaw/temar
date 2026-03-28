@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { Timer } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Card } from '@/components/ui/card';
+import { Card } from '@temar/ui';
 import {
   ChartContainer,
   ChartTooltip,

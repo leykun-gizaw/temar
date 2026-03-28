@@ -1,17 +1,17 @@
 'use client';
 
 import { Receipt } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
+  Card,
+  Badge,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { cn } from '@/lib/utils';
+  cn,
+} from '@temar/ui';
 
 interface TransactionTimelineProps {
   data: Array<{

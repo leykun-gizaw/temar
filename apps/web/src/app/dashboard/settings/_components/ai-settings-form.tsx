@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import {
+  Button,
+  Input,
+  Switch,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@temar/ui';
 import { Loader2, Key, Sparkles, Trash2, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AiSettings, AiProvider } from '@/lib/actions/ai-settings';

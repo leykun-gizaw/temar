@@ -1,15 +1,15 @@
 import Link from 'next/link';
 import SiteNavbar from '@/components/site-navbar';
 import SiteFooter from '@/components/site-footer';
-import { Button } from '@/components/ui/button';
 import {
+  Button,
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+  cn,
+} from '@temar/ui';
 import { Check, Coins, Zap } from 'lucide-react';
 import { getLoggedInUser } from '@/lib/fetchers/users';
 

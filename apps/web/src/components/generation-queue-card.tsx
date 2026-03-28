@@ -8,23 +8,20 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
+  Badge,
+  Button,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+  cn,
+} from '@temar/ui';
 import {
   RefreshCw,
   Loader2,
@@ -43,7 +40,6 @@ import {
   useSSE,
   type GenerationStatusEvent,
 } from '@/components/providers/sse-provider';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { notifyPassBalanceChanged } from '@/lib/pass-events';
 

@@ -6,7 +6,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from '@/components/ui/tabs';
+} from '@temar/ui';
 
 // Overview
 import { OverviewKpiRow } from './overview-kpi-row';

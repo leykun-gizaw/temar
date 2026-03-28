@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Button } from '@temar/ui';
 import {
   Plus,
   Loader2,

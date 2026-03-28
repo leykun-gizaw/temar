@@ -2,14 +2,14 @@
 
 import * as React from 'react';
 import { useActionState } from 'react';
-import { Button } from '@/components/ui/button';
 import {
+  Button,
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+  Input,
+  Label,
+} from '@temar/ui';
 import { Loader2 } from 'lucide-react';
 import { createTopic } from '@/lib/actions/topics';
 import { ErrorState } from '@/lib/definitions';
@@ -65,7 +65,7 @@ export function AddTopicDialog({
                 placeholder="Describe the topic..."
                 rows={3}
                 aria-required="true"
-                className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-h-[60px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
               {errorState.errors?.description && (
                 <p className="text-destructive text-xs">

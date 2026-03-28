@@ -14,7 +14,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@temar/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface NavLink {

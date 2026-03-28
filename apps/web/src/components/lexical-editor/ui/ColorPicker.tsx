@@ -5,9 +5,9 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+  Input,
+  Button,
+} from '@temar/ui';
 
 const PRESET_COLORS = [
   '#000000',

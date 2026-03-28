@@ -2,14 +2,14 @@
 
 import * as React from 'react';
 import { useActionState } from 'react';
-import { Button } from '@/components/ui/button';
 import {
+  Button,
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+  Input,
+  Label,
+} from '@temar/ui';
 import { Loader2, Plus } from 'lucide-react';
 import { createNote } from '@/lib/actions/notes';
 import { ErrorState } from '@/lib/definitions';

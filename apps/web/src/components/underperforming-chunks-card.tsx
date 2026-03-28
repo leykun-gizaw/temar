@@ -7,28 +7,24 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
+  Button,
+  Input,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+  cn,
+} from '@temar/ui';
 import { AlertTriangle, Loader2, Play, Info } from 'lucide-react';
 import Link from 'next/link';
 import type { UnderperformingChunk } from '@/lib/actions/tracking';
 import { getUnderperformingChunks } from '@/lib/actions/tracking';
-import { cn } from '@/lib/utils';
 
 function severityColor(totalLapses: number, avgStability: number): string {
   if (totalLapses >= 5 || avgStability < 0.3) return 'text-red-500';

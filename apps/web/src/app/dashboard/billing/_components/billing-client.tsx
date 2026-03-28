@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Button, cn } from '@temar/ui';
 import {
   Coins,
   CreditCard,
@@ -11,7 +11,6 @@ import {
   CalendarClock,
   CheckCircle2,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type { PassTransaction } from '@/lib/actions/pass';
 import type { SubscriptionInfo, CheckoutConfig } from '@temar/payment-provider';
 import { useCheckout } from '@/hooks/use-checkout';

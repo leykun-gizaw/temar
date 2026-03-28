@@ -6,10 +6,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+  Input,
+  Label,
+  Button,
+} from '@temar/ui';
 
 interface InsertImageDialogProps {
   open: boolean;

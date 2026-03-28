@@ -1,7 +1,6 @@
 'use client';
 
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { Switch, Label } from '@temar/ui';
 import { Bell } from 'lucide-react';
 
 /**
