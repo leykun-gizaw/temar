@@ -819,6 +819,8 @@ ${questionSummaries.join('\n')}`;
     if (!chunkRow) return null;
 
     // Get sibling chunks in the same note (excluding this one)
+    if (!chunkRow.noteId) return null;
+
     const siblingChunks = await dbClient
       .select({ id: chunk.id })
       .from(chunk)

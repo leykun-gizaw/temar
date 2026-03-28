@@ -23,6 +23,7 @@ COPY libs/db-client/package.json libs/db-client/
 COPY libs/pricing-service/package.json libs/pricing-service/
 COPY libs/payment-provider/package.json libs/payment-provider/
 COPY libs/shared-types/package.json libs/shared-types/
+COPY libs/ui/package.json libs/ui/
 RUN pnpm install --frozen-lockfile
 
 # ----------------------------------------------
@@ -38,6 +39,7 @@ COPY libs/db-client ./libs/db-client
 COPY libs/pricing-service ./libs/pricing-service
 COPY libs/payment-provider ./libs/payment-provider
 COPY libs/shared-types ./libs/shared-types
+COPY libs/ui ./libs/ui
 # Remove workspace symlinks so webpack bundles @temar/* from source via tsconfig paths
 RUN rm -rf node_modules/@temar
 # Build the 'web' application
@@ -101,6 +103,7 @@ COPY libs/db-client ./libs/db-client
 COPY libs/pricing-service ./libs/pricing-service
 COPY libs/payment-provider ./libs/payment-provider
 COPY libs/shared-types ./libs/shared-types
+COPY libs/ui ./libs/ui
 RUN rm -rf node_modules/@temar
 RUN NX_DAEMON=false pnpm nx build admin --prod --verbose
 
